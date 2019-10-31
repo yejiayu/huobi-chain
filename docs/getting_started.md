@@ -14,12 +14,9 @@
       - [编译](#%e7%bc%96%e8%af%91)
     - [运行单节点](#%e8%bf%90%e8%a1%8c%e5%8d%95%e8%8a%82%e7%82%b9)
     - [运行多节点](#%e8%bf%90%e8%a1%8c%e5%a4%9a%e8%8a%82%e7%82%b9)
-  - [使用 docker](#%e4%bd%bf%e7%94%a8-docker)
   - [配置说明](#%e9%85%8d%e7%bd%ae%e8%af%b4%e6%98%8e)
 
 ## 安装和运行
-
-此处讲解在你的操作系统直接安装 huobi-chain 的方法，如果想要通过 docker 快速尝试 huobi-chain，可以参考 [使用 docker](#%e4%bd%bf%e7%94%a8-docker)。
 
 ### 安装依赖
 
