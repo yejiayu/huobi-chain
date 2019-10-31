@@ -6,7 +6,7 @@ GraphQL provides a complete and understandable description of the data in your A
 gives clients the power to ask for exactly what they need and nothing more,
 makes it easier to evolve APIs over time, and enables powerful developer tools.
 
-Huobi-chain has embeded a [Graph*i*QL](https://github.com/graphql/graphiql) for checking and calling API. Started a the Muta
+Huobi-chain has embeded a [Graph*i*QL](https://github.com/graphql/graphiql) for checking and calling API. Started a the Huobi-chain
 node, and then try open http://127.0.0.1:8000/graphiql in the browser.
 
 
@@ -80,7 +80,7 @@ Get the asset balance of an account
 <td valign="top"><a href="#hash">Hash</a>!</td>
 <td>
 
-The asset id. Asset is the first-class in Huobi-chain, and the UDT(User Defined Token) will be supported in the future
+The asset id. Asset is the first-class in Huobi-chain, this means that your assets can be more than one in Huobi-chain, and the UDT(User Defined Token) will be supported in the future
 
 </td>
 </tr>
@@ -282,7 +282,7 @@ Known as the block height like other blockchain
 <td valign="top"><a href="#hash">Hash</a>!</td>
 <td>
 
-The merkle proof of the previous epoch
+The hash of the serialized previous epoch
 
 </td>
 </tr>
@@ -300,7 +300,7 @@ A timestamp that records when the epoch was created
 <td valign="top"><a href="#hash">Hash</a>!</td>
 <td>
 
-The merkle proof of ordered transactions
+The merkle root of ordered transactions
 
 </td>
 </tr>
@@ -309,7 +309,7 @@ The merkle proof of ordered transactions
 <td valign="top">[<a href="#hash">Hash</a>!]!</td>
 <td>
 
-The merkle proofs of all the confirms
+The merkle roots of all the confirms
 
 </td>
 </tr>
@@ -318,7 +318,7 @@ The merkle proofs of all the confirms
 <td valign="top"><a href="#hash">Hash</a>!</td>
 <td>
 
-The merkle proof of state root
+The merkle root of state root
 
 </td>
 </tr>
@@ -327,7 +327,7 @@ The merkle proof of state root
 <td valign="top">[<a href="#hash">Hash</a>!]!</td>
 <td>
 
-The merkle proof of receipts
+The merkle roots of receipts
 
 </td>
 </tr>
@@ -399,7 +399,7 @@ The type of contract
 
 ### InputRawTransaction
 
-There was many types transaction in Huobi-chain, A transaction often require computing resources or write data to chain,these resources are valuable so we need to pay some token for them.InputRawTransaction describes information above
+There was many types of transaction in Huobi-chain, A transaction often require computing resources or write data to chain,these resources are valuable so we need to pay some token for them.InputRawTransaction describes information above
 
 <table>
 <thead>
@@ -560,7 +560,7 @@ According to different purposes, Huobi-chain has many contract type
 <td valign="top"><strong>ASSET</strong></td>
 <td>
 
-Asset contract often use for creating User Defined Asset(also known as (User Defined Token))
+Asset contract often use for creating User Defined Asset(also known as UDT(User Defined Token))
 
 </td>
 </tr>
