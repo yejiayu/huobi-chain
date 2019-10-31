@@ -1,4 +1,4 @@
-# Muta GraphQL API
+# Huobi-chain GraphQL API
 
 
 >[GraphQL](https://graphql.org) is a query language for APIs and a runtime for fulfilling those queries with your existing data.
@@ -6,7 +6,7 @@ GraphQL provides a complete and understandable description of the data in your A
 gives clients the power to ask for exactly what they need and nothing more,
 makes it easier to evolve APIs over time, and enables powerful developer tools.
 
-Muta has embeded a [Graph*i*QL](https://github.com/graphql/graphiql) for checking and calling API. Started a the Muta
+Huobi-chain has embeded a [Graph*i*QL](https://github.com/graphql/graphiql) for checking and calling API. Started a the Muta
 node, and then try open http://127.0.0.1:8000/graphiql in the browser.
 
 
@@ -80,7 +80,7 @@ Get the asset balance of an account
 <td valign="top"><a href="#hash">Hash</a>!</td>
 <td>
 
-The asset id. Asset is the first-class in Muta, and the UDT(User Defined Token) will be supported in the future
+The asset id. Asset is the first-class in Huobi-chain, and the UDT(User Defined Token) will be supported in the future
 
 </td>
 </tr>
@@ -399,7 +399,7 @@ The type of contract
 
 ### InputRawTransaction
 
-There was many types transaction in Muta, A transaction often require computing resources or write data to chain,these resources are valuable so we need to pay some token for them.InputRawTransaction describes information above
+There was many types transaction in Huobi-chain, A transaction often require computing resources or write data to chain,these resources are valuable so we need to pay some token for them.InputRawTransaction describes information above
 
 <table>
 <thead>
@@ -442,7 +442,7 @@ asset type
 <td valign="top"><a href="#hash">Hash</a>!</td>
 <td>
 
-Every transaction has its own id, unlike Ethereum's nonce,the nonce in Muta is an hash
+Every transaction has its own id, unlike Ethereum's nonce,the nonce in Huobi-chain is an hash
 
 </td>
 </tr>
@@ -451,7 +451,7 @@ Every transaction has its own id, unlike Ethereum's nonce,the nonce in Muta is a
 <td valign="top"><a href="#uint64">Uint64</a>!</td>
 <td>
 
-For security and performance reasons, Muta will only deal with trade request over a period of time,the `timeout` should be `timeout > current_epoch_height` and `timeout < current_epoch_height + timeout_gap`,the `timeout_gap` generally equal to 20.
+For security and performance reasons, Huobi-chain will only deal with trade request over a period of time,the `timeout` should be `timeout > current_epoch_height` and `timeout < current_epoch_height + timeout_gap`,the `timeout_gap` generally equal to 20.
 
 </td>
 </tr>
@@ -548,7 +548,7 @@ The receiver of the transfer
 
 ### ContractType
 
-According to different purposes, Muta has many contract type
+According to different purposes, Huobi-chain has many contract type
 
 <table>
 <thead>

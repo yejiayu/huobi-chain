@@ -1,7 +1,7 @@
 use crate::schema::{Address, AssetID, Balance, Bytes, Hash, Uint64};
 
 #[derive(GraphQLEnum, Clone)]
-#[graphql(description = "According to different purposes, Muta has many contract type")]
+#[graphql(description = "According to different purposes, Huobi-chain has many contract type")]
 pub enum ContractType {
     // Asset contract
     #[graphql(
@@ -23,7 +23,7 @@ pub enum ContractType {
 // #####################
 
 #[derive(GraphQLInputObject, Clone)]
-#[graphql(description = "There was many types of transaction in Muta, \
+#[graphql(description = "There was many types of transaction in Huobi-chain, \
                          A transaction often require computing resources or write data to chain,\
                          these resources are valuable so we need to pay some token for them.\
                          InputRawTransaction describes information above")]
@@ -39,11 +39,11 @@ pub struct InputRawTransaction {
     pub fee_asset_id: AssetID,
     #[graphql(
         description = "Every transaction has its own id, unlike Ethereum's nonce,\
-                       the nonce in Muta is an hash"
+                       the nonce in Huobi-chain is an hash"
     )]
     pub nonce: Hash,
     #[graphql(description = "For security and performance reasons, \
-    Muta will only deal with trade request over a period of time,\
+    Huobi-chain will only deal with trade request over a period of time,\
     the `timeout` should be `timeout > current_epoch_height` and `timeout < current_epoch_height + timeout_gap`,\
     the `timeout_gap` generally equal to 20.")]
     pub timeout: Uint64,

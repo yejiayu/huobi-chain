@@ -244,8 +244,8 @@ impl<DB: TrieDB> TransactionExecutor<DB> {
                 self.bank_account.register(
                     Rc::clone(&ictx),
                     &address,
-                    "Muta token".to_owned(),
-                    "MTT".to_owned(),
+                    "System token".to_owned(),
+                    "ST".to_owned(),
                     Balance::from(21_000_000_000_000_000u64),
                 )?;
 

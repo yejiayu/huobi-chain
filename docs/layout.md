@@ -32,9 +32,9 @@
 
 A brief description:
 
-- `common` Contains utilities for muta-chain.
+- `common` Contains utilities for huobi-chain.
 - `core` Contains implementations of module traits.
 - `devtools` Contains scripts and configurations for better use of the this repository.
 - `docs` for project documentations.
-- `protocol` Contains types, serialization, core traits for muta-chain.
+- `protocol` Contains types, serialization, core traits for huobi-chain.
 - `src` Contains main packages

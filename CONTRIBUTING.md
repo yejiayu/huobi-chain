@@ -1,6 +1,6 @@
 # Contributing
 
-Our goal is to make contributing to the `muta` project easy and transparent.
+Our goal is to make contributing to the `huobi-chain` project easy and transparent.
 
 When contributing to this repository, please first discuss the change you wish to make via issue, or any other method with the community before making a change. 
 
@@ -21,7 +21,7 @@ When contributing to this repository, please first discuss the change you wish t
   
 * See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-1. Fork the `muta` repo and create your branch from master.
+1. Fork the `huobi-chain` repo and create your branch from master.
 2. If you have added code that should be tested, add unit tests.
 3. Verify and ensure that the test suite passes.
 4. Make sure your code passes CI.

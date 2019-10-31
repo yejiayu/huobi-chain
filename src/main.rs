@@ -39,7 +39,7 @@ use crate::config::Config;
 async fn main() {
     common_logger::init(common_logger::Flag::Main);
 
-    let matches = clap::App::new("Muta")
+    let matches = clap::App::new("Huobi-chain")
         .version("v0.1.0")
         .author("Muta Dev <muta@nervos.org>")
         .arg(

@@ -21,8 +21,8 @@ fn test_bank_contract() {
             .unwrap();
 
     let ctx = mock_invoke_context(caller, None, 0, 1_000_000, fee_asset.clone());
-    let name = "Muta token".to_owned();
-    let symbol = "MTT".to_owned();
+    let name = "System token".to_owned();
+    let symbol = "ST".to_owned();
     let supply = Balance::from(1e18 as u64);
     let asset = bank
         .register(

@@ -1,5 +1,5 @@
 # chain id
-chain_id = "b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036"  # by sha256(Muta)
+chain_id = "b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036"  # by sha256(Huobi-chain)
 
 # crypto
 privkey = "45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"

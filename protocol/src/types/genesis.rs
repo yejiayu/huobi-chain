@@ -39,8 +39,8 @@ mod tests {
             "prevhash": "0x0000000000",
             "system_token": {
                 "code": "",
-                "name": "Muta system token",
-                "symbol": "MST",
+                "name": "System token",
+                "symbol": "ST",
                 "supply": 21000000000
             },
             "state_alloc": [
