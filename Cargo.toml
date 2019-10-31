@@ -1,5 +1,5 @@
 [package]
-name = "muta-chain"
+name = "huobi-chain"
 version = "0.1.0"
 authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
