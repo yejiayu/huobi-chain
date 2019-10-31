@@ -16,8 +16,6 @@ When contributing to this repository, please first discuss the change you wish t
 * When creating a new issue, be sure to include a title and clear description. It is appreciated that if you can also attach as much relevant information as possible, such as version, environment, reproducing steps, samples.
 
 ### Send PR
-
-* See [Code Standards]() for code guidelines.
   
 * See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
