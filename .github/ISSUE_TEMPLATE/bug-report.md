@@ -17,7 +17,7 @@ labels: t:bug
 
 **Environment**:
 
-- MutaChain version or commit hash (`MutaChain -V`):
+- Huobi-Chain version or commit hash (`Huobi-Chain -V`):
 - OS (e.g: `cat /etc/os-release`):
 - Kernel (e.g. `uname -a`):
 - Others:
