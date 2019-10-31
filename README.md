@@ -24,7 +24,7 @@
 
 ### RISC-V Based Virtual Machine
 
-火币公链默认的虚拟机是采用了 [RISC-V][risc-v] 指令集的 CKB-VM。RISC-V 是一套在 BSD 开源协议下分发的针对硬件的精简指令集。相对于区块链中常用的 EVM 和 WASM，CKB-VM 的性能更高，指令消耗评估（参考 [EIP-150 opcode gas cost][eip-150]）更精确，指令集稳定无需频繁硬分叉升级，以及有众多开源生态支持等优势。
+火币公链默认的虚拟机是采用了 [RISC-V][risc-v] 指令集的 CKB-VM。RISC-V 是一套在 BSD 开源协议下分发的针对硬件的精简指令集。相对于区块链中常用的 EVM 和 WASM，CKB-VM 的性能更高，指令集稳定无需频繁硬分叉升级，以及有众多开源生态支持等优势。
 
 得益于 [CKB-VM][ckb-vm] 的灵活性和可扩展性，在不侵入指令集修改的前提下，我们在 CKB-VM 之上实现了一套 Account SDK 以实现火币公链智能合约中的 Account 模型，不仅如此，我们还提供了合约编程语言 [Minits][minits]，Minits 是一个专为区块链智能合约开发设计的 Typescript 的子集，它使用 LLVM 最终把代码编译成 RISC-V binary 在 CKB-VM 中运行。
 
