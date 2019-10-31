@@ -22,7 +22,10 @@ use core_consensus::message::{
 };
 use core_executor::trie::RocksTrieDB;
 use core_executor::TransactionExecutorFactory;
-use core_mempool::{DefaultMemPoolAdapter, HashMemPool, NewTxsHandler, END_GOSSIP_NEW_TXS};
+use core_mempool::{
+    DefaultMemPoolAdapter, HashMemPool, MsgPushTxs, NewTxsHandler, END_GOSSIP_NEW_TXS,
+    END_RESP_PULL_TXS, END_RPC_PULL_TXS,
+};
 use core_network::{NetworkConfig, NetworkService};
 use core_storage::{adapter::rocks::RocksAdapter, ImplStorage};
 
@@ -206,6 +209,18 @@ async fn start(cfg: &Config) -> ProtocolResult<()> {
             END_GOSSIP_NEW_TXS,
             Box::new(NewTxsHandler::new(Arc::clone(&mempool))),
         )
+        .unwrap();
+
+    // register pull transactions
+    network_service
+        .register_endpoint_handler(
+            END_RPC_PULL_TXS,
+            Box::new(NewTxsHandler::new(Arc::clone(&mempool))),
+        )
+        .unwrap();
+
+    network_service
+        .register_rpc_response::<MsgPushTxs>(END_RESP_PULL_TXS)
         .unwrap();
 
     // Init trie db
