@@ -19,11 +19,11 @@
 
 ### Parallel Execution Consensus
 
-火币公链采用 [Overlord](overlord) 共识算法，其设计目标是成为能够支持上百个共识节点，满足数千笔每秒的交易处理能力，且交易延迟不超过数秒的 BFT 共识算法。Overlord 的核心思想是解耦交易定序与状态共识，从而实现共识和执行完全并行，极大提高整条链的交易吞吐量。
+火币公链采用 [Overlord][overlord] 共识算法，其设计目标是成为能够支持上百个共识节点，满足数千笔每秒的交易处理能力，且交易延迟不超过数秒的 BFT 共识算法。Overlord 的核心思想是解耦交易定序与状态共识，从而实现共识和执行完全并行，极大提高整条链的交易吞吐量。
 
 ### RISC-V Based Virtual Machine
 
-火币公链默认的虚拟机是采用了 [RISC-V](risc-v) 指令集的 CKB-VM。RISC-V 是一套在 BSD 开源协议下分发的针对硬件的精简指令集。相对于区块链中常用的 EVM 和 WASM，CKB-VM 的性能更高，指令消耗评估（参考 [EIP-150 opcode gas cost](EIP-150)）更精确，指令集稳定无需频繁硬分叉升级，以及有众多开源生态支持等优势。
+火币公链默认的虚拟机是采用了 [RISC-V][risc-v] 指令集的 CKB-VM。RISC-V 是一套在 BSD 开源协议下分发的针对硬件的精简指令集。相对于区块链中常用的 EVM 和 WASM，CKB-VM 的性能更高，指令消耗评估（参考 [EIP-150 opcode gas cost][eip-150]）更精确，指令集稳定无需频繁硬分叉升级，以及有众多开源生态支持等优势。
 
 得益于 [CKB-VM][ckb-vm] 的灵活性和可扩展性，在不侵入指令集修改的前提下，我们在 CKB-VM 之上实现了一套 Account SDK 以实现火币公链智能合约中的 Account 模型，不仅如此，我们还提供了合约编程语言 [Minits][minits]，Minits 是一个专为区块链智能合约开发设计的 Typescript 的子集，它使用 LLVM 最终把代码编译成 RISC-V binary 在 CKB-VM 中运行。
 
@@ -31,7 +31,7 @@
 
 在以太坊等智能合约平台中，用户自定义代币（User Defined Token, UDT）通常以标准智能合约形式出现。平台对某合约记录的是资产还是普通数据没有区分。这样带来了安全性、通用性和复杂性等多重风险。
 
-Libra 使用的 [Move](move) 以及 [Nervos CKB][ckb-white-paper] 提出了区块链中一等公民（first-class citizen）的概念。在这个概念中资产，或者所属权成为了系统可直接识别的数据，而不是和其他数据糅合在一起对系统保持透明。
+Libra 使用的 [Move][move] 以及 [Nervos CKB][ckb-white-paper] 提出了区块链中一等公民（first-class citizen）的概念。在这个概念中资产，或者所属权成为了系统可直接识别的数据，而不是和其他数据糅合在一起对系统保持透明。
 
 火币公链对原生代币和 UDT 设置了一等公民的地位，我们称之为 first-class asset（简称 FCA）。所有代币的基础行为均由系统提供的原生合约实现，用户只需要给出代币的名称、发行量、管理方式等定义即可创建一等资产。
 
