@@ -560,7 +560,7 @@ According to different purposes, Muta has many contract type
 <td valign="top"><strong>ASSET</strong></td>
 <td>
 
-Asset contract often use for creating User Define Asset(also known as (User Define Token))
+Asset contract often use for creating User Defined Asset(also known as (User Defined Token))
 
 </td>
 </tr>
