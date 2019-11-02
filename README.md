@@ -1,6 +1,8 @@
 # Huobi Chain
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 
+简体中文 | [English](./README_EN.md)
+
 ## Introduction
 
 火币公链是 [火币集团](https://www.huobigroup.com/)和[Nervos Foundation](https://www.nervos.org/) 联合开发的高性能公链。它基于 Muta、CKB-VM、Overlord、nervos-p2p 等开源组件深度定制，并面向金融应用的场景进行了扩展与优化。
