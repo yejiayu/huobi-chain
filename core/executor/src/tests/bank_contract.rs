@@ -42,9 +42,9 @@ fn test_bank_contract() {
     let asset2 = bank.register(
         Rc::<RefCell<InvokeContext>>::clone(&ctx),
         &address,
-        name.clone(),
-        symbol.clone(),
-        supply.clone(),
+        name,
+        symbol,
+        supply,
     );
     assert_eq!(asset2.is_err(), true);
 

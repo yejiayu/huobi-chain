@@ -31,7 +31,6 @@
 
 得益于 [CKB-VM][ckb-vm] 的灵活性和可扩展性，在不侵入指令集修改的前提下，我们在 CKB-VM 之上实现了一套 Account SDK 以实现火币公链智能合约中的 Account 模型，不仅如此，我们还提供了合约编程语言 [Minits][minits]，Minits 是一个专为区块链智能合约开发设计的 Typescript 的子集，它使用 LLVM 最终把代码编译成 RISC-V binary 在 CKB-VM 中运行。
 
-
 ### 内置跨链能力
 
 采用 FCA 实例化的 UDT 具备原生跨链功能，火币公链与其侧链，以及火币公链与 Nervos CKB 公链之间都可以采用这种跨链协议实现去中心化跨链。
@@ -43,7 +42,6 @@
 用户可以采用两种方式部署智能合约，第一种是将合约编译成 RISC-V 代码，动态部署到链上；第二种是采用 Rust 语言实现本机代码部署原生合约。原生合约绕开虚拟机的解释执行过程，直接访问系统资源，具有更高效的性能。
 
 未来火币公链的侧链可能广泛采用原生合约来实现高性能的特定业务。
-
 
 [overlord]: https://github.com/cryptape/overlord
 [risc-v]: https://www.wikiwand.com/en/RISC-V
