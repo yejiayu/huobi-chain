@@ -14,6 +14,8 @@
       - [编译](#%e7%bc%96%e8%af%91)
     - [运行单节点](#%e8%bf%90%e8%a1%8c%e5%8d%95%e8%8a%82%e7%82%b9)
     - [运行多节点](#%e8%bf%90%e8%a1%8c%e5%a4%9a%e8%8a%82%e7%82%b9)
+  - [与链进行交互](#%e4%b8%8e%e9%93%be%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92)
+    - [发交易](#%e5%8f%91%e4%ba%a4%e6%98%93)
   - [配置说明](#%e9%85%8d%e7%bd%ae%e8%af%b4%e6%98%8e)
 
 ## 安装和运行
@@ -50,9 +52,9 @@ pacman -Sy --noconfirm git gcc pkgconf clang make
 ```
 
 ### 直接下载预编译的二进制文件
- 
+
 我们会通过 [github releases](https://github.com/HuobiGroup/huobi-chain/releases) 发布一些常用操作系统的预编译二进制文件。如果其中包含你的操作系统，可以直接下载对应的文件。
- 
+
 ### 从源码编译
 
 #### 获取源码
@@ -114,6 +116,44 @@ OPTIONS:
 2. 将 huobi-chain binary 文件、huobi-chain 配置 config.toml 和创世块文件 genesis.json 分发到待部署的节点机器；
 3. 启动 bootstrap 节点；
 4. 启动其它节点；
+
+## 与链进行交互
+
+链默认在 8000 端口暴露了 GraphQL 接口用于用户与链进行交互。
+
+打开 <http://127.0.0.1:8000/graphiql> 后效果如下图所示：
+
+![](resources/graphiql.png)
+
+点击右上角 Docs 可以查阅接口文档。更多 GraphQL 用法可以参阅 [官方文档](https://graphql.org/)。
+
+### 发交易
+
+目前链仅支持原生转账交易。在开发环境可以使用 `sendUnsafeTransferTransaction` 进行转账，示例如下：
+
+```graphql
+mutation {
+  sendUnsafeTransferTransaction(
+    inputRaw: {
+      chainId: "0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+      feeCycle: "0xff",
+      feeAssetId: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      nonce: "0000000000000000000000000000000000000000000000000000000000000000",
+      timeout: "0x100"
+    },
+    inputAction: {
+      carryingAmount: "0x01",
+      carryingAssetId: "fee0decb4f6a76d402f200b5642a9236ba455c22aa80ef82d69fc70ea5ba20b5",
+      receiver: "100000000000000000000000000000000000000000"
+    },
+    inputPrivkey: "0x45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f")
+}
+```
+
+手续费扣除逻辑暂未实现，`feeCycle` 和 `feeAssetId` 可以随意填写。
+
+如想测试转账交易，可以使用创世块中预先分配了原生资产的账号，参考 [此处](../devtools/chain/README.md)。
+
 
 ## 配置说明
 
