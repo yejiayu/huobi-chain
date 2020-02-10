@@ -75,7 +75,7 @@ riscv service 中提供的系统调用有 4 类：
   - `pvm_set_storage` 和 `pvm_get_storage` 可以用来操作合约的状态空间。每个合约拥有独立的地址，在该地址下拥有独立的状态空间，可以把这个状态空间理解成一个 kv 数据库，用户可以在里面保存任意的数据。合约只能访问和修改自己状态空间内的数据。可以把这个状态空间类比理解成以太坊的 contract storage。
   - `pvm_contract_call` 可以用来调用其它 riscv 合约，`pvm_service_call` 可以用来调用 huobi-chain 的其它 build-in service。
 
-所有的系统调用函数都在 [`pvm.h` 文件](https://github.com/HuobiGroup/huobi-chain/blob/pre-test/services/riscv/src/vm/c/pvm.h)中，里面有详细的函数文档，读者可以自行查阅。
+所有的系统调用函数都在 [`pvm.h` 文件](https://github.com/HuobiGroup/huobi-chain/blob/master/services/riscv/src/vm/c/pvm.h)中，里面有详细的函数文档，读者可以自行查阅。
 
 ## ERC20 和 Bank 合约代码
 
@@ -247,7 +247,7 @@ risc-v service 提供了两种 `exec` 和 `call` 两个交互接口。前者为�
 如果读者熟悉 rust，可以通过写 rust test 或者 binary，来模拟交易直接执行合约代码。
 使用这种方法进行测试无需起链。
 
-参见：<https://github.com/HuobiGroup/huobi-chain/blob/pre-test/services/riscv/src/tests/mod.rs#L45>
+参见：<https://github.com/HuobiGroup/huobi-chain/blob/master/services/riscv/src/tests/mod.rs#L45>
 
 另一种方法是，在本地起一条单节点测试链，通过 muta-sdk 进行部署和调用，在其中加入测试逻辑，保证代码的正确性。
 
