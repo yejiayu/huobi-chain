@@ -3,7 +3,7 @@
 	- [Huobi Chain 测试网信息](/testnet.md)
 - **快速开始**
 	- [快速开始](/getting_started.md)
-	<!-- - [配置说明](/config.md) -->
+	- [配置说明](/config.md)
 - **架构设计**
 	- [总体架构](/arch.md)
 - **模块设计**

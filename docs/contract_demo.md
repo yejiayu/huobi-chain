@@ -226,6 +226,18 @@ risc-v service 提供了两种 `exec` 和 `call` 两个交互接口。前者为�
 > tx = await client.composeTransaction({ method: 'exec', payload, serviceName: 'riscv' })
 > txHash = await client.sendTransaction(account.signTransaction(tx))
 > receipt = await client.getReceipt(txHash)
+{ txHash:
+   '9f18a395972012817c68611e86e182af72f33964ec86c629c8727a9ec1a79daa',
+  height: '0000000000000386',
+  cyclesUsed: '0000000000072306',
+  events: [],
+  stateRoot:
+   '7f95c8a6d338fbd64de764cdf1870cc60696c4e69af1656de279d7cded6026ed',
+  response:
+   { serviceName: 'riscv',
+     method: 'exec',
+     ret: '""',
+     isError: false } }
 ```
 
 ## 测试
