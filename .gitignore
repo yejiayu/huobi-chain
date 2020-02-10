@@ -19,8 +19,9 @@
 .idea/
 .vscode/
 
-# dev
-devtools/chain/data
-
 # rocksdb
 **/rocksdb/
+
+# logs and data
+logs
+data

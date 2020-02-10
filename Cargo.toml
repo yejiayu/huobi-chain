@@ -1,51 +1,28 @@
 [package]
 name = "huobi-chain"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
 
 [dependencies]
-common-logger = { path = "./common/logger" }
-common-config-parser = { path = "./common/config-parser" }
-common-crypto = { path = "./common/crypto" }
-protocol = { path = "./protocol" }
-core-api = { path = "./core/api" }
-core-storage = { path = "./core/storage" }
-core-mempool = { path = "./core/mempool" }
-core-network = { path = "./core/network" }
-core-consensus = { path = "./core/consensus" }
-core-executor = { path = "./core/executor" }
+muta = { git = "https://github.com/nervosnetwork/muta", branch = "master" }
+protocol = { git = "https://github.com/nervosnetwork/muta", branch = "master", package = "muta-protocol" }
 
-parking_lot = "0.9"
+tokio = { version = "0.2", features = ["macros", "rt-core"]}
+derive_more = "0.15"
 runtime = "0.3.0-alpha.7"
 runtime-tokio = "0.3.0-alpha.6"
-serde = "1.0"
-serde_derive = "1.0"
-serde_json = "1.0"
-log = "0.4"
 clap = "2.33"
-bytes = "0.4"
-hex = "0.3"
-rlp = "0.4"
+
+metadata = { path = "services/metadata" }
+asset = { path = "services/asset" }
+riscv = { path = "services/riscv" }
+node_manager = { path = "services/node_manager" }
 
 [workspace]
 members = [
-  "devtools/keypair",
-
-  "common/channel",
-  "common/config-parser",
-  "common/crypto",
-  "common/logger",
-  "common/merkle",
-  "common/metrics",
-  "common/pubsub",
-
-  "core/api",
-  "core/consensus",
-  "core/executor",
-  "core/mempool",
-  "core/network",
-  "core/storage",
-
-  "protocol",
+  "services/metadata",
+  "services/riscv",
+  "services/asset",
+  "services/node_manager"
 ]
