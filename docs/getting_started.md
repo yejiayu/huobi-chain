@@ -228,9 +228,9 @@ $ muta-cli repl
 > const service = new muta_sdk.AssetService(client, account)
 
 # 发行资产
-> HT = await service.createAsset({name: 'Huobi Token', supply: 1000000000, symbol: 'HT'})
-{ name: 'Huobi Token',
-  symbol: 'HT',
+> MT = await service.createAsset({name: 'Muta Token', supply: 1000000000, symbol: 'MT'})
+{ name: 'Muta Token',
+  symbol: 'MT',
   supply: 1000000000,
   issuer: '9d1d1bb11c44500603971a245f55a23f65148eee',
   asset_id:
@@ -241,7 +241,7 @@ $ muta-cli repl
 '0x9d1d1bb11c44500603971a245f55a23f65148eee'
 
 # 查询发行者余额
-> await client.queryService({serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: HT.asset_id, user: account.address})})
+> await client.queryService({serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.asset_id, user: account.address})})
 { isError: false,
   ret:
    '{"asset_id":"e8c2c6606030bc93da018cec5e6400845489b471527d507357b3316ae884a3f3","user":"9d1d1bb11c44500603971a245f55a23f65148eee","balance":1000000000}' }
@@ -249,15 +249,15 @@ $ muta-cli repl
 # 转账
 > const to = accounts[1].address;
 
-> await service.transfer({asset_id: HT.asset_id, to, value: 100});
+> await service.transfer({asset_id: MT.asset_id, to, value: 100});
 
 # 查看转账结果
-> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: HT.asset_id, user: account.address})})
+> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.asset_id, user: account.address})})
 { isError: false,
   ret:
    '{"asset_id":"e8c2c6606030bc93da018cec5e6400845489b471527d507357b3316ae884a3f3","user":"9d1d1bb11c44500603971a245f55a23f65148eee","balance":999999900}' }
 
-> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: HT.asset_id, user: to})})
+> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.asset_id, user: to})})
 { isError: false,
   ret:
    '{"asset_id":"e8c2c6606030bc93da018cec5e6400845489b471527d507357b3316ae884a3f3","user":"9b13a4625e63b0c475c4a6f5dabb761d1c315f2b","balance":100}' }
