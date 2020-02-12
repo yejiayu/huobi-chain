@@ -139,7 +139,7 @@ const address = account.address;
 如果想了解什么是 GraphQL，可以参考 [GraphQL 官方文档](https://graphql.org/)。
 关于 Huobi Chain 的 GraphQL API 接口, 请参看接口章节。
 
-GraphQL 将请求分类为 2 类：Query 和 Mutation。前者不会对数据进行任何形式的修改，是查。后者则相反，增珊改都可能发生。
+GraphQL 将请求分类为 2 类：Query 和 Mutation。前者不会对数据进行任何形式的修改，是查。后者则相反，增删改都可能发生。
 Huobi Chain 的 GraphQL API接口也是如此。此外，Client类还提供了一些工具方法，这些方法不会发送请求到网络，所以他们不属于Huobi Chain GraphQL API接口，但是也被包含在Client类里。
 
 目前的 API 大致分为如下：
@@ -194,7 +194,7 @@ Huobi Chain 的 GraphQL API接口也是如此。此外，Client类还提供了�
 defaultCyclesLimit 和 defaultCyclesPrice 是在将来发送 GraphQL API 请求时给定的默认值，当然你在发送请求的时候可以指定新的值。
 
 maxTimeout = DEFAULT_TIMEOUT_GAP * DEFAULT_CONSENSUS_INTERVAL。
-你已经了解了DEFAULT_TIMEOUT_GAP。因为区块链没有世界时钟，所以只能通过 block 高度 x 平均期望出块时间来大致计算出现实时间。Huobi Chain 内置 Overlord 共识算法的预期**单轮**出块时间是 3 秒，所以 DEFAULT_CONSENSUS_INTERVAL=3。
+你已经了解了DEFAULT_TIMEOUT_GAP。因为区块链没有世界时钟，所以只能通过 block 高度 x 平均期望出块时间来大致计算出现实时间。Huobi Chain 内置 Overlord 共识算法的预期**单轮**出块时间是 3 秒，所以 DEFAULT_CONSENSUS_INTERVAL=3000 // (ms)。
 
 
 万事俱备，接下来我们开始与链进行交互。我们先尝试获得某个区块的信息，因为如果你能某一个区块的信息，就能获得所有的区块的信息，就能获得区块链的信息。
@@ -226,9 +226,10 @@ Huobi Chain 有很多 service，例如 metadata 服务会提供一些关于链�
 为了进一步学习，我们现在向 AssetService 来发起 Query 请求，访问数据。在发起任何Query之前，我们都必须知道请求接口交互的数据格式是什么。假设我们要向 AssetService 来发起查询 Asset 的请求。那么查看 GraphQL API 接口手册，我们需要的数据类型是：
 
 ```typescript
-type Hash = string;
-export interface GetAssetParam {
-  asset_id: Hash;
+type Address = string;
+export interface GetBalancePayParam {
+  asset_id: string;
+  user: Address;
 }
 ```
 
@@ -236,37 +237,35 @@ export interface GetAssetParam {
 
 ```typescript
 type Hash = string;
-type Address = string;
-export interface Asset {
+
+export interface Balance {
   asset_id: Hash;
-  name: string;
-  symbol: string;
-  supply: number | BigNumber;
-  issuer: Address;
+  balance: number | BigNumber;
 }
 ```
 
-其中 asset_id 是创建一个 Asset 后，Asset 服务返回的唯一标识。name 和 symbol 是用户自定义的标识，supply 是总量，issuer是创建账户。
+其中 asset_id 是创建一个 Asset 后，Asset 服务返回的唯一标识。
 
 现在我们通过 queryServiceDyn 方法来访问他，queryServiceDyn 和 queryService 的 api，请参考 SDK 文档或者 API 文档：
 
 ```typescript
-  let asset : Asset | null = null;
   try {
     const asset_id =
       '0x0000000000000000000000000000000000000000000000000000000000000000';
     asset = await client.queryServiceDyn<
-      GetAssetParam,
-      Asset
-      // tslint:disable-next-line:no-object-literal-type-assertion
+      GetBalancePayParam,
+      Balance
     >({
-      caller: '0x2000000000000000000000000000000000000000',
       method: 'get_balance',
-      payload: { asset_id },
+      payload: { 
+        asset_id, 
+        user: '0x2000000000000000000000000000000000000000'
+      },
       serviceName: 'asset',
     } as ServicePayload<GetAssetParam>);
   } catch (e) {
-    asset = null;
+    // TODO
+    console.error(e)
   }
 ```
 
@@ -318,7 +317,7 @@ export interface Asset {
 ```typescript
     const tx = await client.composeTransaction<CreateAssetParam>({
         method: 'create_asset',
-        payload: createAssetParam,
+        payload: { name: 'MY_COIN', symbol: 'SC', supply: 10000000 },
         serviceName: 'asset',
       });
 ```
@@ -326,7 +325,7 @@ export interface Asset {
 随后我们需要使用一个用户，对其签名，那么这个用户就是这个 Asset 的 issuer. 还记得 Account 类型么？现在是他上场的时候了,使用你所期望的用户的 Account 对象调用 signTransaction 来对交易签名：
 
 ```typescript
-    const signedTransaction = Account.fromPrivateKey(
+    const signedTransaction = Muta.accountFromPrivateKey(
         '0x1000000000000000000000000000000000000000000000000000000000000000',
       ).signTransaction(tx);
 ```
@@ -334,7 +333,7 @@ export interface Asset {
 现在我们可以调用 signTransaction 来发送我们的交易了。和大多数区块链一样，由于是异步网络和起步业务系统，你所提交的交易可能不会被立刻提交到区块链上。发送交易后通常返回交易的位置标识哈希值。
 
 ```typescript
-    const txHash = await client.sendTransaction(this.account.signTransaction(tx));
+    const txHash = await client.sendTransaction(signedTransaction);
 ```
 
 接下来我们只需要通过标识哈希定期去查询交易，看交易是否被成功提交到了区块链。如果一笔交易被成功地提交到了区块链，那么他将不可篡改不可回滚。
@@ -383,7 +382,7 @@ export interface Asset {
 所以我们可以通过 JSON.parse 来把 ret 字符串转换成对应的 Asset 对象：
 
 ```typescript
-  let createdAssetResult = utils.safeParseJSON(receipt.response.ret);//util工具类请参考API doc
+  let createdAssetResult = utils.safeParseJSON(receipt.response.ret); // util 工具类请参考API doc
 ```
 
 #### Step5：通过使用 AssetService API，直接和 AssetService 交互
