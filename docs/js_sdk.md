@@ -6,7 +6,7 @@ JS-SDK 之于 Huobi Chain 类似 web3.js 之于 Ethereum。
 ## Install
 
 ```
-$ npm install muta-sdk
+$ npm install muta-sdk@alpha
 ```
 
 ## Modules
@@ -20,7 +20,7 @@ $ npm install muta-sdk
 
 ## Examples
 
-在这里例子中，将带你完整的体验上面的每一个模块，从如何构建一个Muta对象，用以和链开始交互，到创建一个账户，再到构建 Client 对象，和 Service 进行交互。
+在这里例子中，将带你完整的体验上面的每一个模块，从如何构建一个 Muta 对象，用以和链开始交互，到创建一个账户，再到构建 Client 对象，和 Service 进行交互
 
 - Step 1：构建一个 Muta 对象，用以和链开始交互
 - Step 2：创建分层确定性 HD 钱包，来管理你的账户
@@ -40,8 +40,8 @@ const muta = new Muta({
       '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
 
     /**
-     *  接下来我们给出GraphQL API uri. endpoint是用来和链进行rpc交互的uri,
-     *  http://127.0.0.1:8000/graphql是默认的endpoint是用来和链进行rpc交互的uri,
+     *  接下来我们给出 GraphQL API uri. endpoint是用来和链进行rpc交互的uri,
+     *  http://127.0.0.1:8000/graphql 是默认的 endpoint 是用来和链进行rpc交互的uri,
      *  你可以在config.toml文件下的[graphql]部分找到endpoint的配置
      */
     endpoint: 'http://127.0.0.1:8000/graphql',
@@ -394,38 +394,42 @@ export interface Asset {
 
 ```typescript
     const muta = Muta.createDefaultMutaInstance();
-      const account = Account.fromPrivateKey(
-        '0x1000000000000000000000000000000000000000000000000000000000000000',
-      );
+    const account = Muta.accountFromPrivateKey(
+      '0x1000000000000000000000000000000000000000000000000000000000000000',
+    );
     
-      /**
-       * we build a service, pass the client and account object
-       * nothing abnormal
-       */
-      const service = new AssetService(muta.client(), account);
+    const client = muta.client();
+
+    /**
+     * we build a service, pass the client and account object
+     * nothing abnormal
+     */
+    const service = new AssetService(client, account);
 ```
 
 接下来就非常简单了，我们直接创建一个资产，参数类型和之前的相同，不再赘述：
 
 ```typescript
-  const createdAsset = await service.createAsset({
+  // 调用 binding 的 create_asset，它能够帮我们 sendTransaction 并 getReceipt
+  const assetReceipt = await service.create_asset({
     name: 'LOVE_COIN',
     supply: 1314,
     symbol: 'LUV',
   });
-  const assetId = createdAsset.asset_id;
-```
-
-我们通过 asset_id 来查询一个资产的状态：
-
-```typescript
-const asset = await service.getAsset(assetId);
+  
+  // 
+  const asset = assetReceipt.response.ret;
+  
+  const assetId = assetReceipt.asset_id;
 ```
 
 查询一下某个用户的余额：
 
 ```typescript
-const balance = await service.getBalance(assetId, '0x2000000000000000000000000000000000000000');
+const balanceReceipt = await service.get_balance({
+  asset_id: assetId, 
+  user: '0x2000000000000000000000000000000000000000'
+});
 ```
 
 最后是向某个用户发送一定数量的 UDT，这里是 LOVE_COIN：
