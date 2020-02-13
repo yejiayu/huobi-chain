@@ -34,7 +34,7 @@
 
 #### 可灵活定制的 service
 
-Service 是 Muta 框架中用于扩展的抽象层，用户可以基于 Service 定义区块治理、添加 VM、或实现一个 dapp。当前火币公链测试链基于 Muta 框架内置了四个 build-in service： asset service，risc-v service， metadata service ， node manager service。未来火币公链将会通过 service 添加更多的功能特性，满足应用需求和监管需求。未来火币公链的侧链在实现高性能的特定业务时，也可复用这些 service。
+Service 是 Muta 框架中用于扩展的抽象层，用户可以基于 Service 定义区块治理、添加 VM、或实现一个 dapp。当前火币公链测试链基于 Muta 框架内置了四个 build-in service： asset service，risc-v service， metadata service， node manager service。未来火币公链将会通过 service 添加更多的功能特性，满足应用需求和监管需求。未来火币公链的侧链在实现高性能的特定业务时，也可复用这些 service。
 
 #### 应用开发
 

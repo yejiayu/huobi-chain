@@ -12,12 +12,11 @@
 	- [网络](/network.md)
 - **Service 介绍**
 	- [概览](/service_overview.md)
-    - [Metadata Service](/metadata_service.md)
+	- [Metadata Service](/metadata_service.md)
 	- [Node Manager Service](/node_manager_service.md)
 	- [Asset Service](/asset_service.md)
 	- [RISC-V Service](/riscv_service.md)
 - **合约开发**
-	<!-- - [概览](/contract_overview.md) -->
 	- [从0开发RISC-V合约教程(C语言)](/contract_demo.md)
 - **接口**
 	- [接口](/graphql_api.md)

@@ -13,14 +13,14 @@
     - [直接下载预编译的二进制文件](#%e7%9b%b4%e6%8e%a5%e4%b8%8b%e8%bd%bd%e9%a2%84%e7%bc%96%e8%af%91%e7%9a%84%e4%ba%8c%e8%bf%9b%e5%88%b6%e6%96%87%e4%bb%b6)
     - [从源码编译](#%e4%bb%8e%e6%ba%90%e7%a0%81%e7%bc%96%e8%af%91)
       - [获取源码](#%e8%8e%b7%e5%8f%96%e6%ba%90%e7%a0%81)
-      - [安装 rust](#%e5%ae%89%e8%a3%85-rust)
+      - [安装 RUST](#%e5%ae%89%e8%a3%85-rust)
       - [编译](#%e7%bc%96%e8%af%91)
     - [运行单节点](#%e8%bf%90%e8%a1%8c%e5%8d%95%e8%8a%82%e7%82%b9)
   - [与链进行交互](#%e4%b8%8e%e9%93%be%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92)
     - [使用 GraphiQL 与链进行交互](#%e4%bd%bf%e7%94%a8-graphiql-%e4%b8%8e%e9%93%be%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92)
     - [使用 muta-cli 与链进行交互](#%e4%bd%bf%e7%94%a8-muta-cli-%e4%b8%8e%e9%93%be%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92)
   - [使用示例](#%e4%bd%bf%e7%94%a8%e7%a4%ba%e4%be%8b)
-  - [本地部署多节点](#%e6%9c%ac%e5%9c%b0%e9%83%a8%e7%bd%b2%e5%a4%9a%e8%8a%82%e7%82%b9)
+  - [使用 docker 本地部署多节点链](#%e4%bd%bf%e7%94%a8-docker-%e6%9c%ac%e5%9c%b0%e9%83%a8%e7%bd%b2%e5%a4%9a%e8%8a%82%e7%82%b9%e9%93%be)
 
   </details>
 
@@ -61,11 +61,9 @@ $ pacman -Sy --noconfirm git gcc pkgconf clang make
 
 <!-- tabs:end -->
 
-<!--
 ### 直接下载预编译的二进制文件
 
 我们会通过 [github releases](https://github.com/HuobiGroup/huobi-chain/releases) 发布一些常用操作系统的预编译二进制文件。如果其中包含你的操作系统，可以直接下载对应的文件。
--->
 
 ### 从源码编译
 
@@ -79,7 +77,7 @@ $ git clone https://github.com/HuobiGroup/huobi-chain.git
 
 或者在 [github releases](https://github.com/HuobiGroup/huobi-chain/releases) 下载源码压缩包解压。
 
-#### 安装 rust
+#### 安装 RUST
 
 参考： <https://www.rust-lang.org/tools/install>
 
@@ -398,10 +396,9 @@ $ muta-cli repl
 # 再次查询，发现 k 的值已经修改
 > await client.queryService({ serviceName: 'riscv', method: 'call', payload: JSON.stringify({ address, args: 'get k' })})
 { isError: false, ret: '"v"' }
-
 ```
 
-## 本地部署多节点
+## 使用 docker 本地部署多节点链
 
 需要预先安装 [docker](https://www.docker.com/)。
 
@@ -419,4 +416,4 @@ make docker-build
 docker compose -f devtools/docker-compose/bft-4-node.yaml up
 ```
 
-Docker compose 启动 4 个共识节点，分别暴露 graphql 本地端口 8001、8002、8003、8004，节点的详细配置信息可前往 devtools/docker-compose 目录查看。
+Docker compose 启动 4 个共识节点，分别暴露 GraphQL 本地端口 8001、8002、8003、8004，节点的详细配置信息可前往 `devtools/docker-compose` 目录查看。
