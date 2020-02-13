@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::io;
 use std::rc::Rc;
 
 use ckb_vm::machine::asm::{AsmCoreMachine, AsmMachine};
@@ -26,14 +25,12 @@ pub enum MachineType {
 
 #[derive(Clone, Debug)]
 pub struct InterpreterConf {
-    pub print_debug:  bool,
     pub machine_type: MachineType,
 }
 
 impl Default for InterpreterConf {
     fn default() -> Self {
         InterpreterConf {
-            print_debug:  true,
             machine_type: MachineType::Asm,
         }
     }
@@ -73,18 +70,6 @@ impl Interpreter {
     }
 
     pub fn run(&mut self) -> Result<InterpreterResult, ckb_vm::Error> {
-        let (debug_output, assert_output) = if self.cfg.print_debug {
-            (
-                Box::new(io::stdout()) as Box<dyn io::Write>,
-                Box::new(io::stdout()) as Box<dyn io::Write>,
-            )
-        } else {
-            (
-                Box::new(io::sink()) as Box<dyn io::Write>,
-                Box::new(io::sink()) as Box<dyn io::Write>,
-            )
-        };
-
         let (code, init_payload) = match self.r#type {
             InterpreterType::Binary => (self.iparams.code.clone(), None),
             #[cfg(debug_assertions)]
@@ -108,14 +93,8 @@ impl Interpreter {
                     ckb_vm::DefaultCoreMachine<u64, ckb_vm::SparseMemory<u64>>,
                 >::new(core_machine)
                 .instruction_cycle_func(Box::new(vm::cost_model::instruction_cycles))
-                .syscall(Box::new(vm::SyscallDebug::new(
-                    "[ckb-vm debug]",
-                    debug_output,
-                )))
-                .syscall(Box::new(vm::SyscallAssert::new(
-                    "[ckb-vm assert]",
-                    assert_output,
-                )))
+                .syscall(Box::new(vm::SyscallDebug))
+                .syscall(Box::new(vm::SyscallAssert))
                 .syscall(Box::new(vm::SyscallEnvironment::new(
                     self.context.clone(),
                     self.iparams.clone(),
@@ -137,14 +116,8 @@ impl Interpreter {
                 let core_machine = AsmCoreMachine::new_with_max_cycles(cycles_lmit);
                 let machine = DefaultMachineBuilder::<Box<AsmCoreMachine>>::new(core_machine)
                     .instruction_cycle_func(Box::new(vm::cost_model::instruction_cycles))
-                    .syscall(Box::new(vm::SyscallDebug::new(
-                        "[ckb-vm debug]",
-                        debug_output,
-                    )))
-                    .syscall(Box::new(vm::SyscallAssert::new(
-                        "[ckb-vm assert]",
-                        assert_output,
-                    )))
+                    .syscall(Box::new(vm::SyscallDebug))
+                    .syscall(Box::new(vm::SyscallAssert))
                     .syscall(Box::new(vm::SyscallEnvironment::new(
                         self.context.clone(),
                         self.iparams.clone(),
