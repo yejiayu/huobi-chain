@@ -1,0 +1,36 @@
+# crypto
+privkey = "1f2904d7d30379fcfd6e523eadd8731304bb7901f39c3d51d8728ea265fc38b2"
+
+# db config
+data_path = "./data"
+
+[graphql]
+listening_address = "0.0.0.0:8000"
+graphql_uri = "/graphql"
+graphiql_uri = "/graphiql"
+
+[network]
+listening_address = "0.0.0.0:1337"
+rpc_timeout = 10
+
+[[network.bootstraps]]
+pubkey = "0398ea7eb6f0424f310baa38c54ed735cf4125d9135f45288be44ad979b7a83e62"
+address = "173.20.0.21:1337"
+
+[mempool]
+pool_size = 20000
+broadcast_txs_size = 200
+broadcast_txs_interval = 200
+
+[executor]
+light = false
+
+[logger]
+filter = "info"
+log_to_console = true
+console_show_file_and_line = false
+log_path = "logs/"
+log_to_file = true
+metrics = true
+# you can specify log level for modules with config below
+# modules_level = { "overlord::state::process" = "debug", core_consensus = "error" }

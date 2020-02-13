@@ -20,6 +20,7 @@
     - [使用 GraphiQL 与链进行交互](#%e4%bd%bf%e7%94%a8-graphiql-%e4%b8%8e%e9%93%be%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92)
     - [使用 muta-cli 与链进行交互](#%e4%bd%bf%e7%94%a8-muta-cli-%e4%b8%8e%e9%93%be%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92)
   - [使用示例](#%e4%bd%bf%e7%94%a8%e7%a4%ba%e4%be%8b)
+  - [本地部署多节点](#%e6%9c%ac%e5%9c%b0%e9%83%a8%e7%bd%b2%e5%a4%9a%e8%8a%82%e7%82%b9)
 
   </details>
 
@@ -399,3 +400,23 @@ $ muta-cli repl
 { isError: false, ret: '"v"' }
 
 ```
+
+## 本地部署多节点
+
+需要预先安装 [docker](https://www.docker.com/)。
+
+1. 构建 docker 镜像
+
+```bash
+cd /path/to/huobi-chain
+
+make docker-build
+```
+
+2. 运行 docker compose 命令起链
+
+```bash
+docker compose -f devtools/docker-compose/bft-4-node.yaml up
+```
+
+Docker compose 启动 4 个共识节点，分别暴露 graphql 本地端口 8001、8002、8003、8004，节点的详细配置信息可前往 devtools/docker-compose 目录查看。

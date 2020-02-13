@@ -32,7 +32,7 @@ pub struct ValidatorExtend {
 fn get_metadata(&self, ctx: ServiceContext) -> ProtocolResult<Metadata>；
 
 // Example: graphiql send tx
-query get_admin{
+query get_metadata{
   queryService(
   caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
   serviceName: "metadata"

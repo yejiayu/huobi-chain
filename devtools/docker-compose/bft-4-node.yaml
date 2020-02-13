@@ -1,0 +1,106 @@
+version: '2'
+
+services:
+  bft_node1:
+    container_name: bft_node1
+    image: huobi:latest
+    hostname: bft_node1
+    environment:
+      - RUST_LOG 
+      - RUST_BACKTRACE 
+    volumes:
+      - ./node-1-chain.toml:/app/config/chain.toml
+      - ./node-genesis.toml:/app/config/genesis.toml
+      - ../../data/bft1:/app/data
+    ports: 
+      - 8001:8000
+    networks:
+      bft:
+        aliases:
+          - bft_node1
+        ipv4_address: 173.20.0.21
+    command: |
+      sh -c '
+      cd /app;
+      ./huobi-chain;'
+
+  bft_node2:
+    container_name: bft_node2
+    image: huobi:latest
+    hostname: bft_node2
+    environment:
+      - RUST_LOG 
+      - RUST_BACKTRACE 
+    depends_on:
+      - bft_node1
+    volumes:
+      - ./node-2-chain.toml:/app/config/chain.toml
+      - ./node-genesis.toml:/app/config/genesis.toml
+      - ../../data/bft2:/app/data
+    ports: 
+      - 8002:8000
+    networks:
+      bft:
+        aliases:
+          - bft_node2
+        ipv4_address: 173.20.0.22
+    command: |
+      sh -c '
+      cd /app;
+      ./huobi-chain;'
+
+  bft_node3:
+    container_name: bft_node3
+    image: huobi:latest
+    hostname: bft_node3
+    environment:
+      - RUST_LOG 
+      - RUST_BACKTRACE 
+    depends_on:
+      - bft_node1
+    volumes:
+      - ./node-3-chain.toml:/app/config/chain.toml
+      - ./node-genesis.toml:/app/config/genesis.toml
+      - ../../data/bft3:/app/data
+    ports: 
+      - 8003:8000
+    networks:
+      bft:
+        aliases:
+          - bft_node3
+        ipv4_address: 173.20.0.23
+    command: |
+      sh -c '
+      cd /app;
+      ./huobi-chain;'
+
+  bft_node4:
+    container_name: bft_node4
+    image: huobi:latest
+    hostname: bft_node4
+    environment:
+      - RUST_LOG 
+      - RUST_BACKTRACE 
+    depends_on:
+      - bft_node1
+    volumes:
+      - ./node-4-chain.toml:/app/config/chain.toml
+      - ./node-genesis.toml:/app/config/genesis.toml
+      - ../../data/bft4:/app/data
+    ports: 
+      - 8004:8000
+    networks:
+      bft:
+        aliases:
+          - bft_node4
+        ipv4_address: 173.20.0.24
+    command: |
+      sh -c '
+      cd /app;
+      ./huobi-chain;'
+
+networks:
+  bft:
+    ipam:
+     config:
+       - subnet: 173.20.0.0/24

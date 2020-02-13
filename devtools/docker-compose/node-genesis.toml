@@ -1,0 +1,63 @@
+timestamp = 0
+prevhash = "44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
+
+[[services]]
+name = "asset"
+payload = '''
+{
+    "id": "f56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c",
+    "name": "Huobi Token",
+    "symbol": "HT",
+    "supply": 1000000000,
+    "issuer": "f8389d774afdad8755ef8e629e5a154fddc6325a"
+}
+'''
+
+[[services]]
+name = "metadata"
+payload = '''
+{
+    "chain_id": "b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    "common_ref": "4a5257446d6576516f6c",
+    "timeout_gap": 20,
+    "cycles_limit": 999999999999,
+    "cycles_price": 1,
+    "interval": 3000,
+    "verifier_list": [
+        {
+            "bls_pub_key": "040bc2cb1f9c3796cc81208687ba1ff07089b1a8a62b38bf7848a82b1f74964be0bfe84124cf1f37a9c460f75d1283bb9710dafd6f6e4c44ee7a6d955e943a73356e66a2be021abde7f7211039fe2b9e8c22bc007d69db51783608558b49a75d8c",
+            "address": "2f3da6b31b437f0dad05d63769fe701795e59b5e",
+            "propose_weight": 1,
+            "vote_weight": 1
+        },
+        {
+            "bls_pub_key": "04066c7364d61eb158e225413dea1ce4e45dfbf4e8dc2b9ef0f05e6d04f606dc16501467eb1448e72732c3bbaaeef7b92405275d76f65d3c60934d75339b1308d680c203b4be042b8f049e29b20bebfba4cf28f5f7e17f47ff991e3b6451d0f39d",
+            "address": "1d327860000ecf2007d7aec3feff293d77a0dd59",
+            "propose_weight": 1,
+            "vote_weight": 1
+        },
+        {
+            "bls_pub_key": "0419be9322dc00a02bf27bd4eb9e1cf6cd9b3ab1639aa9b606001d68a91ed3c7153dcc86afe57c4e31b5a19cac7736874c02cd11d73a287f32158928026c552f44901d43e052d2984965ffe57f2df19a4dba48c9222b25c06f6f5a615ef2d1788e",
+            "address": "02639185d22336f3744834645aab031f61f7d2b2",
+            "propose_weight": 1,
+            "vote_weight": 1
+        },
+        {
+            "bls_pub_key": "0410193e5cf9a3c4b3c720da6099d4f6e4f363ae85bf8f8c9420d548e644b1879e6d0800123809de5864f757e7fe89bcf30da881f240ad6ab7d30f049888b3b5f4b55d091e556d43d168a77dc19a6654ee36ceb1c6f88f678e4e22468c72e4f520",
+            "address": "0728df1674865a95753fcf7ed987c0a09950afb6",
+            "propose_weight": 1,
+            "vote_weight": 1
+        }
+    ],
+    "propose_ratio": 15,
+    "prevote_ratio": 10,
+    "precommit_ratio": 10,
+    "brake_ratio": 7
+}
+'''
+
+[[services]]
+name = "node_manager"
+# private key of this admin:
+# 2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2
+payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
