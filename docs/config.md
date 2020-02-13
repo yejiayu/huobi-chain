@@ -2,9 +2,9 @@
 
 默认的创世块和配置样例在 `config` 文件夹中，此处对其中的一些字段进行说明。
 
-## `genesis.toml`
+## 创世块
 
-创世块
+`genesis.toml`:
 
 ```toml
 timestamp = 0
@@ -60,13 +60,13 @@ payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
 - `asset`: 如果链需要发行原生资产，可以参考上面的例子填写，否则可以去掉
 - `metadata`: 链的元数据，必须填写
   - `chain_id`: 链唯一 id
-  - `common_ref`: bls 签名需要
+  - `common_ref`: BLS 签名需要
   - `timeout_gap`: 交易池能接受的最大超时块范围。用户在发送交易的时候，需要填写 `timeout` 字段，表示块高度超过这个值后，如果该交易还没有被打包，则以后都不会被打包，这样可以确保之前的某笔交易超时后一定会失败，避免用户的交易很长时间未被打包后换 `nonce` 重发交易，结果两笔交易都上链的情况。当用户填写的 `timeout` > `chain_current_height` + `timeout_gap` 时，交易池会拒绝这笔交易。
   - `cycles_limit`: 区块最大 `cycle` 限制
   - `cycles_price`: 最小 cycle 价格，目前没有使用
   - `interval`: 出块间隔，单位为 ms
   - `verifier_list`: 共识列表
-    - `bls_pub_key`: 节点的 bls 公钥
+    - `bls_pub_key`: 节点的 BLS 公钥
     - `address`: 节点的地址
     - `propose_weight`: 节点的出块权重。如果有四个共识节点，出块权重分别为 `1, 2, 3, 4`，则第一个节点的出块概率为 `1 / (1 + 2 + 3 + 4)`。投票权重的逻辑类似。
     - `vote_weight`: 节点的投票权重
@@ -78,9 +78,9 @@ payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
   - 如果有共同认可的超级管理员，则将其地址填入此处，否则可以填写全零地址
 
 
-## `chain.toml`
+## 链的运行配置
 
-链的运行配置：
+`chain.toml`:
 
 ```toml
 privkey = "45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
@@ -129,7 +129,7 @@ metrics = true
   - `graphiql_uri`: GraphiQL 访问路径
 - `network`:
   - `listening_address`: 链 p2p 网络监听地址
-  - `rpc_timeout`: rpc 调用（例如从其它节点拉交易）超时时间，单位为秒
+  - `rpc_timeout`: RPC 调用（例如从其它节点拉交易）超时时间，单位为秒
   - `bootstraps`: 起链时连接的初始节点信息
 - `mempool`: 交易池相关配置
   - `pool_size`: 交易池大小

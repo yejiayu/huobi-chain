@@ -4,21 +4,21 @@
 - **快速开始**
 	- [快速开始](/getting_started.md)
 	- [配置说明](/config.md)
+	- [多节点部署指南](./multi_node_deploy.md)
 - **架构设计**
-	- [总体架构](/arch.md)
-- **模块设计**
+	<!-- - [整体架构](/arch.md) -->
 	- [交易池](/transaction_pool.md)
 	- [共识](/overlord.md)
 	- [网络](/network.md)
 - **Service 介绍**
 	- [概览](/service_overview.md)
+    - [Metadata Service](/metadata_service.md)
+	- [Node Manager Service](/node_manager_service.md)
 	- [Asset Service](/asset_service.md)
-	- [Metadata Service](/metadata_service.md)
-	- [Node manager Service](/node_manager_service.md)
 	- [RISC-V Service](/riscv_service.md)
 - **合约开发**
 	<!-- - [概览](/contract_overview.md) -->
-	- [从0开发riscv合约教程(c语言)](/contract_demo.md)
+	- [从0开发RISC-V合约教程(C语言)](/contract_demo.md)
 - **接口**
 	- [接口](/graphql_api.md)
 - **SDK**

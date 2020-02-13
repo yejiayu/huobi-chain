@@ -1,10 +1,10 @@
 # Asset Service
 
-Asset service 是 huobi-chain 的内置资产模块，负责管理链原生资产以及第三方发行资产。
+## 概述
 
-## 特点
+Asset service 是 Huobi Chain 的内置资产模块，负责管理链原生资产以及第三方发行资产。
 
-- 资产成为一等公民：加密资产作为区块链的核心，理应成为一等公民。Asset 模块利用 muta 框架提供的 service 能力，为所有资产提供链级别的支持，为面向资产编程提供支持。
+- 资产成为一等公民：加密资产作为区块链的核心，理应成为一等公民。Asset 模块利用 Muta 框架提供的 service 能力，为所有资产提供链级别的支持，为面向资产编程提供支持。
   
 - 第三方发行资产： 用户可以使用 Asset 模块发行资产，自定义资产属性和总量等
 
@@ -36,8 +36,11 @@ pub struct CreateAssetPayload {
     pub symbol: String,
     pub supply: u64,
 }
+```
 
-// Example: graphiql send tx 
+GraphiQL 示例：
+
+```
 mutation create_asset{
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",

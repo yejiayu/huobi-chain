@@ -1,4 +1,7 @@
 # Node Manager Service
+
+## 概述
+
 Node Manager Service 负责变更节点的共识配置，并对变更权限进行管理。这些信息存储在 Metadata Service 中，在 `Metadata` 中可以动态变更的字段有  `interval`、`verifier_list`、 `propose_ratio`、 `prevote_ratio`、`precommit_ratio`、`brake_ratio` 。只有 admin 账户有权限进行变更操作，admin 账户的初始值写在 `config/genesis.toml` 配置文件中，起链后可以发交易给 Node Manager Service 进行修改。
 
 ## 接口
@@ -7,8 +10,11 @@ Node Manager Service 负责变更节点的共识配置，并对变更权限进�
    
 ```rust
 fn get_admin(&self, ctx: ServiceContext) -> ProtocolResult<Address>；
+```
 
-// Example: graphiql send tx
+GraphiQL 示例：
+
+```
 query get_admin{
   queryService(
   caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
@@ -32,8 +38,11 @@ fn set_admin(&mut self, ctx: ServiceContext, payload: SetAdminPayload) -> Protoc
 pub struct SetAdminPayload {
     pub admin: Address,
 }
+```
 
-// Example: graphiql send tx
+GraphiQL 示例：
+
+```
 mutation set_admin{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
@@ -71,8 +80,11 @@ pub struct ValidatorExtend {
     pub propose_weight: u32,
     pub vote_weight:    u32,
 }
+```
 
-// Example: graphiql send tx
+GraphiQL 示例：
+
+```
 mutation update_metadata{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
@@ -98,8 +110,11 @@ fn update_interval(&mut self, ctx: ServiceContext, payload: UpdateIntervalPayloa
 pub struct UpdateIntervalPayload {
     pub interval: u64,
 }
+```
 
-// Example: graphiql send tx
+GraphiQL 示例：
+
+```
 mutation update_interval{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
@@ -132,8 +147,11 @@ pub struct ValidatorExtend {
     pub propose_weight: u32,
     pub vote_weight:    u32,
 }
+```
 
-// Example: graphiql send tx
+GraphiQL 示例：
+
+```
 mutation update_validators{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
@@ -162,8 +180,11 @@ pub struct UpdateRatioPayload {
     pub precommit_ratio: u64,
     pub brake_ratio: u64
 }
+```
 
-// Example: graphiql send tx
+GraphiQL 示例：
+
+```
 mutation update_ratio{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",

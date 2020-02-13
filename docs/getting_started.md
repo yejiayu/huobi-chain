@@ -33,30 +33,30 @@
 #### ** MacOS **
 
 ```
-brew install autoconf libtool
+$ brew install autoconf libtool
 ```
 
 #### ** ubuntu **
 
 ```
-apt update
-apt install -y git curl openssl cmake pkg-config libssl-dev gcc build-essential clang libclang-dev
+$ apt update
+$ apt install -y git curl openssl cmake pkg-config libssl-dev gcc build-essential clang libclang-dev
 ```
 
 #### ** centos7 **
 
 ```
-yum install -y centos-release-scl
-yum install -y git make gcc-c++ openssl-devel llvm-toolset-7
+$ yum install -y centos-release-scl
+$ yum install -y git make gcc-c++ openssl-devel llvm-toolset-7
 
 # 打开 llvm 支持
-scl enable llvm-toolset-7 bash
+$ scl enable llvm-toolset-7 bash
 ```
 
 #### ** archlinux **
 
 ```
-pacman -Sy --noconfirm git gcc pkgconf clang make
+$ pacman -Sy --noconfirm git gcc pkgconf clang make
 ```
 
 <!-- tabs:end -->
@@ -74,7 +74,7 @@ pacman -Sy --noconfirm git gcc pkgconf clang make
 通过 git 下载源码：
 
 ```
-git clone https://github.com/HuobiGroup/huobi-chain.git
+$ git clone https://github.com/HuobiGroup/huobi-chain.git
 ```
 
 或者在 [github releases](https://github.com/HuobiGroup/huobi-chain/releases) 下载源码压缩包解压。
@@ -84,14 +84,14 @@ git clone https://github.com/HuobiGroup/huobi-chain.git
 参考： <https://www.rust-lang.org/tools/install>
 
 ```
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 #### 编译
 
 ```
-cd /path/to/huobi-chain
-make prod
+$ cd /path/to/huobi-chain
+$ make prod
 ```
 
 编译完成后的二进制文件在 `target/release/huobi-chain`。
@@ -99,7 +99,7 @@ make prod
 ### 运行单节点
 
 ```
-cd /path/to/huobi-chain
+$ cd /path/to/huobi-chain
 
 # 使用默认配置运行 huobi-chain
 # 如果是直接下载的 binary，请自行替换下面的命令为对应的路径
@@ -138,7 +138,7 @@ OPTIONS:
 
 ### 使用 muta-cli 与链进行交互
 
-我们通过 [muta-sdk](https://github.com/nervosnetwork/muta-sdk-js) 和 nodejs 封装了一个交互式命令行，可以更方便的与 huobi-chain 进行交互。
+我们通过 [muta-sdk](./js_sdk) 和 nodejs 封装了一个交互式命令行，可以更方便的与 huobi-chain 进行交互。
 
 ```bash
 $ npm install -g muta-cli

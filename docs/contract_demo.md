@@ -2,7 +2,7 @@
 
 ## 概述
 
-RISC-V service 为 huobi-chain 提供了一个支持 RISC-V 指令集的虚拟机服务。
+RISC-V service 为 Huobi Chain 提供了一个支持 RISC-V 指令集的虚拟机服务。
 用户可以通过该服务自行部署和运行合约，实现强大的自定义功能。
 
 一个 RISC-V 合约的本质是一个 Linux 的 ELF 可执行文件，使用虚拟机运行该合约等同于 Linux 环境下在单核 CPU 下运行这个可执行文件。
@@ -67,13 +67,13 @@ int pvm_load_args(uint8_t *data, uint64_t *len)
 }
 ```
 
-riscv service 中提供的系统调用有 4 类：
+RISC-V service 中提供的系统调用有 4 类：
 - debug 工具。`pvm_debug` 提供了虚拟机内部的 debug 工具，用户可以打印一段任意的 bytes，方便合约进行调试
 - 入参出参。`pvm_load_args` 和 `pvm_ret` 分别提供了合约的入参和出参功能，用户通过前者获取合约调用参数，通过后者返回合约执行结果。合约的入参和出参均为任意的 bytes
 - 获取交易上下文。例如通过 `pvm_caller` 获取调用该函数的地址，`pvm_block_height` 获取当前块高度。
 - 链操作：
   - `pvm_set_storage` 和 `pvm_get_storage` 可以用来操作合约的状态空间。每个合约拥有独立的地址，在该地址下拥有独立的状态空间，可以把这个状态空间理解成一个 kv 数据库，用户可以在里面保存任意的数据。合约只能访问和修改自己状态空间内的数据。可以把这个状态空间类比理解成以太坊的 contract storage。
-  - `pvm_contract_call` 可以用来调用其它 riscv 合约，`pvm_service_call` 可以用来调用 huobi-chain 的其它 build-in service。
+  - `pvm_contract_call` 可以用来调用其它 RISC-V 合约，`pvm_service_call` 可以用来调用 huobi-chain 的其它 build-in service。
 
 所有的系统调用函数都在 [`pvm.h` 文件](https://github.com/HuobiGroup/huobi-chain/blob/master/services/riscv/src/vm/c/pvm.h)中，里面有详细的函数文档，读者可以自行查阅。
 
@@ -142,7 +142,7 @@ clear:
 
 ## 部署
 
-risc-v service 的部署合约接口签名如下：
+RISC-V service 的部署合约接口签名如下：
 
 ```rust
 pub enum InterpreterType {
@@ -212,7 +212,7 @@ $ muta-cli repl
 
 ## 交互
 
-risc-v service 提供了两种 `exec` 和 `call` 两个交互接口。前者为写接口，可以操作链上数据，需要通过发交易，打包执行，后者为查询接口，可以通过链的 query 功能直接调用。
+RISC-V service 提供了两种 `exec` 和 `call` 两个交互接口。前者为写接口，可以操作链上数据，需要通过发交易，打包执行，后者为查询接口，可以通过链的 query 功能直接调用。
 
 示例（继续使用刚才的 client）：
 
@@ -244,7 +244,7 @@ risc-v service 提供了两种 `exec` 和 `call` 两个交互接口。前者为�
 
 测试是合约开发的重要环节。目前我们可以通过两种方式进行合约测试。
 
-如果读者熟悉 rust，可以通过写 rust test 或者 binary，来模拟交易直接执行合约代码。
+如果读者熟悉 RUST，可以通过写 RUST test 或者 binary，来模拟交易直接执行合约代码。
 使用这种方法进行测试无需起链。
 
 参见：<https://github.com/HuobiGroup/huobi-chain/blob/master/services/riscv/src/tests/mod.rs#L45>
@@ -255,6 +255,6 @@ risc-v service 提供了两种 `exec` 和 `call` 两个交互接口。前者为�
 
 基于本地测试链运行该脚本可以方便的对合约进行测试。
 
-未来我们也将提供一些独立的组件，来帮助用户更方便的开发、测试合约。如果读者有兴趣，欢迎加入 muta 社区进行贡献。
+未来我们也将提供一些独立的组件，来帮助用户更方便的开发、测试合约。如果读者有兴趣，欢迎加入社区进行贡献。
 
 ## FAQ

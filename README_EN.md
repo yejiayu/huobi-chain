@@ -26,9 +26,6 @@ The Huobi chain adopts the [Overlord][overlord] consensus algorithm, which is de
 
 The default virtual machine for the Huobi public chain is CKB-VM with the [RISC-V][risc-v] instruction set. RISC-V is an open-source hardware instruction set architecture (ISA) based on established reduced instruction set computer (RISC) principles. Compared with the commonly used EVM and WASM in the blockchain, CKB-VM has many advantages, including higher performance, stable instruction set without frequent hard fork upgrade, and support from open source ecology.
 
-Thanks to the flexibility and extensibility of [CKB-VM][ckb-vm], we implemented an Account SDK on CKB-VM for the account model of Huobi public chain without invading the instruction set. We also offer the contract programming language [Minits][minits], a subset of Typescript designed specifically for blockchain smart contract development, which uses LLVM to eventually compile the code into RISC-V binary running in CKB-VM.
-
-
 ### Built-in Interoperation Capability
 
 The UDT instantiated with FCA has cross-chain function natively, and the cross-chain protocol can be used to implement the decentralized cross-chain between the Huobi public chain and its side chain, as well as between the Huobi public chain and the Nervos CKB.

@@ -17,7 +17,7 @@
 
 ## 简介
 
-火币公链是 [火币集团](https://www.huobigroup.com/) 和 [Nervos Foundation](https://www.nervos.org/) 联合开发的高性能公链。它基于 Muta、CKB-VM、Overlord、nervos-p2p 等开源组件深度定制，并面向金融应用的场景进行了扩展与优化。
+火币公链是 [火币集团](https://www.huobigroup.com/) 和 [Nervos Foundation](https://www.nervos.org/) 联合开发的高性能公链。它基于 Muta、CKB-VM、Overlord、Nervos-p2p 等开源组件深度定制，并面向金融应用的场景进行了扩展与优化。
 
 火币公链目前的主要技术特征有：共识算法采用自适应流水线算法提高交易吞吐量；采用聚合签名技术降低共识算法延迟；使用基于账户的 CKB-VM 实现编译器和硬件友好的高性能智能合约虚拟机；内置一等资产类型，对用户资产采用内置服务管理，大幅提高安全性、通用性并降低复杂度；支持原生跨链协议，火币公链、[Nervos CKB](https://github.com/nervosnetwork/ckb) 和基于火币公链或 [Muta](https://github.com/nervosnetwork/muta) 技术开发的侧链可以直接实现跨链；支持高灵活性的 service 定制，来适应不同业务场景；支持合约开发，赋能去中心化应用。
 
@@ -26,8 +26,8 @@
 ## 开始
 
 - 如果你想基于火币公链技术搭建自己的区块链，可以参考[快速入门](./getting_started.md)。
-- 如果你想了解火币公链的整体架构，和一些模块的设计，可以参考[架构设计](./arch)、[模块设计](./transaction_pool)。
-- 如果你想基于火币公链开发去中心化应用，可以参考[从 0 开发 riscv 合约教程](./contract_demo)。
+- 如果你想了解火币公链的架构设计，可以参考[架构设计](./arch)、[模块设计](./transaction_pool)。
+- 如果你想在火币公链上开发去中心化应用，可以参考[从 0 开发 riscv 合约教程](./contract_demo)。
 
 ## 核心功能
 
@@ -45,7 +45,7 @@
 
 #### 可灵活定制的 service
 
-Service 是 Muta 框架中用于扩展的抽象层，用户可以基于 Service 定义区块治理、添加 VM、或实现一个 dapp。当前火币公链测试链基于 Muta 框架内置了四个 build in service： asset service，risc-v service， metadata service ， node manager service。未来火币公链的侧链可能广泛采用 service 来实现高性能的特定业务。
+Service 是 Muta 框架中用于扩展的抽象层，用户可以基于 Service 定义区块治理、添加 VM、或实现一个 dapp。当前火币公链测试链基于 Muta 框架内置了四个 build-in service： asset service，risc-v service， metadata service ， node manager service。未来火币公链将会通过 service 添加更多的功能特性，满足应用需求和监管需求。未来火币公链的侧链在实现高性能的特定业务时，也可复用这些 service。
 
 #### 应用开发
 
@@ -53,14 +53,16 @@ Service 是 Muta 框架中用于扩展的抽象层，用户可以基于 Service 
 
 ## 贡献 ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-- :fork_and_knife:Fork 这个项目并clone到本地
+- :fork_and_knife:Fork 这个项目并 clone 到本地
 - :twisted_rightwards_arrows:新建一个分支: `git checkout -b new-branch`
-- :wrench:增加新特性或者解决一些bug
+- :wrench:增加新特性或者解决一些 bug
 - :memo:提交你的修改: `git commit -am 'Add some feature'`
 - :rocket:推送你的分支: `git push origin new-branch`
-- :tada:提交Pull Request
+- :tada:提交 Pull Request
 
-或者提交一个[issue](https://github.com/HuobiGroup/huobi-chain/issues) - 欢迎任何有帮助性的建议:stuck_out_tongue_winking_eye:
+或者提交一个[issue](https://github.com/HuobiGroup/huobi-chain/issues) 
+
+- 欢迎任何有帮助性的建议:stuck_out_tongue_winking_eye:
 
 [overlord]: https://github.com/cryptape/overlord
 [risc-v]: https://www.wikiwand.com/en/RISC-V

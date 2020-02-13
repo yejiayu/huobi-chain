@@ -1,4 +1,7 @@
 # Metadata Service
+
+## 概述
+
 Metadata Service 负责存储链的元数据信息，包括：
 
 ```rust
@@ -30,8 +33,11 @@ pub struct ValidatorExtend {
    
 ```rust
 fn get_metadata(&self, ctx: ServiceContext) -> ProtocolResult<Metadata>；
+```
 
-// Example: graphiql send tx
+GraphiQL 示例：
+
+```
 query get_metadata{
   queryService(
   caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
