@@ -1,5 +1,5 @@
 # Node Manager Service
-Node Manager Service 负责变更节点的共识配置，并对变更权限进行管理。这些信息存储在 Metadata Service 中，在 `Metadata` 中可以动态变更的字段有  `interval`、`verifier_list`、 `propose_ratio`、 `prevote_ratio`、`precommit_ratio` 。只有 admin 账户有权限进行变更操作，admin 账户的初始值写在 `config/genesis.toml` 配置文件中，起链后可以发交易给 Node Manager Service 进行修改。
+Node Manager Service 负责变更节点的共识配置，并对变更权限进行管理。这些信息存储在 Metadata Service 中，在 `Metadata` 中可以动态变更的字段有  `interval`、`verifier_list`、 `propose_ratio`、 `prevote_ratio`、`precommit_ratio`、`brake_ratio` 。只有 admin 账户有权限进行变更操作，admin 账户的初始值写在 `config/genesis.toml` 配置文件中，起链后可以发交易给 Node Manager Service 进行修改。
 
 ## 接口
 
@@ -57,11 +57,19 @@ fn update_metadata(&mut self, ctx: ServiceContext, payload: UpdateMetadataPayloa
 
 // 参数
 pub struct UpdateMetadataPayload {
-    pub verifier_list:   Vec<Validator>,
+    pub verifier_list:   Vec<ValidatorExtend>,
     pub interval:        u64,
     pub propose_ratio:   u64,
     pub prevote_ratio:   u64,
     pub precommit_ratio: u64,
+    pub brake_ratio:  u64
+}
+
+pub struct ValidatorExtend {
+    pub bls_pub_key: String,
+    pub address:        Address,
+    pub propose_weight: u32,
+    pub vote_weight:    u32,
 }
 
 // Example: graphiql send tx
@@ -69,7 +77,7 @@ mutation update_metadata{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
     method:"update_metadata",
-    payload:"{\"verifier_list\": [{\"address\": \"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"propose_weight\": 5, \"vote_weight\": 5}], \"interval\": 5000, \"propose_ratio\": 5, \"prevote_ratio\": 5, \"precommit_ratio\": 5}",
+    payload:"{\"verifier_list\": [{\"bls_pub_key\": \"04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22\", \"address\": \"f8389d774afdad8755ef8e629e5a154fddc6325a\", \"propose_weight\": 5, \"vote_weight\": 5}], \"interval\": 5000, \"propose_ratio\": 5, \"prevote_ratio\": 5, \"precommit_ratio\": 5, \"brake_ratio\": 5}",
     timeout:"0xbe",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
     chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
@@ -115,10 +123,11 @@ fn update_validators(&mut self, ctx: ServiceContext, payload: UpdateValidatorsPa
 
 // 参数
 pub struct UpdateValidatorsPayload {
-    pub verifier_list: Vec<Validator>,
+    pub verifier_list: Vec<ValidatorExtend>,
 }
 
-pub struct Validator {
+pub struct ValidatorExtend {
+    pub bls_pub_key: String,
     pub address:        Address,
     pub propose_weight: u32,
     pub vote_weight:    u32,
@@ -129,7 +138,7 @@ mutation update_validators{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
     method:"update_validators",
-    payload:"{\"verifier_list\": [{\"address\": \"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"propose_weight\": 5, \"vote_weight\": 5}]}",
+    payload:"{\"verifier_list\": [{\"bls_pub_key\": \"04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22\", \"address\": \"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"propose_weight\": 5, \"vote_weight\": 5}]}",
     timeout:"0xbe",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
     chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
@@ -151,6 +160,7 @@ pub struct UpdateRatioPayload {
     pub propose_ratio:   u64,
     pub prevote_ratio:   u64,
     pub precommit_ratio: u64,
+    pub brake_ratio: u64
 }
 
 // Example: graphiql send tx
@@ -158,7 +168,7 @@ mutation update_ratio{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
     method:"update_ratio",
-    payload:"{\"propose_ratio\": 5, \"prevote_ratio\": 5, \"precommit_ratio\": 5}",
+    payload:"{\"propose_ratio\": 5, \"prevote_ratio\": 5, \"precommit_ratio\": 5, \"brake_ratio\": 5}",
     timeout:"0xbe",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
     chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",

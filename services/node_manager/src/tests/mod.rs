@@ -62,7 +62,7 @@ fn test_update_metadata() {
         request:      TransactionRequest {
             service_name: "node_manager".to_owned(),
             method:       "update_metadata".to_owned(),
-            payload:      r#"{ "verifier_list": [{"address": "016cbd9ee47a255a6f68882918dcdd9e14e6bee1", "propose_weight": 6, "vote_weight": 6}], "interval": 6, "propose_ratio": 6, "prevote_ratio": 6, "precommit_ratio": 6 }"#
+            payload:      r#"{ "verifier_list": [{"bls_pub_key": "FFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22", "address": "016cbd9ee47a255a6f68882918dcdd9e14e6bee1", "propose_weight": 6, "vote_weight": 6}], "interval": 6, "propose_ratio": 6, "prevote_ratio": 6, "precommit_ratio": 6, "brake_ratio": 6 }"#
                 .to_owned(),
         },
     };
@@ -81,7 +81,7 @@ fn test_update_metadata() {
     let receipt = &executor_resp.receipts[0];
     let event = &receipt.events[0];
 
-    let expect_event = r#"{"topic":"Metadata Updated","verifier_list":[{"address":"016cbd9ee47a255a6f68882918dcdd9e14e6bee1","propose_weight":6,"vote_weight":6}],"interval":6,"propose_ratio":6,"prevote_ratio":6,"precommit_ratio":6}"#.to_owned();
+    let expect_event = r#"{"topic":"Metadata Updated","verifier_list":[{"bls_pub_key":"FFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22","address":"016cbd9ee47a255a6f68882918dcdd9e14e6bee1","propose_weight":6,"vote_weight":6}],"interval":6,"propose_ratio":6,"prevote_ratio":6,"precommit_ratio":6,"brake_ratio":6}"#.to_owned();
 
     assert_eq!(expect_event, event.data);
 }

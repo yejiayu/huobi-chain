@@ -9,13 +9,15 @@ pub struct Metadata {
     pub cycles_limit:    u64, // 区块全部交易消耗的 cycles 上限
     pub cycles_price:    u64, // 节点设置的交易打包进区块的最小 cycles_price
     pub interval:        u64, // 区块产生间隔
-    pub verifier_list:   Vec<Validator>, // 共识验证人列表
+    pub verifier_list:   Vec<ValidatorExtend>, // 共识验证人列表
     pub propose_ratio:   u64, // 共识 propose 阶段的超时时间与 interval 的比值
     pub prevote_ratio:   u64, // 共识 prevote 阶段的超时时间与 interval 的比值
     pub precommit_ratio: u64, // 共识 precommit 阶段的超时时间与 interval 的比值
+    pub brake_ratio: u64 // 共识重发 choke 的超时时间与 interval 的比值
 }
 
-pub struct Validator {
+pub struct ValidatorExtend {
+    pub bls_pub_key: String,
     pub address:        Address,
     pub propose_weight: u32, //出块权重
     pub vote_weight:    u32, // 投票权重

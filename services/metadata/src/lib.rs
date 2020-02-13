@@ -12,7 +12,7 @@ use protocol::{ProtocolError, ProtocolErrorKind, ProtocolResult};
 
 use crate::types::UpdateMetadataPayload;
 
-const ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
+static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
 
 pub struct MetadataService<SDK> {
     sdk: SDK,
@@ -57,8 +57,7 @@ impl<SDK: ServiceSDK> MetadataService<SDK> {
                 metadata.precommit_ratio = payload.precommit_ratio;
                 metadata.prevote_ratio = payload.prevote_ratio;
                 metadata.propose_ratio = payload.propose_ratio;
-                self.sdk
-                    .set_value(METADATA_KEY.to_string(), metadata.clone())
+                self.sdk.set_value(METADATA_KEY.to_string(), metadata)
             } else {
                 Err(ServiceError::AdmissionFail.into())
             }

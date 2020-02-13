@@ -17,7 +17,7 @@ use crate::types::{
 };
 
 const ADMIN_KEY: &str = "admin";
-const ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
+static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
 
 pub struct NodeManagerService<SDK> {
     sdk: SDK,
@@ -87,6 +87,7 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
                 propose_ratio:   payload.propose_ratio,
                 prevote_ratio:   payload.prevote_ratio,
                 precommit_ratio: payload.precommit_ratio,
+                brake_ratio:     payload.brake_ratio,
             };
             let event_str = serde_json::to_string(&event).map_err(ServiceError::JsonParse)?;
             ctx.emit_event(event_str)
@@ -113,6 +114,7 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
                 propose_ratio:   metadata.propose_ratio,
                 prevote_ratio:   metadata.prevote_ratio,
                 precommit_ratio: metadata.precommit_ratio,
+                brake_ratio:     metadata.brake_ratio,
             };
 
             let metadata_payload_str =
@@ -155,6 +157,7 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
                 propose_ratio:   metadata.propose_ratio,
                 prevote_ratio:   metadata.prevote_ratio,
                 precommit_ratio: metadata.precommit_ratio,
+                brake_ratio:     metadata.brake_ratio,
             };
 
             let metadata_payload_str =
@@ -197,6 +200,7 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
                 propose_ratio:   payload.propose_ratio,
                 prevote_ratio:   payload.prevote_ratio,
                 precommit_ratio: payload.precommit_ratio,
+                brake_ratio:     payload.brake_ratio,
             };
 
             let metadata_payload_str =
@@ -214,6 +218,7 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
                 propose_ratio:   payload.propose_ratio,
                 prevote_ratio:   payload.prevote_ratio,
                 precommit_ratio: payload.precommit_ratio,
+                brake_ratio:     payload.brake_ratio,
             };
 
             let event_str = serde_json::to_string(&event).map_err(ServiceError::JsonParse)?;

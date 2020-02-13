@@ -67,3 +67,34 @@ security-audit:
 .PHONY: build prod prod-test
 .PHONY: fmt test clippy doc doc-deps doc-api check stats
 .PHONY: ci info security-audit
+
+# For riscv service
+TARGET := riscv64-unknown-elf
+CC := $(TARGET)-gcc
+LD := $(TARGET)-gcc
+CFLAGS := -Os -DCKB_NO_MMU -D__riscv_soft_float -D__riscv_float_abi_soft
+LDFLAGS := -lm -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,-s
+CURRENT_DIR := $(shell pwd)
+DOCKER_BUILD := docker run --rm -it -v $(CURRENT_DIR):/src nervos/ckb-riscv-gnu-toolchain:xenial bash -c
+TEST_SRC := $(CURRENT_DIR)/services/riscv/src/tests
+RISCV_SRC := $(CURRENT_DIR)/services/riscv/src/vm/c
+DUKTAPE_SRC := $(RISCV_SRC)/duktape
+
+simple_storage:
+	$(CC) -I$(RISCV_SRC) $(TEST_SRC)/simple_storage.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(TEST_SRC)/simple_storage
+
+simple_storage_docker:
+	$(DOCKER_BUILD) "cd /src && make simple_storage"
+
+duktape: libpvm.a
+	$(CC) -I$(DUKTAPE_SRC) -I$(RISCV_SRC) $(DUKTAPE_SRC)/duktape.c $(RISCV_SRC)/duktape_ee.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(RISCV_SRC)/duktape_ee.bin
+
+duktape_docker:
+	$(DOCKER_BUILD) "cd /src && make duktape"
+
+libpvm.a:
+	$(CC) -I$(RISCV_SRC) -c $(RISCV_SRC)/pvm.c -o /tmp/pvm.o
+	ar rcs $(RISCV_SRC)/libpvm.a /tmp/pvm.o
+
+pvm_docker:
+	$(DOCKER_BUILD) "cd /src && make pvm_structs_test"

@@ -10,20 +10,20 @@ use framework::binding::state::{GeneralServiceState, MPTTrie};
 use protocol::traits::{NoopDispatcher, ServiceSDK, Storage};
 use protocol::types::{
     Address, Block, Hash, Metadata, Proof, Receipt, ServiceContext, ServiceContextParams,
-    SignedTransaction, Validator, METADATA_KEY,
+    SignedTransaction, ValidatorExtend, METADATA_KEY,
 };
 use protocol::{types::Bytes, ProtocolResult};
 
 use crate::types::UpdateMetadataPayload;
 use crate::MetadataService;
 
-const ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
+static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
 
 #[test]
 fn test_get_metadata() {
     let cycles_limit = 1024 * 1024 * 1024; // 1073741824
     let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let context = mock_context(cycles_limit, caller.clone());
+    let context = mock_context(cycles_limit, caller);
 
     let init_metadata = mock_metadata_1();
 
@@ -37,7 +37,7 @@ fn test_get_metadata() {
 fn test_update_metadata() {
     let cycles_limit = 1024 * 1024 * 1024; // 1073741824
     let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let context = mock_context(cycles_limit, caller.clone());
+    let context = mock_context(cycles_limit, caller);
 
     let init_metadata = mock_metadata_1();
     let mut service = new_metadata_service(init_metadata.clone());
@@ -53,6 +53,7 @@ fn test_update_metadata() {
             propose_ratio:   update_metadata.propose_ratio,
             prevote_ratio:   update_metadata.prevote_ratio,
             precommit_ratio: update_metadata.precommit_ratio,
+            brake_ratio:     update_metadata.brake_ratio,
         })
         .unwrap();
 
@@ -92,7 +93,8 @@ fn mock_metadata_1() -> Metadata {
         cycles_limit:    99_999_999,
         cycles_price:    1,
         interval:        3000,
-        verifier_list:   [Validator {
+        verifier_list:   [ValidatorExtend {
+            bls_pub_key: "04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned(),
             address:        Address::from_hex("CAB8EEA4799C21379C20EF5BAA2CC8AF1BEC475B").unwrap(),
             propose_weight: 1,
             vote_weight:    1,
@@ -101,6 +103,7 @@ fn mock_metadata_1() -> Metadata {
         propose_ratio:   10,
         prevote_ratio:   10,
         precommit_ratio: 10,
+        brake_ratio: 1
     }
 }
 fn mock_metadata_2() -> Metadata {
@@ -112,13 +115,15 @@ fn mock_metadata_2() -> Metadata {
         cycles_price:    1,
         interval:        6000,
         verifier_list:   [
-            Validator {
+            ValidatorExtend {
+                bls_pub_key: "FFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned(),
                 address:        Address::from_hex("CAB8EEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
                     .unwrap(),
                 propose_weight: 3,
                 vote_weight:    13,
             },
-            Validator {
+            ValidatorExtend {
+                bls_pub_key: "FFFFFFf9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402edFFFFFF".to_owned(),
                 address:        Address::from_hex("FFFFFEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
                     .unwrap(),
                 propose_weight: 3,
@@ -129,6 +134,7 @@ fn mock_metadata_2() -> Metadata {
         propose_ratio:   1,
         prevote_ratio:   1,
         precommit_ratio: 1,
+        brake_ratio: 1
     }
 }
 

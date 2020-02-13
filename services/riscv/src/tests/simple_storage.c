@@ -40,8 +40,7 @@ char** strsplit( const char* s, const char* delim ) {
 
 int main() {
     char args[MAX_COMMAND_LEN] = {0};
-    uint64_t args_len = 0;
-    pvm_load_args(args, &args_len);
+    uint64_t args_len = pvm_load_args(args);
     pvm_debug(args);
     if (args_len > MAX_COMMAND_LEN) {
         pvm_ret_str("args too long");
@@ -66,8 +65,7 @@ int main() {
             return 1;
         }
         char val[MAX_COMMAND_LEN] = {0};
-        uint64_t val_len = 0;
-        pvm_get_storage(arr[1], strlen(arr[1]), val, &val_len);
+        uint64_t val_len = pvm_get_storage(arr[1], strlen(arr[1]), val);
         pvm_ret(val, val_len);
         pvm_debug("get success");
     } else {
