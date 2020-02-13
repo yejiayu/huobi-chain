@@ -1,5 +1,19 @@
 # Overlord 架构设计
 
+- [目标](#目标)
+- [设计背景](#设计背景)
+- [Overlord 协议](#Overlord协议)
+  - [总体设计](#总体设计)
+  - [协议描述](#协议描述)
+- [Overlord 架构](#Overlord架构)
+  - [共识状态机](#共识状态机)
+  - [状态存储](#状态存储)
+  - [定时器](#定时器)
+  - [Wal](#Wal)
+- [Overlord 接口](#Overlord接口)
+  - [共识接口](#共识接口)
+  - [密码学接口](#密码学接口)
+
 ## 目标
 
 Overlord 的目标是成为能够支持上百个共识节点，满足数千笔每秒的交易处理能力，且交易延迟不超过数秒的 BFT 共识算法。简单来讲，就是能够满足大部分现实业务需求的高性能共识算法。
@@ -31,11 +45,11 @@ Overlord 的核心思想是解耦交易定序与状态共识。
 
 ### 协议描述
 
-在 Overlord 中，一次共识过程称为一个 *epoch*，我们将达成共识的区块称为 *epoch*。*epoch* 包含 Header 和 Body 两部分（如下图所示）。*epoch* 的核心结构如下图所示，`epoch_id` 是单调递增的数值，相当于高度；`prev_hash` 是上一个 *epoch* 的哈希；`order_root` 是包含在 Body 中的所有待定序的交易的 merkle root；`state_root` 表示最新的世界状态的 MPT Root；`confirm_roots` 表示从上一个 *epoch* 的 `state_root` 到当前 *epoch* 的 `state_root` 之间执行模块向前推进的 `order_root` 集合；`receipt_roots` 记录被执行的每一个 `order_root` 所对应的 `receipt_root`；`proof` 是对上一个 *epoch* 的证明。
+在 Overlord 中，我们将达成共识的区块称为 *block*。*block* 包含 Header 和 Body 两部分（如下图所示）。*block* 的核心结构如下图所示，`height` 是单调递增的数值，相当于高度；`prev_hash` 是上一个 *block* 的哈希；`order_root` 是包含在 Body 中的所有待定序的交易的 merkle root；`state_root` 表示最新的世界状态的 MPT Root；`confirm_roots` 表示从上一个 *block* 的 `state_root` 到当前 *block* 的 `state_root` 之间执行模块向前推进的 `order_root` 集合；`receipt_roots` 记录被执行的每一个 `order_root` 所对应的 `receipt_root`；`proof` 是对上一个 *block* 的证明。
 
-<div align=center><img src="./static/epoch.png"></div>
+<div align=center><img src="./static/block.png"></div>
 
-在具体的方案中，共识模块批量打包交易进行共识, 达成共识后, 将已定序的交易集合添加到待执行的队列中, 执行模块以交易集合为单位依次执行, 每执行完一个交易集合, 就将被执行的交易集合的 order_root, 以及执行后的 stateRoot 发给共识模块。在 Leader 打包交易拼装 *epoch* 时, 取最新收到的 state_root 作为最新状态参与共识.
+在具体的方案中，共识模块批量打包交易进行共识, 达成共识后, 将已定序的交易集合添加到待执行的队列中, 执行模块以交易集合为单位依次执行, 每执行完一个交易集合, 就将被执行的交易集合的 order_root, 以及执行后的 stateRoot 发给共识模块。在 Leader 打包交易拼装 *block* 时, 取最新收到的 state_root 作为最新状态参与共识.
 
 Overlord 是在具体共识算法之上的解释层, 通过重新诠释共识的语义, 使得交易定序与状态共识解耦, 从而在实际运行中获得更高的交易处理能力。理论上, Overlord 能够基于几乎任何 BFT 类共识算法, 具体在我们的项目中则是基于改进的 Tendermint。
 
@@ -43,7 +57,7 @@ Overlord 是在具体共识算法之上的解释层, 通过重新诠释共识的
 
 1. 将聚合签名应用到 Tendermint 中, 使共识的消息复杂度从 <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n^{2})" title="O(n^{2})" /> 降到 <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n)" title="O(n)" />, 从而能够支持更多的共识节点
 2. 在 *proposal* 中增加了 propose 交易区, 使新交易的同步与共识过程可并行
-3. 共识节点收到 *proposal* 后, 无需等 *epoch* 校验通过即可投 *prevote* 票, 而在投 *precommit* 票之前必须得到 *epoch* 校验结果, 从而使得区块校验与 *prevote* 投票过程并行
+3. 共识节点收到 *proposal* 后, 无需等 *block* 校验通过即可投 *prevote* 票, 而在投 *precommit* 票之前必须得到 *block* 校验结果, 从而使得区块校验与 *prevote* 投票过程并行
 
 #### 聚合签名
 
@@ -53,13 +67,13 @@ Overlord 是在具体共识算法之上的解释层, 通过重新诠释共识的
 
 #### 同步并行
 
-Overlord 采用压缩区块（compact block）的方式广播 *CompactEpoch*，即其 Body 中仅包含交易哈希，而非完整交易。共识节点收到 *CompactEpoch* 后，需要同步获得其 Body 中包含的全部完整交易后才能构造出完整的 *epoch*。
+Overlord 采用压缩区块（compact block）的方式广播 *CompactBlock*，即其 Body 中仅包含交易哈希，而非完整交易。共识节点收到 *CompactBlock* 后，需要同步获得其 Body 中包含的全部完整交易后才能构造出完整的 *block*。
 
-我们在 proposal 里除了包含 *CompactEpoch* 外，还额外增加了一个 *propose* *交易区，propose* 交易区中包含待同步的新交易的哈希。需要注意的是，这些交易与 *CompactEpoch* 里包含的待定序的交易哈希并不重叠，当 *CompactEpoch* 不足以包含交易池中所有的新交易时，剩余的新交易可以包含到 *propose* 交易区中提前同步。这在系统交易量很大的时候，可以提高交易同步与共识的并发程度，进一步提高交易处理能力.
+我们在 proposal 里除了包含 *CompactBlock* 外，还额外增加了一个 *propose* *交易区，propose* 交易区中包含待同步的新交易的哈希。需要注意的是，这些交易与 *CompactBlock* 里包含的待定序的交易哈希并不重叠，当 *CompactBlock* 不足以包含交易池中所有的新交易时，剩余的新交易可以包含到 *propose* 交易区中提前同步。这在系统交易量很大的时候，可以提高交易同步与共识的并发程度，进一步提高交易处理能力.
 
 #### 校验并行
 
-共识节点收到 *proposal* 后，将 *CompactEpoch* 的校验(获得完整交易，校验交易的正确性) 与 *prevote* 投票并行，只有当收到 *prevote* 聚合签名和 *CompactEpoch* 的检验结果后，才会投 *precommit* 票。
+共识节点收到 *proposal* 后，将 *CompactBlock* 的校验(获得完整交易，校验交易的正确性) 与 *prevote* 投票并行，只有当收到 *prevote* 聚合签名和 *CompactBlock* 的检验结果后，才会投 *precommit* 票。
 
 ## Overlord 架构
 
@@ -79,7 +93,7 @@ Overlord 共识由以下几个组件组成的：
 
 ### 共识状态机(SMR)
 
-状态机模块是整个共识的逻辑核心，它主要的功能是状态变更和 **lock** 的控制。当收到消息触发时，根据收到的消息做状态变更，并将变更后的状态作为事件抛出。在我们的实现中，Overlord 使用一个应用 BLS 聚合签名优化的 Tendermint 状态机进行共识，整体的工作过程如下.
+状态机模块是整个共识的逻辑核心，它主要的功能是状态变更和 **lock** 的控制。当收到消息触发时，根据收到的消息做状态变更，并将变更后的状态作为事件抛出。在我们的实现中，Overlord 使用一个应用 BLS 聚合签名优化的 Tendermint 状态机进行共识，整体的工作过程如下。
 
 #### 提议阶段
 
@@ -112,14 +126,13 @@ Overlord 共识由以下几个组件组成的：
 共识状态机的状态转换图如下图所示：
 
 <div align=center><img src="./static/state_transition.png"></div>
-
 在工程中，我们将预投票阶段和校验等待阶段合并为一个阶段，共用一个超时时间。当状态机收到聚合后的投票和校验结果之后，进入到预提交阶段。
 
 #### 状态机状态
 
 状态机模块需要存储的状态有：
 
-* *epoch_id*: 当前共识的 epoch
+* *height*: 当前共识的高度
 
 * *round*: 当前共识的轮次
 
@@ -165,6 +178,10 @@ pub enum SMREvent {
     /// for state: do commit,
     /// for timer: do nothing.
     Commit(Hash),
+    /// Stop event,
+    /// for state: stop process,
+    /// for timer: stop process.
+    Stop,
 }
 ```
 
@@ -175,8 +192,8 @@ pub enum SMREvent {
 pub fn new() -> Self
 /// Trigger a SMR action.
 pub fn trigger(&self, gate: SMRTrigger) -> Result<(), Error>
-/// Goto a new consensus epoch.
-pub fn new_epoch(&self, epoch_id: u64) -> Result<(), Error>
+/// Goto a new consensus height.
+pub fn new_height(&self, height: u64) -> Result<(), Error>
 ```
 
 ### 状态存储(State)
@@ -187,21 +204,21 @@ pub fn new_epoch(&self, epoch_id: u64) -> Result<(), Error>
 
 状态存储模块需要存储的状态有：
 
-* *epoch_id*: 当前共识的 epoch
+* *height*: 当前共识的高度
 
 * *round*: 当前共识的轮次
 
-* *proposals*: 缓存当前 epoch 所有的提议
+* *proposals*: 缓存当前高度的所有的提议
 
-* *votes*: 缓存当前 epoch 所有的投票
+* *votes*: 缓存当前高度的所有的投票
 
-* *QCs*: 缓存当前 epoch 所有的 *QC*
+* *QCs*: 缓存当前高度的所有的 *QC*
 
 * *authority_manage*: 共识列表管理
 
 * *is_leader*: 节点是不是 *leader*
   
-* *proof*: 可选，上一个 epoch 的证明
+* *proof*: 可选，上一个 block 的证明
 
 * *last_commit_round*: 可选，上一次提交的轮次
 
@@ -215,7 +232,7 @@ pub fn new_epoch(&self, epoch_id: u64) -> Result<(), Error>
 
 当状态存储模块监听到状态机抛出的 `NewRound` 事件时，通过一个确定性随机数算法判断自己是不是出块节点。如果是出块节点则提出一个 proposal。
 
-*确定性随机数算法*：因为 Overlord 共识协议允许设置不同的出块权重和投票权重，在判断出块时，节点将出块权重进行归一化，并投射到整个 `u64` 的范围中，使用当前 `epoch_id` 与 `round` 之和作为随机数种子，判断生成的随机数落入到`u64` 范围中的哪一个区间中，该权重对应的节点即为出块节点。
+*确定性随机数算法*：因为 Overlord 共识协议允许设置不同的出块权重和投票权重，在判断出块时，节点将出块权重进行归一化，并投射到整个 `u64` 的范围中，使用当前 `height` 与 `round` 之和作为随机数种子，判断生成的随机数落入到`u64` 范围中的哪一个区间中，该权重对应的节点即为出块节点。
 
 #### 密码学操作
 
@@ -242,14 +259,10 @@ pub fn new_epoch(&self, epoch_id: u64) -> Result<(), Error>
 #### Wal 接口
 
 ```rust
-/// Create a new Wal struct.
-pub fn new(path: &str) -> Self
-/// Set a new epoch of Wal, while go to new epoch.
-pub fn set_epoch(&self, epoch_id: u64) -> Result<(), Error>
-/// Save message to Wal.
-pub async fn save(&self, msg_type: WalMsgType, msg: Vec<u8>) -> Result<(), Error>;
-/// Load message from Wal.
-pub fn load(&self) -> Vec<(WalMsgType, Vec<u8>)>
+/// Save wal information.
+pub async fn save(&self, info: Bytes) -> Result<(), Error>;
+/// Load wal information.
+pub fn load(&self) -> Result<Option<Bytes>, Error>;
 ```
 
 ## Overlord 接口
@@ -258,40 +271,52 @@ pub fn load(&self) -> Vec<(WalMsgType, Vec<u8>)>
 
 ```rust
 #[async_trait]
-pub trait Consensus<T: Serialize + Deserialize + Clone + Debug> {
-    /// Consensus error
-    type Error: ::std::error::Error;
-    /// Get an epoch of an epoch_id and return the epoch with its hash.
-    async fn get_epoch(
+pub trait Consensus<T: Codec>: Send + Sync {
+    /// Get a block of an height and return the block with its hash.
+    async fn get_block(
         &self,
-        ctx: Context,
-        epoch_id: u64
-    ) -> Result<(T, Hash)), Self::Error>;
-    /// Check the correctness of an epoch.
-    async fn check_epoch(
+        _ctx: Vec<u8>,
+        height: u64,
+    ) -> Result<(T, Hash), Box<dyn Error + Send>>;
+
+    /// Check the correctness of a block. If is passed, return the integrated transcations to do
+    /// data persistence.
+    async fn check_block(
         &self,
-        ctx: Context,
-        hash: Hash
-    ) -> Result<(), Self::Error>;
-    /// Commit an epoch.
+        _ctx: Vec<u8>,
+        height: u64,
+        hash: Hash,
+    ) -> Result<(), Box<dyn Error + Send>>;
+
+    /// Commit a given block to execute and return the rich status.
     async fn commit(
-        &self, ctx: Context,
-        epoch_id: u64,
-        commit: Commit<T>
-    ) -> Result<Status, Self::Error>;
-    /// Transmit a message to the Relayer.
-    async fn transmit_to_relayer(
         &self,
-        ctx: Context,
-        msg: OutputMsg,
-        addr: Address
-    ) -> Result<(), Self::Error>;
+        _ctx: Vec<u8>,
+        height: u64,
+        commit: Commit<T>,
+    ) -> Result<Status, Box<dyn Error + Send>>;
+
+    /// Get an authority list of the given height.
+    async fn get_authority_list(
+        &self, 
+        _ctx: Vec<u8>, 
+        height: u64
+    ) -> Result<Vec<Node>, Box<dyn Error + Send>>;
+
     /// Broadcast a message to other replicas.
     async fn broadcast_to_other(
         &self,
-        ctx: Context,
-        msg: OutputMsg
-    ) -> Result<(), Self::Error>;
+        _ctx: Vec<u8>,
+        msg: OutputMsg<T>,
+    ) -> Result<(), Box<dyn Error + Send>>;
+
+    /// Transmit a message to the Relayer, the third argument is the relayer's address.
+    async fn transmit_to_relayer(
+        &self,
+        _ctx: Vec<u8>,
+        addr: Address,
+        msg: OutputMsg<T>,
+    ) -> Result<(), Box<dyn Error + Send>>;
 }
 ```
 
@@ -299,17 +324,29 @@ pub trait Consensus<T: Serialize + Deserialize + Clone + Debug> {
 
 ```rust
 pub trait Crypto {
-    /// Crypto error.
-    type Error: ::std::error::Error;
     /// Hash a message.
     fn hash(&self, msg: &[u8]) -> Hash;
+
     /// Sign to the given hash by private key.
-    fn sign(&self, hash: Hash) -> Result<Signature, Self::Error>;
+    fn sign(&self, hash: Hash) -> Result<Signature, Box<dyn Error + Send>>;
+
     /// Aggregate signatures into an aggregated signature.
-    fn aggregate_signatures(&self, signatures: Vec<Signatures>) -> Result<Signature, Self::Error>;
+    fn aggregate_signatures(
+        &self,
+        signatures: Vec<Signature>,
+    ) -> Result<Signature, Box<dyn Error + Send>>;
+
     /// Verify a signature.
-    fn verify_signature(&self, signature: Signature, hash: Hash) -> Result<Address, Self::Error>;
+    fn verify_signature(
+        &self,
+        signature: Signature,
+        hash: Hash,
+    ) -> Result<Address, Box<dyn Error + Send>>;
+    
     /// Verify an aggregated signature.
-    fn verify_aggregated_signature(&self, aggregate_signature: Signature) -> Result<(), Self::Error>;
+    fn verify_aggregated_signature(
+        &self,
+        aggregate_signature: AggregatedSignature,
+    ) -> Result<(), Box<dyn Error + Send>>;
 }
 ```

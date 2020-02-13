@@ -1,137 +1,135 @@
-# Overlord 架构设计
+# Overlord
 
-## 目标
+### Goal
 
-Overlord 的目标是成为能够支持上百个共识节点，满足数千笔每秒的交易处理能力，且交易延迟不超过数秒的 BFT 共识算法。简单来讲，就是能够满足大部分现实业务需求的高性能共识算法。
+Overlord is a Byzantine fault tolerance (BFT) consensus algorithm aiming to support thousands of transactions per second under hundreds of consensus nodes, with transaction delays of no more than a few seconds. Simply put, it is a high-performance consensus algorithm able to meets most of the real business needs.
 
-## 设计背景
+### Background
 
-在区块链中，一次共识至少包含两层语义：
+Usually, a consensus process consists of at least two layers of semantics:
 
-1. 完成交易定序
-2. 对最新状态达成共识
+1. Complete the transaction sequencing 
+2. Achieve consensus on the latest state
 
-对于 UTXO 模型的区块链来说，新状态隐含在交易输出中，因此 1 和 2 是一体不可分割的。而对于 Account 模型的区块链来说，交易中并没有包含状态，只有执行完交易才能生成最新状态，状态用单独的一颗 MPT 树保存。
+For the blockchain of the UTXO model, the new state is implicit in the transaction output, so 1 and 2 are integral and inseparable. For the blockchain of the Account model, the transaction does not contain the state, and only after the transaction is executed can the latest state be generated and the state is saved in an independent MPT tree.
 
-在 Account 模型中，为了实现第二层语义，常用的办法是，共识节点在打包新区块之前执行完区块中的所有交易，以计算出最新状态保存到块头中。包含了最新状态的区块达成共识后，区块中的交易完成了定序，同时最新状态亦完成了共识，任何节点可以重放区块中的交易验证状态的正确性。然而，这种处理方法制约了 BFT 类共识算法的交易处理能力。如下图所示，当高度为 h 的区块 B(h) 达成共识后，高度为 h+1 的新 leader 打包并执行 B(h+1) 后才能广播 B(h+1)，其他共识节点收到 B(h+1) 后必须再执行 B(h+1) 以验证其正确性。在共识过程中，这两次串行的区块执行过程拖慢了共识效率。
+For the Account model, in order to implement the second semantic, the common method is to let the consensus nodes execute all the transactions firstly. In this step, the latest state could be calculated and be saved to the block header. And then, consensus node will broadcast the block in which the transaction is sequenced.  Once the consensus is achieved,  the state and the transaction sequence is determined among all the nodes.  
+However, this method restricts the transaction processing capability of the BFT-like consensus algorithm. As shown in the figure below, Only after the block B(h)(h means the block height) reaches a consensus, the new leader can pack and execute B（h+1），and then broadcast B(h+1). After receiving B(h+1), other consensus nodes need to execute B(h+1) again to verify its correctness. So, in this process, these two serial block execution processes slowed down the consensus efficiency.
 
-<div align=center><img src="./static/block_process.png"></div>
+<div align=center><img src="../static/block_process.png"></div>
 
-一种改进的办法是，Leader 在打包新区块时并不立即执行该块，待区块达成共识后，共识节点才执行该块生成新的状态，下一个高度的 Leader 将新状态与下一个区块一起参与共识。这种办法省掉了一次区块执行过程。
+An improved method is that the Leader does not execute the block immediately after packing the new block. After the block reaches a consensus, the consensus node executes the block to generate a new state, and the next height leader will pack this state and the next height blocks together to participate in the next consensus process. This method saves one block execution process time.
 
-当从更微观的角度来审察这种改进方案时，我们发现其仍然存在很大的改进空间。这是因为，任何一个共识节点的共识模块和执行模块在整个共识过程中始终是串行的，如上图所示，当共识模块在对区块共识时，执行模块始终是空闲的，反之亦然。如果能够将执行模块和共识模块并行，那么共识的交易处理能力理论上能够达到执行模块的最大处理极限。
+When examining this improvement from a more microscopic perspective, we found that there is still much room for improvement. This is because the consensus module and the execution module of any consensus node are always serial throughout the consensus process. As shown in the figure above, when the consensus module runs, the execution module is always idle, and vice versa. If the execution module and the consensus module can be paralleled, the consensus transaction processing capability can theoretically reach the maximum processing limit of the execution module.
 
-## Overlord 协议
 
-### 总体设计
 
-Overlord 的核心思想是解耦交易定序与状态共识。
+## Overlord Protocol
 
-我们用 B(h, S, T) 表示高度为 h 的区块，其包含的状态是 S，定序的交易集合是 T。在共识的第二层语义中，人们对 S 的解读往往是执行完 T 后的状态，正是这种思维定势使得执行模块和共识模块无法并行。如果将 S 理解为是共识模块在开始对 B(h, S, T) 共识时，执行模块执行达到的最新状态，那么共识模块将无需等待执行模块执行新的区块，而执行模块只需要沿着已定序的交易向前执行。这样，共识模块可以连续向前推进，不断将新交易定序，同时完成执行模块的最新状态共识; 执行模块也可以连续执行已定序的交易集合，直到将所有已定序的交易执行完毕。
+### Overview of the protocol
 
-### 协议描述
+The core of Overlord is to decouple transaction sequence and state consensus.
 
-在 Overlord 中，一次共识过程称为一个 *epoch*，我们将达成共识的区块称为 *epoch*。*epoch* 包含 Header 和 Body 两部分（如下图所示）。*epoch* 的核心结构如下图所示，`epoch_id` 是单调递增的数值，相当于高度；`prev_hash` 是上一个 *epoch* 的哈希；`order_root` 是包含在 Body 中的所有待定序的交易的 merkle root；`state_root` 表示最新的世界状态的 MPT Root；`confirm_roots` 表示从上一个 *epoch* 的 `state_root` 到当前 *epoch* 的 `state_root` 之间执行模块向前推进的 `order_root` 集合；`receipt_roots` 记录被执行的每一个 `order_root` 所对应的 `receipt_root`；`proof` 是对上一个 *epoch* 的证明。
+We use B(h, S, T) to represent a block of height h, which contains a state of S, and the ordered transaction set is T. In the second semantic of consensus, people's interpretation of S is often the state after the execution of T， and this makes the execution module and consensus module impossible to parallel. If S is understood as the latest state in execution module execution in this moment, the consensus module will not have to wait for the execution module to execute the block. And the execution module only needs to execute forward. In this way, the consensus module can continuously advance, continuously ordering new transactions, and complete consensus on the latest state of the execution module; the execution module can also continuously execute the ordered transaction set until all the ordered transactions are executed.
 
-<div align=center><img src="./static/epoch.png"></div>
 
-在具体的方案中，共识模块批量打包交易进行共识, 达成共识后, 将已定序的交易集合添加到待执行的队列中, 执行模块以交易集合为单位依次执行, 每执行完一个交易集合, 就将被执行的交易集合的 order_root, 以及执行后的 stateRoot 发给共识模块。在 Leader 打包交易拼装 *epoch* 时, 取最新收到的 state_root 作为最新状态参与共识.
+### Protocol description
 
-Overlord 是在具体共识算法之上的解释层, 通过重新诠释共识的语义, 使得交易定序与状态共识解耦, 从而在实际运行中获得更高的交易处理能力。理论上, Overlord 能够基于几乎任何 BFT 类共识算法, 具体在我们的项目中则是基于改进的 Tendermint。
 
-我们对 Tendermint 主要做了三点改进：
+In Overlord, a consensus process is called a block. The block contains two parts, Header and Body (as shown below). The core structure of block is shown below, `height` is a monotonically increasing value, equivalent to height; `prev_hash` is the hash of the previous block; `order_root` is the merkle root of all pending transactions contained in the Body; `state_root` represents the latest world The MPT root of the state; `confirm_roots` represents the `order_root` collection from the `state_root` of the previous block to the `state_root` of the current block; the `receipt_roots` records the `receipt_root` corresponding to each `order_root` being executed; proof is proof of the previous block .
 
-1. 将聚合签名应用到 Tendermint 中, 使共识的消息复杂度从 <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n^{2})" title="O(n^{2})" /> 降到 <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n)" title="O(n)" />, 从而能够支持更多的共识节点
-2. 在 *proposal* 中增加了 propose 交易区, 使新交易的同步与共识过程可并行
-3. 共识节点收到 *proposal* 后, 无需等 *epoch* 校验通过即可投 *prevote* 票, 而在投 *precommit* 票之前必须得到 *epoch* 校验结果, 从而使得区块校验与 *prevote* 投票过程并行
+<div align=center><img src="../static/block.png"></div>
 
-#### 聚合签名
+In this method, the consensus module batches the transactions to make a consensus. After the consensus is reached, the ordered transaction set is added to the queue to be executed, and the execution module executes in order of the transaction set, and each execution of the transaction set is performed. The ordered root of the transaction set to be executed, and the executed stateRoot are sent to the consensus module. When packing the transactions to assemble the block, the leader take the latest state_root as the latest state to participate in the consensus.
 
-在 Tendermint 共识协议中，节点在收到 *proposal* 之后对其投出 *prevote*，*prevote* 投票是全网广播给其他节点的。这时的通信复杂度是 <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n^{2})" title="O(n^{2})" />。使用聚合签名优化是所有的节点将 *prevote* 投票发给一个指定的 *Relayer* 节点，Relayer 节点可以是任何一个共识节点。Relayer 节点将收到的签名通过算法计算聚合签名，再用一个位图 (bit-vec) 表示是哪些节点的投票。将聚合签名和位图发送给其他节点，对于 *precommit* 投票同理。这样就将通信复杂度降到了 <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n)" title="O(n)" />。
+Overlord is an interpretation layer above the specific consensus algorithm. By reinterpreting the semantics of consensus, the transaction sequence is decoupled from the state consensus, so that higher transaction processing capability can be obtained in actual operation. In theory, Overlord can be based on almost any BFT-like consensus algorithm, specifically in our project based on the improved Tendermint.
 
-如果 *Relayer* 出现故障，没有发送聚合签名给共识节点，或者 *Relayer* 作恶，只给小部分共识节点发送聚合签名，那么共识将会失活。我们采用超时投空票的方式解决这个问题。当节点在投出 *prevote* 投票之后，立即设置一个定时器，如果的超时时间内没有收到 *prevoteQC* 直接进入预提交状态，投出 *nil precommit* 投票。之后进入到下一个 round。如果预投票阶段正常，投出 *precommit* 之后同样设置一个定时器，如果超时没有收到 *precommitQC* 则直接进入下一个 round。
+We have made three major improvements compared to Tendermint:
 
-#### 同步并行
+1. Apply the aggregate signature to Tendermint to make the consensus message complexity from <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n^{2})" title= "O(n^{2})" /> falls to <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n)" title="O(n)" />, thus being able to support more consensus nodes
+2. The propose transaction area is added to the proposal, so that the synchronization of the new transaction can be paralleled with the consensus process.
+3. After receiving the proposal, the consensus node can vote for the prevote without waiting for the block check, and must obtain the block check result before voting the precommit vote, so that the block check is parallel with the prevote process.
 
-Overlord 采用压缩区块（compact block）的方式广播 *CompactEpoch*，即其 Body 中仅包含交易哈希，而非完整交易。共识节点收到 *CompactEpoch* 后，需要同步获得其 Body 中包含的全部完整交易后才能构造出完整的 *epoch*。
+#### Aggregate signature
 
-我们在 proposal 里除了包含 *CompactEpoch* 外，还额外增加了一个 *propose* *交易区，propose* 交易区中包含待同步的新交易的哈希。需要注意的是，这些交易与 *CompactEpoch* 里包含的待定序的交易哈希并不重叠，当 *CompactEpoch* 不足以包含交易池中所有的新交易时，剩余的新交易可以包含到 *propose* 交易区中提前同步。这在系统交易量很大的时候，可以提高交易同步与共识的并发程度，进一步提高交易处理能力.
+In the Tendermint consensus protocol, the node casts a prevote on the proposal after it receives the proposal, and the prevote vote is broadcast to other nodes throughout the network. The communication complexity at this time is <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n^{2})" title="O(n^{2})" /> Using aggregated signature optimization is the process by which all nodes send prevote votes to a specified Relayer node, which can be any consensus node. The Relayer node calculates the aggregated signature by the algorithm, and then uses a bitmap (bit-vec) to indicate which nodes vote. Send aggregated signatures and bitmaps to other nodes, for the same reason as precommit voting. This reduces the communication complexity to <img src="https://latex.codecogs.com/svg.latex?\inline&space;O(n)" title="O(n)" />.
 
-#### 校验并行
+If Relayer fails, no aggregated signature is sent to the consensus node, or Relayer does evil, and only a small number of consensus nodes send aggregated signatures, the consensus will be inactivated. We use a time-out vote to solve this problem. When the node sends a prevote vote, it immediately sets a timer. If the prevoteQC is not received within the timeout period, it directly enters the pre-commit status, and the nil precommit vote is thrown. Then go to the next round. If the pre-voting phase is normal, a timer is also set after the precommit is sent. If the precommitQC is not received after the timeout, the next round is entered.
 
-共识节点收到 *proposal* 后，将 *CompactEpoch* 的校验(获得完整交易，校验交易的正确性) 与 *prevote* 投票并行，只有当收到 *prevote* 聚合签名和 *CompactEpoch* 的检验结果后，才会投 *precommit* 票。
+#### Synchronous parallelism
 
-## Overlord 架构
+Overlord broadcasts CompactBlock in a compact block, meaning that its body contains only transaction hashes, not full transactions. After receiving the CompactBlock, the consensus node needs to synchronize all the complete transactions contained in its Body to construct a complete block.
 
-Overlord 共识由以下几个组件组成的：
+In addition to the CompactBlock, we also added a propose trading area in the proposal. The pose contains the hash of the new transaction to be synchronized. It should be noted that these transactions do not overlap with the pending transaction hashes contained in CompactBlock. When CompactBlock is not sufficient to contain all new transactions in the trading pool, the remaining new transactions can be included in the proposed trading area for early synchronization. This can increase the degree of concurrency of transaction synchronization and consensus when the system transaction volume is large, and further improve transaction processing capability.
 
-* 状态机(SMR)：根据输入消息的进行状态转换
+#### Verify parallelism
 
-* 状态存储(State)：用于存储提议，投票等状态
+After receiving the *proposal*, the consensus node will verify the *CompactBlock* (to obtain the complete transaction and verify the correctness of the transaction) in parallel with the *prevote* vote. Only after receiving the *prevote* aggregate signature and the *CompactBlock* test result will the *precommit* be cast.
 
-* 定时器(Timer)：设定超时时间触发状态机操作
+## Overlord architecture
 
-* Wal：用于读写 Wal 日志
+The Overlord consensus consists of the following components:
 
-在 Overlord 共识架构中，当收到消息时，状态存储模块先对消息做基本检查。通过后，根据接收到的消息更新状态，并将消息传输给状态机。此外，为了保持活性还需要一个定时器，当超时时定时器调用接口触发状态机。状态机在做状态变更之后会抛出一个当前状态的事件，状态存储模块和定时器模块监听状态机抛出的事件，根据监听到的事件做相应的处理，例如写 Wal，发送投票，设置定时器等。在重启时状态存储模块先从 Wal 中读取数据，再发送给状态机。整体的架构如下图所示：
+* State Machine (SMR): State transition based on input messages
+* State storage (State): used to store the status of the proposal, voting, etc.
+* Timer: Set the timeout period to trigger the state machine operation
+* Wal: used to read and write Wal logs
 
-<div align=center><img src="./static/arch_overlord.png"></div>
+In the Overlord consensus architecture, when a message is received, the state storage module performs a basic check on the message. After passing, the status is updated according to the received message and the message is transmitted to the state machine. In addition, a timer is required to maintain activity, and when the timer expires, the timer calls the interface to trigger the state machine. The state machine will throw a current state event after making the state change. The state storage module and the timer module listen to the event thrown by the state machine, and perform corresponding processing according to the monitored event, such as writing Wal, sending a vote, setting the timing. And so on. At the time of the restart, the state storage module reads the data from the Wal and sends it to the state machine. The overall architecture is shown below:
 
-### 共识状态机(SMR)
+<div align=center><img src="../static/arch_overlord.png"></div>
 
-状态机模块是整个共识的逻辑核心，它主要的功能是状态变更和 **lock** 的控制。当收到消息触发时，根据收到的消息做状态变更，并将变更后的状态作为事件抛出。在我们的实现中，Overlord 使用一个应用 BLS 聚合签名优化的 Tendermint 状态机进行共识，整体的工作过程如下.
+### Consensus State Machine (SMR)
 
-#### 提议阶段
+The state machine module is the logical core of the entire consensus, and its main functions are state changes and *lock* control. When the received message is triggered, the status change is made according to the received message, and the changed status is thrown as an event. In our implementation, Overlord uses a Tendermint state machine that applies BLS aggregate signature optimization for consensus. The overall working process is as follows.
 
-节点使用确定性随机算法确定本轮的 *Leader*。
+#### Prepare phase
 
-**Leader**: 广播一个 *proposal*
+The node uses a deterministic random algorithm to determine the leader of the current round.
 
-**Others**: 设置一个定时器 T1，当收到 *proposal* 之后向 *Relayer* 发送 *prevote* 投票
+*Leader*: Broadcast a proposal
 
-#### 预投票阶段
+*Others*: Set a timer T1 to send a *prevote* vote to *Relayer* when the proposal is received
 
-**Relayer**: 设置一个定时器 T2，对收到的 *prevote* 投票进行聚合并生成位图，将聚合后的投票和位图广播给其他节点
+#### Prevote step
 
-**Others**: 设置一个定时器 T2，检查聚合的 *prevote* 投票的合法性，生成 **PoLC** 发送 *precommit* 投票
+*Relayer*: Set a timer T2 to aggregate the received *prevote* votes and generate a bitmap to broadcast the aggregated votes and bitmaps to other nodes.
 
-#### 校验等待阶段
+*Others*: Set a timer T2, check the validity of the aggregated prevote vote, generate *PoLC* send precommit vote
 
-所有节点设置一个定时器 T3，当收到对 *proposal* 的校验结果之后，进入预提交阶段
+####Verification step
 
-#### 预提交阶段
+All nodes set a timer T3. After receiving the verification result of the *proposal*, they enter the *pre-commit* stage.
 
-**Relayer**: 设置一个定时器 T4，对收到的 *precommit* 投票进行聚合并生成位图，将聚合后的投票和位图广播给其他节点
+#### Precommit step
 
-**Others**: 设置一个定时器 T4，检查聚合的 *precommit* 投票的合法性
+*Relayer*: Set a timer T4 to aggregate the received precommit votes and generate a bitmap to broadcast the aggregated votes and bitmaps to other nodes.
 
-#### 提交阶段
+*Others*: Set a timer T4 to check the legitimacy of the aggregated precommit vote
 
-所有节点将 *proposal* 提交
+#### Commit step
 
-共识状态机的状态转换图如下图所示：
+All nodes commit the proposal
 
-<div align=center><img src="./static/state_transition.png"></div>
+The state transition diagram of the consensus state machine is shown below:
 
-在工程中，我们将预投票阶段和校验等待阶段合并为一个阶段，共用一个超时时间。当状态机收到聚合后的投票和校验结果之后，进入到预提交阶段。
+<div align=center><img src="../static/state_transition.png"></div>
 
-#### 状态机状态
+In the project, we combine the pre-voting phase and the verification phase into one phase, sharing a timeout. When the state machine receives the aggregated voting and verification results, it enters the pre-commit phase.
 
-状态机模块需要存储的状态有：
+#### State Machine State
 
-* *epoch_id*: 当前共识的 epoch
+The states that the state machine module needs to store are:
 
-* *round*: 当前共识的轮次
+* height: current consensus height
+* round: round of current consensus
+* step: the current stage
+* proposal_hash: optional, current hash of consensus
+* lock: optional, whether it has been reached *PoLC*
 
-* *step*: 当前所在的阶段
+#### data structure
 
-* *proposal_hash*: 可选，当前正在共识的哈希
-
-* *lock*: 可选，当前是否已经达成 **PoLC**
-
-#### 数据结构
-
-状态机的触发结构如下：
+The trigger structure of the state machine is as follows:
 
 ```rust
 pub struct SMRTrigger {
@@ -141,7 +139,7 @@ pub struct SMRTrigger {
 }
 ```
 
-状态机的输出结构如下：
+The output structure of the state machine is as follows:
 
 ```rust
 pub enum SMREvent {
@@ -165,151 +163,163 @@ pub enum SMREvent {
     /// for state: do commit,
     /// for timer: do nothing.
     Commit(Hash),
+    /// Stop event,
+    /// for state: stop process,
+    /// for timer: stop process.
+    Stop,
 }
 ```
 
-#### 状态机接口
+#### State Machine Interface
 
 ```rust
 /// Create a new SMR service.
 pub fn new() -> Self
 /// Trigger a SMR action.
 pub fn trigger(&self, gate: SMRTrigger) -> Result<(), Error>
-/// Goto a new consensus epoch.
-pub fn new_epoch(&self, epoch_id: u64) -> Result<(), Error>
+/// Goto a new consensus height.
+pub fn new_height(&self, height: u64) -> Result<(), Error>
 ```
 
-### 状态存储(State)
+### State storage (State)
 
-状态存储模块是整个共识的功能核心，主要的功能为存储状态，消息分发，出块和密码学相关操作。在工作过程中，对于网络层传输来的消息，首先进行验签，校验消息的合法性。对通过的消息判断是否需要写入 Wal。之后将消息发送给状态机。状态存储模块时刻监听状态机抛出的事件，并根据事件作出相应的处理。
+The state storage module is the functional core of the entire consensus. The main functions are storage state, message distribution, block, and cryptography related operations. In the working process, for the message transmitted by the network layer, the first check is performed to verify the validity of the message. Determine whether the written message needs to be written to Wal. The message is then sent to the state machine. The state storage module constantly listens for events thrown by the state machine and processes them accordingly.
 
-#### 存储状态
+#### Storage Status
 
-状态存储模块需要存储的状态有：
+The state that the state storage module needs to store include:
 
-* *epoch_id*: 当前共识的 epoch
+* height: current consensus height
+* round: round of current consensus
+* proposals: cache current height all offers
+* votes: cache current height all votes
+* QCs: Cache current height all QC
+* authority_manage: consensus list management
+* is_leader: whether the node is a leader
+* proof: optional, proof of the last height
+* last_commit_round: optional, the last round of submissions
+* last_commit_proposal: Optional, last submitted proposal
 
-* *round*: 当前共识的轮次
+#### Message Distribution
 
-* *proposals*: 缓存当前 epoch 所有的提议
+When sending a message, choose how to send the message based on the message and parameters (broadcast to other nodes or sent to Relayer).
 
-* *votes*: 缓存当前 epoch 所有的投票
+#### Block
 
-* *QCs*: 缓存当前 epoch 所有的 *QC*
+When the state storage module listens to the NewRound event thrown by the state machine, it determines whether it is a block node by a deterministic random number algorithm. If it is a block node, a proposal is made.
 
-* *authority_manage*: 共识列表管理
+Deterministic random number algorithm: Because the Overlord consensus protocol allows different out-of-block weights and voting weights to be set, when determining the block, the node normalizes the block weights and projects them into the entire u64 range, using the current height and The sum of round is used as a random number seed to determine which of the u64 ranges the generated random number falls into, and the node corresponding to the weight is the outbound node.
 
-* *is_leader*: 节点是不是 *leader*
-  
-* *proof*: 可选，上一个 epoch 的证明
+#### Cryptography
 
-* *last_commit_round*: 可选，上一次提交的轮次
+Cryptographic operations include the following methods:
 
-* *last_commit_proposal*: 可选，上一次提交的提议
+* When the message is received, the signature of message need to be verified
+* When receiving the aggregate vote, verify the signature and check whether the weight exceeds the threshold
+* Sign the message when making a proposal or voting
+* When you are a Relayer, aggregate the votes you receive.
 
-#### 消息分发
+#### Status Storage Interface
 
-发送消息时，根据消息及参数选择发送消息的方式（广播给其他节点或发送给 *Relayer*）。
+### Timer
 
-#### 出块
-
-当状态存储模块监听到状态机抛出的 `NewRound` 事件时，通过一个确定性随机数算法判断自己是不是出块节点。如果是出块节点则提出一个 proposal。
-
-*确定性随机数算法*：因为 Overlord 共识协议允许设置不同的出块权重和投票权重，在判断出块时，节点将出块权重进行归一化，并投射到整个 `u64` 的范围中，使用当前 `epoch_id` 与 `round` 之和作为随机数种子，判断生成的随机数落入到`u64` 范围中的哪一个区间中，该权重对应的节点即为出块节点。
-
-#### 密码学操作
-
-密码学操作包括如下方法：
-
-* 收到消息时，对消息进行验签
-
-* 收到聚合投票时，验签并校验权重是否超过阈值
-
-* 发出提议或投票时，对消息进行签名
-
-* 自己是 *Relayer* 时，对收到的投票进行聚合
-
-#### 状态存储接口
-
-### 定时器
-
-当状态机运行到某些状态的时候，需要设定定时器以便超时重发等操作。定时器模块会监听状态机抛出的事件，根据事件设置定时器。当达到超时时间，调用状态机模块的接口触发超时。定时器与状态存储复用 `SMREvent` 和接口。
+When the state machine runs to certain states, it needs to set a timer to perform operations such as timeout retransmission. The timer module listens for events thrown by the state machine and sets the timer based on the event. When the timeout period is reached, the interface of the calling state machine module triggers a timeout. The timer is multiplexed with the state store SMREvent and interface.
 
 ### Wal
 
-在共识过程中，需要将一些消息写入到 Wal 中。当重启时，状态存储模块首先从 Wal 中读取消息，回复重启前的状态。Wal 模块只与状态存储模块交互。
+In the consensus process, some messages need to be written to Wal. When restarting, the state storage module first reads the message from Wal and replies to the state before the restart. The Wal module only interacts with the state storage module.
 
-#### Wal 接口
+#### Wal Interface
 
 ```rust
-/// Create a new Wal struct.
-pub fn new(path: &str) -> Self
-/// Set a new epoch of Wal, while go to new epoch.
-pub fn set_epoch(&self, epoch_id: u64) -> Result<(), Error>
-/// Save message to Wal.
-pub async fn save(&self, msg_type: WalMsgType, msg: Vec<u8>) -> Result<(), Error>;
-/// Load message from Wal.
-pub fn load(&self) -> Vec<(WalMsgType, Vec<u8>)>
+/// Save wal information.
+pub async fn save(&self, info: Bytes) -> Result<(), Error>;
+/// Load wal information.
+pub fn load(&self) -> Result<Option<Bytes>, Error>;
 ```
 
-## Overlord 接口
+## Overlord Interface
 
-### 共识接口
+### Consensus Interface
 
 ```rust
 #[async_trait]
-pub trait Consensus<T: Serialize + Deserialize + Clone + Debug> {
-    /// Consensus error
-    type Error: ::std::error::Error;
-    /// Get an epoch of an epoch_id and return the epoch with its hash.
-    async fn get_epoch(
+pub trait Consensus<T: Codec>: Send + Sync {
+    /// Get a block of an height and return the block with its hash.
+    async fn get_block(
         &self,
-        ctx: Context,
-        epoch_id: u64
-    ) -> Result<(T, Hash)), Self::Error>;
-    /// Check the correctness of an epoch.
-    async fn check_epoch(
+        _ctx: Vec<u8>,
+        height: u64,
+    ) -> Result<(T, Hash), Box<dyn Error + Send>>;
+
+    /// Check the correctness of a block. If is passed, return the integrated transcations to do
+    /// data persistence.
+    async fn check_block(
         &self,
-        ctx: Context,
-        hash: Hash
-    ) -> Result<(), Self::Error>;
-    /// Commit an epoch.
+        _ctx: Vec<u8>,
+        height: u64,
+        hash: Hash,
+    ) -> Result<(), Box<dyn Error + Send>>;
+
+    /// Commit a given block to execute and return the rich status.
     async fn commit(
-        &self, ctx: Context,
-        epoch_id: u64,
-        commit: Commit<T>
-    ) -> Result<Status, Self::Error>;
-    /// Transmit a message to the Relayer.
-    async fn transmit_to_relayer(
         &self,
-        ctx: Context,
-        msg: OutputMsg,
-        addr: Address
-    ) -> Result<(), Self::Error>;
+        _ctx: Vec<u8>,
+        height: u64,
+        commit: Commit<T>,
+    ) -> Result<Status, Box<dyn Error + Send>>;
+
+    /// Get an authority list of the given height.
+    async fn get_authority_list(
+        &self, 
+        _ctx: Vec<u8>, 
+        height: u64
+    ) -> Result<Vec<Node>, Box<dyn Error + Send>>;
+
     /// Broadcast a message to other replicas.
     async fn broadcast_to_other(
         &self,
-        ctx: Context,
-        msg: OutputMsg
-    ) -> Result<(), Self::Error>;
+        _ctx: Vec<u8>,
+        msg: OutputMsg<T>,
+    ) -> Result<(), Box<dyn Error + Send>>;
+
+    /// Transmit a message to the Relayer, the third argument is the relayer's address.
+    async fn transmit_to_relayer(
+        &self,
+        _ctx: Vec<u8>,
+        addr: Address,
+        msg: OutputMsg<T>,
+    ) -> Result<(), Box<dyn Error + Send>>;
 }
 ```
 
-### 密码学接口
+### Cryptography Interface
 
 ```rust
 pub trait Crypto {
-    /// Crypto error.
-    type Error: ::std::error::Error;
     /// Hash a message.
     fn hash(&self, msg: &[u8]) -> Hash;
+
     /// Sign to the given hash by private key.
-    fn sign(&self, hash: Hash) -> Result<Signature, Self::Error>;
+    fn sign(&self, hash: Hash) -> Result<Signature, Box<dyn Error + Send>>;
+
     /// Aggregate signatures into an aggregated signature.
-    fn aggregate_signatures(&self, signatures: Vec<Signatures>) -> Result<Signature, Self::Error>;
+    fn aggregate_signatures(
+        &self,
+        signatures: Vec<Signature>,
+    ) -> Result<Signature, Box<dyn Error + Send>>;
+
     /// Verify a signature.
-    fn verify_signature(&self, signature: Signature, hash: Hash) -> Result<Address, Self::Error>;
+    fn verify_signature(
+        &self,
+        signature: Signature,
+        hash: Hash,
+    ) -> Result<Address, Box<dyn Error + Send>>;
+    
     /// Verify an aggregated signature.
-    fn verify_aggregated_signature(&self, aggregate_signature: Signature) -> Result<(), Self::Error>;
+    fn verify_aggregated_signature(
+        &self,
+        aggregate_signature: AggregatedSignature,
+    ) -> Result<(), Box<dyn Error + Send>>;
 }
 ```
