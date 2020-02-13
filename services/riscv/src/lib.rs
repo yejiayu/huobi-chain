@@ -14,7 +14,9 @@ use protocol::traits::ServiceSDK;
 use protocol::types::{Address, Hash, ServiceContext};
 use protocol::{Bytes, BytesMut, ProtocolError, ProtocolErrorKind, ProtocolResult};
 
-use crate::types::{Contract, DeployPayload, DeployResp, ExecPayload};
+use crate::types::{
+    Contract, DeployPayload, DeployResp, ExecPayload, GetContractPayload, GetContractResp,
+};
 use crate::vm::{ChainInterface, Interpreter, InterpreterConf, InterpreterParams};
 
 pub struct RiscvService<SDK> {
@@ -44,7 +46,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
             .sdk
             .borrow()
             .get_value::<Hash, Bytes>(&contract.code_hash)?
-            .unwrap();
+            .ok_or_else(|| ServiceError::CodeNotFound)?;
         let interpreter_params = InterpreterParams {
             address: payload.address.clone(),
             code,
@@ -131,6 +133,50 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
             address: contract_address,
             init_ret,
         })
+    }
+
+    #[read]
+    fn get_contract(
+        &self,
+        ctx: ServiceContext,
+        payload: GetContractPayload,
+    ) -> ProtocolResult<GetContractResp> {
+        ctx.sub_cycles(21000)?;
+        let contract = self
+            .sdk
+            .borrow()
+            .get_value::<Address, Contract>(&payload.address)?
+            .ok_or_else(|| ServiceError::ContractNotExists(payload.address.as_hex()))?;
+        let mut resp = GetContractResp {
+            code_hash: contract.code_hash.clone(),
+            intp_type: contract.intp_type,
+            ..Default::default()
+        };
+        if payload.get_code {
+            let code = self
+                .sdk
+                .borrow()
+                .get_value::<Hash, Bytes>(&contract.code_hash)?
+                .ok_or_else(|| ServiceError::CodeNotFound)?;
+            ctx.sub_cycles(code.len() as u64)?;
+            resp.code = hex::encode(&code);
+        }
+        for key in payload.storage_keys.iter() {
+            ctx.sub_cycles(key.len() as u64)?;
+            let decoded_key =
+                hex::decode(key).map_err(|_| ServiceError::InvalidKey(key.clone()))?;
+            let mut contract_key = BytesMut::from(payload.address.as_bytes().as_ref());
+            contract_key.extend(decoded_key);
+            let contract_key = Hash::digest(contract_key.freeze());
+            let value = self
+                .sdk
+                .borrow()
+                .get_value::<Hash, Bytes>(&contract_key)?
+                .unwrap_or_default();
+            ctx.sub_cycles(value.len() as u64)?;
+            resp.storage_values.push(hex::encode(value));
+        }
+        Ok(resp)
     }
 }
 
@@ -219,6 +265,9 @@ pub enum ServiceError {
     #[display(fmt = "Contract {} not exists", _0)]
     ContractNotExists(String),
 
+    #[display(fmt = "code not found")]
+    CodeNotFound,
+
     #[display(fmt = "CKB VM return non zero, exitcode: {}, ret: {}", exitcode, ret)]
     NonZeroExitCode { exitcode: i8, ret: String },
 
@@ -230,6 +279,9 @@ pub enum ServiceError {
 
     #[display(fmt = "hex decode error: {:?}", _0)]
     HexDecode(hex::FromHexError),
+
+    #[display(fmt = "invalid key '{:?}', should be a hex string", _0)]
+    InvalidKey(String),
 }
 
 impl std::error::Error for ServiceError {}

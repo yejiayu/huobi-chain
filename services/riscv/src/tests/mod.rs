@@ -16,7 +16,7 @@ use protocol::types::{
 };
 use protocol::{Bytes, ProtocolResult};
 
-use crate::types::{DeployPayload, ExecPayload, InterpreterType};
+use crate::types::{DeployPayload, ExecPayload, GetContractPayload, InterpreterType};
 use crate::RiscvService;
 
 type TestRiscvService = RiscvService<
@@ -57,15 +57,32 @@ fn test_deploy_and_run() {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
     let buffer = Bytes::from(buffer);
+    let code = hex::encode(buffer.as_ref());
     let deploy_payload = DeployPayload {
-        code:      hex::encode(buffer.as_ref()),
+        code:      code.clone(),
         intp_type: InterpreterType::Binary,
         init_args: "set k init".into(),
     };
     let deploy_result = service.deploy(context.clone(), deploy_payload).unwrap();
     assert_eq!(&deploy_result.init_ret, "");
-
     let address = deploy_result.address;
+
+    // test get_contract
+    let get_contract_payload = GetContractPayload {
+        address:      address.clone(),
+        get_code:     true,
+        storage_keys: vec![hex::encode("k"), "".to_owned(), "3a".to_owned()],
+    };
+    let get_contract_resp = service
+        .get_contract(context.clone(), get_contract_payload)
+        .unwrap();
+    assert_eq!(&get_contract_resp.code, &code);
+    assert_eq!(&get_contract_resp.storage_values, &vec![
+        hex::encode("init"),
+        "".to_owned(),
+        "".to_owned()
+    ]);
+
     let exec_result = service.call(context.clone(), ExecPayload {
         address: address.clone(),
         args:    "get k".into(),

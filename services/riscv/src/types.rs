@@ -30,9 +30,16 @@ impl TryFrom<u8> for InterpreterType {
     }
 }
 
+impl Default for InterpreterType {
+    fn default() -> Self {
+        Self::Binary
+    }
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct DeployPayload {
     pub code:      String,
+    #[serde(default)]
     pub intp_type: InterpreterType,
     pub init_args: String,
 }
@@ -66,6 +73,23 @@ pub struct InterpreterResult {
 pub struct Contract {
     pub code_hash: Hash,
     pub intp_type: InterpreterType,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct GetContractPayload {
+    pub address:      Address,
+    #[serde(default)]
+    pub get_code:     bool,
+    #[serde(default)]
+    pub storage_keys: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct GetContractResp {
+    pub code_hash:      Hash,
+    pub intp_type:      InterpreterType,
+    pub code:           String,
+    pub storage_values: Vec<String>,
 }
 
 impl FixedCodec for Contract {
