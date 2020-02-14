@@ -63,7 +63,7 @@ dependencies = [
 [[package]]
 name = "asset"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "binding-macro 0.1.0-alpha.0 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -243,7 +243,7 @@ dependencies = [
 [[package]]
 name = "binding-macro"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "derive_more 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "muta-protocol 0.1.0-alpha.1 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
@@ -454,7 +454,7 @@ dependencies = [
 [[package]]
 name = "common-config-parser"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "reqwest 0.9.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -466,7 +466,7 @@ dependencies = [
 [[package]]
 name = "common-crypto"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "ophelia 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ophelia-bls-amcl 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -476,7 +476,7 @@ dependencies = [
 [[package]]
 name = "common-logger"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "backtrace 0.3.38 (registry+https://github.com/rust-lang/crates.io-index)",
  "json 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -487,7 +487,7 @@ dependencies = [
 [[package]]
 name = "common-merkle"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "muta-protocol 0.1.0-alpha.1 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
  "rayon 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -523,7 +523,7 @@ dependencies = [
 [[package]]
 name = "core-api"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "async-trait 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -543,7 +543,7 @@ dependencies = [
 [[package]]
 name = "core-consensus"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "async-trait 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "bincode 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -562,7 +562,7 @@ dependencies = [
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "moodyblues-sdk 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "muta-protocol 0.1.0-alpha.1 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
- "overlord 0.2.0-alpha.4 (git+https://github.com/nervosnetwork/overlord?rev=743540c)",
+ "overlord 0.2.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rlp 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -587,7 +587,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "core-mempool"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "async-trait 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -612,7 +612,7 @@ dependencies = [
 [[package]]
 name = "core-network"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "async-trait 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "bincode 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -639,7 +639,7 @@ dependencies = [
 [[package]]
 name = "core-storage"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "async-trait 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -989,7 +989,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "framework"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "asset 0.1.0-alpha.0 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1001,6 +1001,7 @@ dependencies = [
  "hex 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "json 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "metadata 0.1.0-alpha.0 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
  "muta-protocol 0.1.0-alpha.1 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
  "rlp 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1720,7 +1721,7 @@ dependencies = [
 [[package]]
 name = "metadata"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "binding-macro 0.1.0-alpha.0 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1827,7 +1828,7 @@ dependencies = [
 [[package]]
 name = "muta"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "binding-macro 0.1.0-alpha.0 (git+https://github.com/nervosnetwork/muta?branch=huobi-chain)",
  "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1858,7 +1859,7 @@ dependencies = [
 [[package]]
 name = "muta-protocol"
 version = "0.1.0-alpha.1"
-source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#4c07a9c81c340ac348149e519049c82a6909c909"
+source = "git+https://github.com/nervosnetwork/muta?branch=huobi-chain#7c681a0b1cb1112bc5ef7eb528277eab3321f014"
 dependencies = [
  "async-trait 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "bincode 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2076,8 +2077,8 @@ dependencies = [
 
 [[package]]
 name = "overlord"
-version = "0.2.0-alpha.4"
-source = "git+https://github.com/nervosnetwork/overlord?rev=743540c#743540cbc9b309d55954104ccd64d26757269711"
+version = "0.2.0-alpha.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "async-trait 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "bit-vec 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -4091,7 +4092,7 @@ dependencies = [
 "checksum ophelia-hasher 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "61d941a336bcf304907e9e69610cfb5b2329af1305134299ec8d616aabe1d88d"
 "checksum ophelia-secp256k1 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5645d74fc60a1ba12dc908cbd954552c57c1c57443dfa7f36249b9c9e62ab69a"
 "checksum ordered-float 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "18869315e81473c951eb56ad5558bbc56978562d3ecfb87abb7a1e944cea4518"
-"checksum overlord 0.2.0-alpha.4 (git+https://github.com/nervosnetwork/overlord?rev=743540c)" = "<none>"
+"checksum overlord 0.2.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)" = "c6529f86118455101086e0e03cc77867929cef72ffeac409c4b11982c1655d12"
 "checksum parking_lot 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "92e98c49ab0b7ce5b222f2cc9193fc4efe11c6d0bd4f648e374684a6857b1cfc"
 "checksum parking_lot 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fa7767817701cce701d5585b9c4db3cdd02086398322c1d7e8bf5094a96a2ce7"
 "checksum parking_lot 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f842b1982eb6c2fe34036a4fbfb06dd185a3f5c8edfaacdf7d1ea10b07de6252"
