@@ -1,0 +1,40 @@
+version: '2'
+
+services:
+  chain:
+    image: nervos/muta:dev
+    environment:
+      - RUST_BACKTRACE
+    working_dir: /app
+    volumes:
+      - ./chain.toml:/app/config/chain.toml
+      - ./genesis.toml:/app/config/genesis.toml
+      - ../..:/app
+      - ../../target/docker_target:/app/target
+      - ../../target/cargo_cache:/usr/local/cargo/registry
+    command:
+      - /bin/sh
+      - -c
+      - |
+        rm -rf ./target/tests/e2e/data
+        cargo run --release
+  e2e-test:
+    image: node:10.15
+    depends_on:
+      - chain
+    working_dir: /app/tests/e2e
+    volumes:
+      - ../..:/app
+      - ../../target/tests/e2e/node_modules:/app/tests/e2e/node_modules
+    links:
+      - chain
+    environment:
+      - ENDPOINT=http://chain:8000/graphql
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app/tests/e2e
+        npm install
+        chmod +x ./wait-for-it.sh
+        ./wait-for-it.sh -t 7200 chain:8000 -- yarn run test
