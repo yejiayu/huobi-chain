@@ -57,6 +57,7 @@ impl<SDK: ServiceSDK> MetadataService<SDK> {
                 metadata.precommit_ratio = payload.precommit_ratio;
                 metadata.prevote_ratio = payload.prevote_ratio;
                 metadata.propose_ratio = payload.propose_ratio;
+                metadata.brake_ratio = payload.brake_ratio;
                 self.sdk.set_value(METADATA_KEY.to_string(), metadata)
             } else {
                 Err(ServiceError::AdmissionFail.into())
