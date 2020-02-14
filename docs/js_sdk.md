@@ -1,7 +1,14 @@
 # JS-SDK
 
-JS-SDK 是官方推出的基于 Javascript 的 SDK 工具。它包装了节点信息，可以用 Graphql RPC 方法进行管理账户以及与内建 Service 交互。
-JS-SDK 之于 Huobi Chain 类似 web3.js 之于 Ethereum。
+JS-SDK 是官方推出的基于 JavaScript 的 SDK。用于与 Huobi Chain RPC 进行交互的一系列工具。 如果你熟悉以太坊，那么可以将这个 SDK 类比于 web3.js。
+
+## 写在前面
+
+为了使我们不会迷惑，在开始之前需要了解一些基本的概念。当然，如果已经很熟悉 Huobi Chain ，那么请直接跳过这个部分吧。
+
+- [Service](./service_overview.md): Huobi Chain 提供的各种服务由 Service 暴露
+- [GraphQL](https://graphql.org): Huobi Chain 的 RPC 服务由GraphQL 提供，虽然名字带有 QL(Query Language)，但它是拥有 mutation 能力的
+- [TypeScript](https://www.typescriptlang.org/): 一种 JavaScript 的超级，给 JavaScript 加上了类型，并能够编译成 JavaScript。顺带一提，这个 SDK 就是由 TypeScript 编写，因此使用诸如 VSCode 等编辑器会有很强的代码提示功能。文档中，我们也会使用 TypeScript 的 interface 描述数据结构
 
 ## Install
 
@@ -9,26 +16,27 @@ JS-SDK 之于 Huobi Chain 类似 web3.js 之于 Ethereum。
 $ npm install muta-sdk@alpha
 ```
 
-## Modules
+## Modules in SDK
+
+1. Client：屏蔽了 GraphQL 的细节，更方便地和链的 GraphQL API 交互。
+2. Account：进行 Huobi Chain 的账户管理，一个账户包含了这个账户的私钥,公钥以及地址。
+3. Wallet：Huobi Chain 的钱包功能，可以管理多个Account。
+4. Service：提供对于 Huobi Chain 内置 Service 的直接通信，类似与对以太坊智能合约进行合约级别的 API 通信。
+5. utils: 包括了签名、地址转换、序列化、编解码等一系列工具方法
 
 详情请查看[SDK 文档](https://nervosnetwork.github.io/muta-sdk-js/)。
 
-1. Client：屏蔽了 GraphQL 的细节，帮助开发者更方便地和链做 GraphQL API 交互。
-2. Account：进行 Huobi Chain 的账户管理，一个账户包含了这个账户的私钥,公钥以及地址。
-3. Wallet：Huobi Chain 的钱包功能，可以管理多个Account。
-4. Built-in Service：提供对于 Huobi Chain 内置 Service 的直接通行。类似与对以太坊智能合约进行合约级别的 API 通信。
-
 ## Examples
 
-在这里例子中，将带你完整的体验上面的每一个模块，从如何构建一个 Muta 对象，用以和链开始交互，到创建一个账户，再到构建 Client 对象，和 Service 进行交互
+接下来的例子中，我们将通过 5 个步骤，实现在链上创建一种属于我们的[资产(Asset)](./asset_service.md)，并转账给另一个账户。
 
 - Step 1：构建一个 Muta 对象，用以和链开始交互
 - Step 2：创建分层确定性 HD 钱包，来管理你的账户
-- Step 3：创建一个 Account，来管理账户的公私钥对
+- Step 3：创建一个 Account 对象，来管理账户的公私钥对，并对交易进行签名
 - Step 4：构建 Client 对象，正式和链上的 Service 进行数据交互
-- Step 5：通过使用 AssetService API，直接和 AssetService 交互
+- Step 5(Optional)：通过使用 AssetService Binding 定向与 AssetService 进行交互
 
-#### Step 1：构建一个 muta 对象，用以和链进行交互
+#### Step 1：构建一个 Muta 对象，用以和链进行交互
 
 ```js
 const muta = new Muta({
@@ -40,17 +48,17 @@ const muta = new Muta({
       '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
 
     /**
-     *  接下来我们给出 GraphQL API uri. endpoint是用来和链进行rpc交互的uri,
-     *  http://127.0.0.1:8000/graphql 是默认的 endpoint 是用来和链进行rpc交互的uri,
-     *  你可以在config.toml文件下的[graphql]部分找到endpoint的配置
+     *  接下来我们给出 GraphQL API uri. endpoint 是用来和链进行 RPC 交互的 URI,
+     *  http://127.0.0.1:8000/graphql 是默认的 endpoint 是用来和链进行 RPC 交互的 URI,
+     *  你可以在 config.toml 文件下的 [graphql] 部分找到 endpoint 的配置
      */
     endpoint: 'http://127.0.0.1:8000/graphql',
 
     /**
-     * timeout_gap表示一笔交易发出后，最多允许几个块的延迟.如果随着链的进行,block超出了
-     * timeout_gap的设置但是交易仍然没有上链,那么这笔交易就被认为无效了.
-     * 比起以太坊的txpool的不确定性,Huobi-chain提供了tx及时性的检测和保障.
-     * timeoutGap并没有默认值,但是js-sdk预设为20,你可以所以更改
+     * timeout_gap 表示一笔交易发出后，最多允许几个块的延迟.如果随着链的进行, block 超出了
+     * timeout_gap 的设置但是交易仍然没有上链,那么这笔交易就被认为无效了.
+     * 比起以太坊的 txpool 的不确定性,Huobi-chain提供了tx及时性的检测和保障.
+     * timeoutGap 并没有默认值,但是 js-sdk 预设为20,你可以所以更改
      */
     timeoutGap: DEFAULT_TIMEOUT_GAP,
   });
@@ -58,11 +66,11 @@ const muta = new Muta({
 
 当然,如果你通过[快速入门](./getting_started.md)起了一条默认配置的链，并且现在你只是想跑通本文档的例子，你可以直接执行下面的指令。
 
-```
-  /**
-   * 因为测试链的参数基本一致,所以上面的参数一般不会修改,那么下面的语句和上面的逻辑是一样的
-   */
-  const mutaByDefaultConfig = Muta.createDefaultMutaInstance();
+```typescript
+/**
+* 因为测试链的参数基本一致,所以上面的参数一般不会修改,那么下面的语句和上面的逻辑是一样的
+*/
+const muta = Muta.createDefaultMutaInstance();
 ```
 
 好的，现在你已经了解了 muta 类了，非常简单，接下来让我们看看分层确定性钱包吧。
@@ -91,7 +99,7 @@ const mnemonicWords = Wallet.generateMnemonic();
 
 ```js
 const hdWallet = new Wallet(mnemonicWords);
-const hdWallet = new HDWallet(
+const hdWallet = new Wallet(
     'drastic behave exhaust enough tube judge real logic escape critic horror gold'
   );
 ```
@@ -101,12 +109,6 @@ const hdWallet = new HDWallet(
 `m/44'/${COIN_TYPE}'/${accountIndex}'/0/0`
 其中 `COIN_TYPE = 918`，accountIndex 就是需要派生的账户的索引。
 
-```js
-const account = hdWallet.deriveAccount(2);//我们派生accountIndex=2的账户
-```
-
-下面创建一个 Account，用来管理账户的公私钥对。
-
 #### Step3：创建 Account，来管理账户的公私钥对。
 
 Account 包含了一对公私钥对，以及他派生出来的地址，Huobi Chain 采用 secp256k1 作为签名曲线。
@@ -114,7 +116,7 @@ Account 包含了一对公私钥对，以及他派生出来的地址，Huobi Cha
 通过 HDWallet 可以派生出账户:
 
 ```js
-const account = hdWallet.deriveAccount(2);//我们派生accountIndex=2的账户
+const account = hdWallet.deriveAccount(2);//我们派生accountIndex=2 的账户
 ```
 
 当然，如果你有自己私钥，也可以通过指定私钥创建 Account：
@@ -125,7 +127,7 @@ const account = Account.fromPrivateKey(
   );
 ```
 
-当然，获取对应的公钥和地址也不在话下：
+接着，获取对应的公钥和地址也不在话下：
 
 ```js
 const publicKey = account.publicKey;
@@ -136,11 +138,13 @@ const address = account.address;
 
 #### Step 4：构建 Client 对象，正式和链上的 Service 进行数据交互
 
-如果想了解什么是 GraphQL，可以参考 [GraphQL 官方文档](https://graphql.org/)。
 关于 Huobi Chain 的 GraphQL API 接口, 请参看[接口](./graphql_api)章节。
 
-GraphQL 将请求分类为 2 类：Query 和 Mutation。前者不会对数据进行任何形式的修改，是查询。后者则相反，增删改都可能发生。
-Huobi Chain 的 GraphQL API 接口也是如此。此外，Client 类还提供了一些工具方法，这些方法不会发送请求到网络，所以他们不属于 Huobi Chain GraphQL API 接口，但是也被包含在 Client 类里。
+Huobi Chain 的 GraphQL API 提供了 Query 和 Mutation。
+- Query 的调用不会对数据进行任何形式的修改，一般是查询
+- Mutation 的调用则能够修改链上数据的
+
+Client 类还提供了一些工具方法，这些方法不会发送请求到网络，所以他们不属于 Huobi Chain GraphQL API 接口，但是也被包含在 Client 类里。
 
 目前的 API 大致分为如下：
 
@@ -165,19 +169,6 @@ let client = Muta.createDefaultMutaInstance().client();
 当然,你也可以自己构建一个 Client 对象：
 
 ```js
-  /**
-   * or if you want to initialize a customized Client object, you could pass a ClientOption arg
-   *
-   * export interface ClientOption {
-   *  endpoint: string; // you already know it
-   *  chainId: string; //the Muta chain id, refer to >>genesis.toml<<
-   *  maxTimeout: number; //this is the timeoutGap, please see ex1
-   *  defaultCyclesLimit: Uint64; //below
-   *  defaultCyclesPrice: Uint64; //below
-   * }
-   *
-   */
-
 let client = new Client({
   chainId:
     '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
@@ -212,16 +203,17 @@ const latestBlockInfo = await client.getBlock(null);
 当然，你可以直接获得最新区块的高度：
 
 ```js
-let latestBlockHeight = hexToNum(latestBlockInfo.header.height);
-// or easier way
-latestBlockHeight = await client.getLatestBlockHeight();
+const latestBlockHeight = await client.getLatestBlockHeight();
 ```
 
-接下来我们更进一步，我们从节点Query一些数据，还记得么 Query 和 Mutation 的差别么?
+接下来我们更进一步，我们从节点 Query 一些数据，还记得么 Query 和 Mutation 的差别么?
 
-Huobi Chain 有很多 service，例如 metadata 服务会提供一些关于链的基础信息，asset 资产服务可以提供创建用户自定义 token 的功能(User defined tokens)。服务之间通常居然有依赖关系，可以互相调用，构建出更高级的业务逻辑。如果你是要和内置服务交互，那么请参考我们的内置服务的 GraphQL API 接口手册，如果你是要和用户自定义服务交互，那么请咨询服务的开发团队。
+Huobi Chain 拥有若干 service，例如 [metadata](./metadata_service.md) 服务会提供一些关于链的基础信息；[asset](./asset_service.md) 资产服务可以提供创建用户自定义 token 的功能(User defined tokens)。
+服务之间通常居然有依赖关系，可以互相调用，构建出更高级的业务逻辑。如果你是要和内置服务交互，那么请参考我们的内置服务的 GraphQL API 接口手册，如果你是要和用户自定义服务交互，那么可以在 GitHub issue 下留下大侠的足迹。
 
-为了进一步学习，我们现在向 AssetService 来发起 Query 请求，访问数据。在发起任何 Query 之前，我们都必须知道请求接口交互的数据格式是什么。假设我们要向 AssetService 来发起查询 Asset 的请求。那么查看 GraphQL API 接口手册，我们需要的数据类型是：
+为了进一步学习，我们现在向 AssetService 来发起 Query 请求，访问数据。在发起任何 Query 之前，我们都必须知道请求接口交互的数据格式是什么。
+
+接下来，我们要向 AssetService 来发起查询 Asset 的请求。
 
 ```typescript
 type Address = string;
@@ -310,7 +302,7 @@ export interface Balance {
     }
 ```
 
-那么我们通过 Client 的工具方法 composeTransaction 来构建一个这样的签名：
+那么我们通过 Client 的工具方法 composeTransaction 来构建一个这样的交易对象：
 
 ```typescript
     const tx = await client.composeTransaction<CreateAssetParam>({
@@ -320,7 +312,7 @@ export interface Balance {
       });
 ```
 
-随后我们需要使用一个用户，对其签名，那么这个用户就是这个 Asset 的 issuer。还记得 Account 类型么？现在是他上场的时候了，使用你所期望的用户的 Account 对象调用 signTransaction 来对交易签名：
+随后我们需要使用一个用户，对交易签名，那么这个用户就是这个 Asset 的 issuer。还记得 Account 类型么？现在是他上场的时候了，使用你所期望的用户的 Account 对象调用 signTransaction 来对交易签名：
 
 ```typescript
     const signedTransaction = Muta.accountFromPrivateKey(
@@ -343,23 +335,23 @@ export interface Balance {
 
 ```
 
-Receipt凭证的数据类型如下:
+Receipt 凭证的数据类型如下:
 
 ```typescript
 export interface Receipt {
-  stateRoot: string; //交易被提交后的state的root
-  height: string; //交易被提交进入的块的盖高度
-  txHash: string; //该笔交易的唯一哈希表示
-  cyclesUsed: string; //该笔交易使用的cycle
-  events: Event[]; //该笔交易产生的事件
-  response: ReceiptResponse; //该笔交易的返回
+  stateRoot: string; // 交易被执行后的 MerkleRoot
+  height: string; // 交易被提交进入的块的盖高度
+  txHash: string; // 该笔交易的唯一哈希表示
+  cyclesUsed: string; // 该笔交易使用的 cycles
+  events: Event[]; // 该笔交易产生的事件
+  response: ReceiptResponse; // 该笔交易的执行结果
 }
 
 export interface ReceiptResponse {
-  serviceName: string; //该笔交易调用的服务名称
-  method: string; //该笔交易调用的服务方法
-  ret: string; //服务给出的返回数据
-  isError: boolean; //服务给出的返回结果,运行是否成功
+  serviceName: string; // 该笔交易调用的服务名称
+  method: string; // 该笔交易调用的服务方法
+  ret: string; // 服务给出的返回数据
+  isError: boolean; // 服务给出的返回结果,运行是否成功
 }
 ```
 
@@ -383,9 +375,9 @@ export interface Asset {
   let createdAssetResult = utils.safeParseJSON(receipt.response.ret); // util 工具类请参考API doc
 ```
 
-#### Step5：通过使用 AssetService API，直接和 AssetService 交互
+#### Step5：通过使用 AssetService Binding API，直接和 AssetService 交互
 
-好的，通过Client的例子，你已经可以向任何服务发起数据交互了，但是每次都调用原生的 GraphQL API，非常的恼人，我相信你肯定可以把他们包装成对应的js方法。现在我们来看一看 Huobi Chain 内置的 AssetService 对应的 js-sdk：
+好的，通过 Client 的例子，你已经可以向任何服务发起数据交互了。但是每次都调用原生的 `queryService` 与 `sendTransaction` 非常的恼人，所以，我们可以直接使用已经内置了的 Service Binding。还是拿 AssetService 举例子，SDK 中提供了它的 binding。
 
 老规矩，我们仍然需要一个 Client 对象和 Account 对象，就像上一节里我们用到的一样，作用也是一样的。随后我们创建一个AssetService：
 
