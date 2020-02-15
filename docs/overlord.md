@@ -47,6 +47,9 @@ Overlord 的核心思想是解耦交易定序与状态共识。
 
 在 Overlord 中，我们将达成共识的区块称为 *block*。*block* 包含 Header 和 Body 两部分（如下图所示）。*block* 的核心结构如下图所示，`height` 是单调递增的数值，相当于高度；`prev_hash` 是上一个 *block* 的哈希；`order_root` 是包含在 Body 中的所有待定序的交易的 merkle root；`state_root` 表示最新的世界状态的 MPT Root；`confirm_roots` 表示从上一个 *block* 的 `state_root` 到当前 *block* 的 `state_root` 之间执行模块向前推进的 `order_root` 集合；`receipt_roots` 记录被执行的每一个 `order_root` 所对应的 `receipt_root`；`proof` 是对上一个 *block* 的证明。
 
+> [!NOTE|style:flat]
+> Overlord 是确定性共识，但是需要特别注意的是，区块头中所包含的 proof 是用来验证上一个块，而非当前区块。因此，对于最新区块而言，能证明其合法性的 proof 将被尚未出现的下一个区块包含，那么如何验证最新区块的合法性呢？实际上，诚实节点在将最新区块持久化之前，已经获得了对该区块的 proof 并进行了合法性验证，因此从诚实节点获取的最新区块是经过验证并且可以相信不会回滚的。
+
 <div align=center><img src="./static/block.png"></div>
 
 在具体的方案中，共识模块批量打包交易进行共识, 达成共识后, 将已定序的交易集合添加到待执行的队列中, 执行模块以交易集合为单位依次执行, 每执行完一个交易集合, 就将被执行的交易集合的 order_root, 以及执行后的 stateRoot 发给共识模块。在 Leader 打包交易拼装 *block* 时, 取最新收到的 state_root 作为最新状态参与共识.
