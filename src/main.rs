@@ -44,7 +44,7 @@ impl ServiceMapping for DefaultServiceMapping {
 #[tokio::main]
 async fn main() {
     let matches = clap::App::new("Huobi-chain")
-        .version("v0.2.0")
+        .version("v0.0.1-rc.1")
         .author("Muta Dev <muta@nervos.org>")
         .arg(
             clap::Arg::from_usage("-c --config=[FILE] 'a required file for the configuration'")
