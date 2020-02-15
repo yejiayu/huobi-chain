@@ -1,12 +1,12 @@
 [package]
 name = "huobi-chain"
-version = "0.0.1-rc.1"
+version = "0.1.0-rc.1"
 authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
 
 [dependencies]
-muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.0.1-rc.1-huobi" }
-protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.0.1-rc.1-huobi", package = "muta-protocol" }
+muta = { git = "https://github.com/nervosnetwork/muta", rev = "417bfa85" }
+protocol = { git = "https://github.com/nervosnetwork/muta", rev = "417bfa85", package = "muta-protocol" }
 
 tokio = { version = "0.2", features = ["macros", "rt-core"]}
 derive_more = "0.15"
