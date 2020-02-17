@@ -14,9 +14,9 @@
 
 ## 开始
 
-- 如果你想基于火币公链技术搭建自己的区块链，可以参考[快速入门](./getting_started.md)。
-- 如果你想了解火币公链的架构设计，可以参考[架构设计](./arch)、[模块设计](./transaction_pool)。
-- 如果你想在火币公链上开发去中心化应用，可以参考[从 0 开发 riscv 合约教程](./contract_demo)。
+- 如果你想基于火币公链技术搭建自己的区块链，可以参考[快速入门](./docs/getting_started.md)。
+- 如果你想了解火币公链的架构设计，可以参考 [架构设计](./docs/arch)。
+- 如果你想在火币公链上开发去中心化应用，可以参考[从 0 开发 riscv 合约教程](./docs/contract_demo)。
 
 ## 核心功能
 
@@ -50,6 +50,8 @@ Service 是 Muta 框架中用于扩展的抽象层，用户可以基于 Service 
 - :tada:提交 Pull Request
 
 或者提交一个[issue](https://github.com/HuobiGroup/huobi-chain/issues) - 欢迎任何有帮助性的建议:stuck_out_tongue_winking_eye:
+
+如果愿意参与翻译文档，请到未翻译的英文文档页面上方点击 edit on GitHub 可以找到源文件，直接修改源文件，并且提 PR，步骤同上面的 PR 步骤。
 
 [overlord]: https://github.com/cryptape/overlord
 [risc-v]: https://www.wikiwand.com/en/RISC-V

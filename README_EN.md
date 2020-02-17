@@ -11,8 +11,9 @@ In terms of optimization for financial applications, Huobi chain plans to suppor
 
 ## Get Started
 
-- [Install](./docs/getting_started.md)
-- [Documents](./docs/index.md)
+- If you want to build your own blockchain based on Huobi Chain technology, you can refer to Quick [Start](./docs/getting_started.md).
+- If you want to know the architecture design of the Huobi Chain, you can refer to the [architecture design and module design](./docs/arch).
+- If you want to develop decentralized applications on Huobi Chain, you can refer to the [contract development tutorial](./docs/contract_demo).
 
 ## Key Features
 
@@ -20,23 +21,36 @@ In terms of optimization for financial applications, Huobi chain plans to suppor
 
 ### Parallel Execution Consensus
 
-The Huobi chain adopts the [Overlord][overlord] consensus algorithm, which is designed to be a BFT consensus algorithm capable of supporting hundreds of consensus nodes, satisfying thousands of transactions per second with trading delays of no more than a few seconds. The core idea of ​​Overlord is to decouple transaction sequencing and state consensus, so that the consensus module and the execution module can be executed in parallel, which greatly improves the transaction throughput of the entire chain.
-
-### RISC-V Based Virtual Machine
-
-The default virtual machine for the Huobi public chain is CKB-VM with the [RISC-V][risc-v] instruction set. RISC-V is an open-source hardware instruction set architecture (ISA) based on established reduced instruction set computer (RISC) principles. Compared with the commonly used EVM and WASM in the blockchain, CKB-VM has many advantages, including higher performance, stable instruction set without frequent hard fork upgrade, and support from open source ecology.
+The Huobi chain adopts the [Overlord][overlord] consensus algorithm, which is designed to be a BFT consensus algorithm capable of supporting hundreds of consensus nodes, satisfying thousands of transactions per second with trading delays of no more than a few seconds. The core idea of ​​Overlord is to decouple transaction sequencing and state consensus, so that the consensus module and the execution module can be executed in parallel, which greatly improves the transaction throughput of the entire chain. Moreover, the consensus mechanism of Overload ensures that the blocks on the chain are determined and cannot be rolled back, which is more suitable for financial scenarios.
 
 ### Built-in Interoperation Capability
 
-The UDT instantiated with FCA has cross-chain function natively, and the cross-chain protocol can be used to implement the decentralized cross-chain between the Huobi public chain and its side chain, as well as between the Huobi public chain and the Nervos CKB.
+The UDT instantiated with FCA has cross-chain function natively, and the cross-chain protocol can be used to implement the decentralized cross-chain between the Huobi public chain and its side chain, as well as between the Huobi Chain and the Nervos CKB.
 
-We pass the cross-chain proof in a decentralized relay. The relayer can be a sidechain validator or other third-party users. Direct cross-chain functionality can be achieved between the side chains without relying on the Huobi chain or the Nervos CKB.
+We pass the cross-chain proof in a decentralized relay. The relayer can be a sidechain validator or other third-party users. Direct cross-chain functionality can be achieved between the side chains without relying on the Huobi Chain or the Nervos CKB. 
 
-### Native Services
+### Flexible and customizable service
 
-Users can deploy smart contracts in two ways. The first is to compile the contract into RISC-V code and dynamically deploy it to the chain. The second is to deploy native contracts written in Rust. The native contract bypasses the virtual machine's interpretation process and directly accesses system resources, which gains more efficient performance.
+Service is an abstraction layer used in the Muta framework for extension. Users can define chain management, add VMs, or implement a dapp based on the services. Huobi Chain testnet currently based on the Muta framework have four built-in services: asset service, RISC-V service, metadata service, and node manager service. In the future, Huobi Chain will add more functional features through services to meet application requirements and regulatory requirements. And the side chain can also reuse these services when realizing high-performance specific business.
 
-In the future, the side chain of the Huobi public chain may widely apply the original contract to some business scenarios that require high performance.
+### Application development
+
+Users can issue their own tokens or develop decentralized applications through contracts on the current testnet. Contracts can be written in C language, and would be compiled into RISC-V code and dynamically deployed on the chain. Huobi Chain will support more contract programming languages ​​in the future to further improve the developer experience.
+
+## Contribute ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+
+- :fork_and_knife:Fork it!
+- :twisted_rightwards_arrows:Create your branch: `git checkout -b new-branch`
+- :wrench:Make your changes
+- :memo:Commit your changes: `git commit -am 'Add some feature'`
+- :rocket:Push to the branch: `git push origin new-branch`
+- :tada:Submit a pull request
+
+or submit an [issue](https://github.com/HuobiGroup/huobi-chain/issues) 
+
+- any helpful suggestions are welcomed.:stuck_out_tongue_winking_eye:
+
+If you are willing to participate in the translation of the document, please go to the top of the untranslated English document page and click edit on GitHub to find the source file, modify the source file directly, and submit the PR. The steps are the same as the PR step above.
 
 [overlord]: https://github.com/cryptape/overlord
 [risc-v]: https://www.wikiwand.com/en/RISC-V
