@@ -1,4 +1,12 @@
-import { muta, CHAIN_CONFIG, delay, client, accounts, admin } from "./utils";
+import {
+  muta,
+  CHAIN_CONFIG,
+  delay,
+  client,
+  accounts,
+  admin,
+  str2hex
+} from "./utils";
 import { readFileSync } from "fs";
 
 const account = accounts[0];
@@ -20,8 +28,12 @@ async function deploy(code, init_args, intp_type) {
   const receipt = await client.getReceipt(tx_hash);
   // console.log('deploy:', { tx_hash, receipt });
 
-  const addr = JSON.parse(receipt.response.ret).address;
-  return addr;
+  try {
+    const addr = JSON.parse(receipt.response.ret).address;
+    return addr;
+  } catch (err) {
+    throw receipt;
+  }
 }
 
 async function query(address, args) {
@@ -88,5 +100,17 @@ describe("riscv service", () => {
       "",
       ""
     ]);
+  });
+
+  test("test invalid contract", async () => {
+    const code = str2hex("invalid contract");
+    try {
+      const addr = await deploy(code, "invalid params", "Binary");
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err.response.ret).toBe(
+        "[ProtocolError] Kind: Service Error: CkbVm(ParseError)"
+      );
+    }
   });
 });

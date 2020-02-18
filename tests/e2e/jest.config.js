@@ -4,5 +4,8 @@ module.exports = {
   transform: {
     "^.+\\.ts?$": "ts-jest"
   },
-  moduleFileExtensions: ["ts", "js", "json"]
+  moduleFileExtensions: ["ts", "js", "json"],
+  setupFilesAfterEnv: [
+    "./jest.setup.js"
+  ]
 };

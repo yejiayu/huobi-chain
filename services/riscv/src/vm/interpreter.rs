@@ -107,7 +107,7 @@ impl Interpreter {
                     Rc::<RefCell<_>>::clone(&self.chain),
                 )))
                 .build();
-                machine.load_program(&code, &args[..]).unwrap();
+                machine.load_program(&code, &args[..])?;
                 let exitcode = machine.run()?;
                 let cycles = machine.cycles();
                 (exitcode, cycles)
@@ -131,7 +131,7 @@ impl Interpreter {
                     )))
                     .build();
                 let mut machine = AsmMachine::new(machine, None);
-                machine.load_program(&code, &args[..]).unwrap();
+                machine.load_program(&code, &args[..])?;
                 let exitcode = machine.run()?;
                 let cycles = machine.machine.cycles();
                 (exitcode, cycles)
