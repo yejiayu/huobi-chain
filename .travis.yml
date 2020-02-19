@@ -1,30 +1,7 @@
 language: rust
+rust: nightly
 dist: bionic
-sudo: false
-
-cache:
-  cargo: true
-  apt: true
-
-git:
-  depth: 1
-  submodules: false
-
-if: 'branch IN (master, develop, staging, trying) OR type != push OR fork = true OR tag =~ ^v'
-
-addons:
-  apt:
-    packages:
-    - gcc
-    - librocksdb5.8
-    - librocksdb-dev
-
-matrix:
-  include:
-  - rust: nightly
-
-install: ./devtools/ci/install.sh
-script: ./devtools/ci/script.sh
+sudo: true
 
 env:
   global:
@@ -36,4 +13,53 @@ env:
 
 before_cache:
   - rm -rf ./target/debug/incremental/
-  - cargo sweep -f
+
+cache:
+  apt: true
+  directories:
+    - $TRAVIS_HOME/.cargo/
+
+git:
+  depth: 2
+  submodules: false
+
+if: branch IN (master, release) OR type != push  OR fork = true OR tag =~ ^v
+
+addons:
+  apt:
+    packages:
+    - gcc
+    - librocksdb5.8
+    - librocksdb-dev
+
+install: ./devtools/ci/install.sh
+script: ./devtools/ci/script.sh
+
+matrix:
+  include:
+    - name: do ci
+      if: 'tag IS NOT present'
+    - name: linux package
+      if: 'tag IS present'
+      os: linux
+      script: 
+        - cargo build --release
+        - ./devtools/ci/package.sh
+    - name: osx package
+      if: 'tag IS present'
+      os: osx
+      script: 
+        - cargo build --release
+        - ./devtools/ci/package.sh
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  overwrite: true
+  api_key:
+    secure: Y/XSoCZiY2PzEIp7XAhbWW2t+iPRYiYiICExKItTmYUVYTa07IMQHmnsVJjP/jl9U/eUfbd9/+ilUxK8A6m316dBfdd3sfyBiC9Cffo+g+eUZU83ycDllc4mXqH9lFBIX1WIbpkylasIVw/7xj1jOdlZhYZ4eiUIF4kj7/98b9FWcaPmSAh9ZmNzK+Wx+8ZigwBxTomTUcJNoUe4B2JXBpJVunhWvO2fapPLhu/cHBOEirzocfAPuXItDZQ2e5l3Gee/heCWEf+P7m7rWK/GA55ZmhREVHJimkhEHeKI9VSEpItEgleV3X+NOY1yYUkriCIpoDIQIWhJLEjp1Kr3nxsCtGdMBDuBz3mFq97wssvMBt0w178Dm5ifQ5Iznt0WdKxmt2J0lURnLZG8fJOD90VIxsQ9f6hQQbpm/N9pJNSz2XlPHQsKM+dsl0W3Dz2/USe0nziGCRUh3w+7/51Kd3PtHYpRr/XHEMdmwWLI7GK5giFoXCcWOJzsi+P2jc/bMrGXwlbclmL2zAbkjU360HSnF3GIs4Et5iGx6mQQbTJJOJeAnrtIV+XMxDpVf6VMse67NhxBHiYb7kaz+qAmfQXAmqayKImSbg8yMvOUYUQeY4O4L4COSaznN1rd9S3gBDG889vrSZ+MXBGQ+rCWYKCZvSugIJmvO2iT/kWXHYE=
+  file:
+    - huobi-chain-$TRAVIS_TAG-linux.tar.gz
+    - huobi-chain-$TRAVIS_TAG-osx.tar.gz
+  on:
+    tags: true
