@@ -8,27 +8,57 @@ use std::rc::Rc;
 
 use derive_more::{Display, From};
 
-use binding_macro::{read, service, write};
-use protocol::traits::ExecutorParams;
-use protocol::traits::ServiceSDK;
+use binding_macro::{genesis, read, service, write};
+use protocol::traits::{ExecutorParams, ServiceSDK, StoreBool, StoreMap};
 use protocol::types::{Address, Hash, ServiceContext};
 use protocol::{Bytes, BytesMut, ProtocolError, ProtocolErrorKind, ProtocolResult};
 
 use crate::types::{
-    Contract, DeployPayload, DeployResp, ExecPayload, GetContractPayload, GetContractResp,
+    Addresses, Contract, DeployPayload, DeployResp, ExecPayload, GetContractPayload,
+    GetContractResp, InitGenesisPayload,
 };
 use crate::vm::{ChainInterface, Interpreter, InterpreterConf, InterpreterParams};
 
 pub struct RiscvService<SDK> {
-    sdk: Rc<RefCell<SDK>>,
+    sdk:              Rc<RefCell<SDK>>,
+    deploy_auth:      Box<dyn StoreMap<Address, bool>>,
+    admins:           Box<dyn StoreMap<Address, bool>>,
+    enable_whitelist: Box<dyn StoreBool>,
 }
 
 #[service]
 impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
     pub fn init(sdk: SDK) -> ProtocolResult<Self> {
+        let sdk = Rc::new(RefCell::new(sdk));
+        let deploy_auth: Box<dyn StoreMap<Address, bool>> =
+            sdk.borrow_mut().alloc_or_recover_map("deploy_auth")?;
+        let enable_whitelist = sdk.borrow_mut().alloc_or_recover_bool("enable_whitelist")?;
+        let admins: Box<dyn StoreMap<Address, bool>> =
+            sdk.borrow_mut().alloc_or_recover_map("admins")?;
         Ok(Self {
-            sdk: Rc::new(RefCell::new(sdk)),
+            sdk,
+            deploy_auth,
+            enable_whitelist,
+            admins,
         })
+    }
+
+    #[genesis]
+    fn init_genesis(&mut self, payload: InitGenesisPayload) -> ProtocolResult<()> {
+        self.enable_whitelist.set(payload.enable_whitelist)?;
+        if payload.enable_whitelist {
+            assert!(
+                !payload.admins.is_empty(),
+                "If riscv whitelist is enabled, you should set at least one admin in genesis.toml"
+            );
+        }
+        for addr in payload.whitelist {
+            self.deploy_auth.insert(addr, true)?;
+        }
+        for addr in payload.admins {
+            self.admins.insert(addr, true)?;
+        }
+        Ok(())
     }
 
     fn run(
@@ -88,12 +118,66 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         self.run(ctx, payload, false)
     }
 
+    fn verify_authority(&self, ctx: &ServiceContext) -> ProtocolResult<bool> {
+        self.admins.contains(&ctx.get_caller())
+    }
+
+    #[write]
+    fn grant_deploy_auth(&mut self, ctx: ServiceContext, payload: Addresses) -> ProtocolResult<()> {
+        if !self.verify_authority(&ctx)? {
+            return Err(ServiceError::NonAuthorized.into());
+        }
+        ctx.sub_cycles(payload.addresses.len() as u64 * 10000)?;
+        for addr in payload.addresses {
+            self.deploy_auth.insert(addr, true)?;
+        }
+        Ok(())
+    }
+
+    #[write]
+    fn revoke_deploy_auth(
+        &mut self,
+        ctx: ServiceContext,
+        payload: Addresses,
+    ) -> ProtocolResult<()> {
+        if !self.verify_authority(&ctx)? {
+            return Err(ServiceError::NonAuthorized.into());
+        }
+        ctx.sub_cycles(payload.addresses.len() as u64 * 10000)?;
+        for addr in payload.addresses {
+            self.deploy_auth.remove(&addr)?;
+        }
+        Ok(())
+    }
+
+    #[read]
+    fn check_deploy_auth(
+        &self,
+        ctx: ServiceContext,
+        payload: Addresses,
+    ) -> ProtocolResult<Addresses> {
+        let mut res = Addresses::default();
+        ctx.sub_cycles(payload.addresses.len() as u64 * 1000)?;
+        for addr in payload.addresses {
+            if self.deploy_auth.contains(&addr)? {
+                res.addresses.push(addr);
+            }
+        }
+        Ok(res)
+    }
+
     #[write]
     fn deploy(
         &mut self,
         ctx: ServiceContext,
         payload: DeployPayload,
     ) -> ProtocolResult<DeployResp> {
+        // check auth
+        let enable_whitelist = self.enable_whitelist.get().unwrap_or_default();
+        if enable_whitelist && !self.deploy_auth.contains(&ctx.get_caller())? {
+            return Err(ServiceError::NonAuthorized.into());
+        }
+
         let code = Bytes::from(hex::decode(&payload.code).map_err(ServiceError::HexDecode)?);
 
         // Save code
@@ -282,6 +366,9 @@ pub enum ServiceError {
 
     #[display(fmt = "invalid key '{:?}', should be a hex string", _0)]
     InvalidKey(String),
+
+    #[display(fmt = "Not authorized")]
+    NonAuthorized,
 }
 
 impl std::error::Error for ServiceError {}

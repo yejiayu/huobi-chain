@@ -85,11 +85,27 @@ pub struct GetContractPayload {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct Addresses {
+    #[serde(default)]
+    pub addresses: Vec<Address>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct GetContractResp {
     pub code_hash:      Hash,
     pub intp_type:      InterpreterType,
     pub code:           String,
     pub storage_values: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct InitGenesisPayload {
+    #[serde(default)]
+    pub enable_whitelist: bool,
+    #[serde(default)]
+    pub whitelist:        Vec<Address>,
+    #[serde(default)]
+    pub admins:           Vec<Address>,
 }
 
 impl FixedCodec for Contract {

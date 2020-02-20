@@ -74,6 +74,7 @@ pub struct DeployResp {
 }
 ```
 
+- method: deploy
 - 参数
   - code：合约代码，使用 hex 编码
   - intp_type：生产环境目前仅支持 `Binary`，即 ELF 二进制文件格式，dev 和 test 环境可以使用 `Duktape`，即使用 js 代码作为合约代码
@@ -91,7 +92,28 @@ pub struct ExecPayload {
 }
 ```
 
+- method: exec
 - 参数
   - address：调用的合约地址
   - args：合约调用参数
 - 返回值：为合约返回的字符串
+
+### 授权部署合约/撤销授权/查看授权
+
+
+```javascript
+// payload 示例
+{
+  addresses: ["cff1002107105460941f797828f468667aa1a2db"]
+}
+```
+
+- method:
+  - 授权：grant_deploy_auth
+  - 取消授权：revoke_deploy_auth
+  - 查看授权：check_deploy_auth
+- payload: 均为上述示例
+  - addresses: 要授权的地址列表
+- 返回值
+  - grant_deploy_auth 和 revoke_deploy_auth 无返回值
+  - check_deploy_auth 返回待检查列表中有权限的地址

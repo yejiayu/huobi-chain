@@ -40,6 +40,18 @@ payload = '''
 
 [[services]]
 name = "node_manager"
-# private key of this admin:
+# private key of 0xcff1002107105460941f797828f468667aa1a2db:
 # 2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2
 payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
+
+[[services]]
+name = 'riscv'
+# private key of 0x9cccacbb8a4b0353d42138613b2db72d6a661cf4:
+# d6ef93ed5d27327fd10349a75d3b7a91aa5c1d0f42994be10c1cb0e357e722f5
+payload = '''
+{
+    "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
+    "enable_whitelist": true,
+    "whitelist": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
+}
+'''

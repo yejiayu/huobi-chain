@@ -5,13 +5,17 @@ import {
   client,
   accounts,
   admin,
-  str2hex
+  str2hex,
 } from "./utils";
 import { readFileSync } from "fs";
+import { Muta } from "muta-sdk";
 
-const account = accounts[0];
+const account = Muta.accountFromPrivateKey(
+  "d6ef93ed5d27327fd10349a75d3b7a91aa5c1d0f42994be10c1cb0e357e722f5"
+);
 
-async function deploy(code, init_args, intp_type) {
+async function deploy(code, init_args, intp_type, acc = null) {
+  const account_to_sign = acc || account;
   const tx = await client.composeTransaction({
     method: "deploy",
     payload: {
@@ -22,7 +26,7 @@ async function deploy(code, init_args, intp_type) {
     serviceName: "riscv"
   });
   // console.log(tx);
-  const tx_hash = await client.sendTransaction(account.signTransaction(tx));
+  const tx_hash = await client.sendTransaction(account_to_sign.signTransaction(tx));
   // console.log(tx_hash);
 
   const receipt = await client.getReceipt(tx_hash);
@@ -70,8 +74,82 @@ async function exec(address, args) {
   return exec_receipt;
 }
 
+
 describe("riscv service", () => {
-  test("test normal process", async () => {
+  test("test_riscv_deploy_auth", async () => {
+    const acc = accounts[1];
+    const code = readFileSync("../../services/riscv/src/tests/simple_storage");
+    // not authed
+    try {
+      let addr = await deploy(code, "set k init", "Binary", acc);
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err.response.ret).toBe(
+        "[ProtocolError] Kind: Service Error: NonAuthorized"
+      );
+    }
+
+    // check auth
+    let deploy_auth_res = await client.queryService({
+      serviceName: "riscv",
+      method: "check_deploy_auth",
+      payload: JSON.stringify({
+        addresses: [acc.address, accounts[2].address],
+      })
+    });
+    // console.log({deploy_auth_res});
+    expect(deploy_auth_res.isError).toBe(false);
+    expect(JSON.parse(deploy_auth_res.ret).addresses).toStrictEqual([]);
+
+    // grant deploy auth to account
+    let tx = await client.composeTransaction({
+      method: "grant_deploy_auth",
+      payload: {
+        addresses: [acc.address],
+      },
+      serviceName: "riscv"
+    });
+    let tx_hash = await client.sendTransaction(admin.signTransaction(tx));
+    let receipt = await client.getReceipt(tx_hash);
+    let addr = await deploy(code, "set k init", "Binary", acc);
+
+    // check auth
+    deploy_auth_res = await client.queryService({
+      serviceName: "riscv",
+      method: "check_deploy_auth",
+      payload: JSON.stringify({
+        addresses: [acc.address, accounts[2].address],
+      })
+    });
+    // console.log({deploy_auth_res});
+    expect(deploy_auth_res.isError).toBe(false);
+    expect(JSON.parse(deploy_auth_res.ret).addresses).toStrictEqual([acc.address.slice(2)]);
+
+    // revoke auth
+    tx = await client.composeTransaction({
+      method: "revoke_deploy_auth",
+      payload: {
+        addresses: [acc.address],
+      },
+      serviceName: "riscv"
+    });
+    tx_hash = await client.sendTransaction(admin.signTransaction(tx));
+    receipt = await client.getReceipt(tx_hash);
+
+    // check auth
+    deploy_auth_res = await client.queryService({
+      serviceName: "riscv",
+      method: "check_deploy_auth",
+      payload: JSON.stringify({
+        addresses: [acc.address, accounts[2].address],
+      })
+    });
+    // console.log({deploy_auth_res});
+    expect(deploy_auth_res.isError).toBe(false);
+    expect(JSON.parse(deploy_auth_res.ret).addresses).toStrictEqual([]);
+  });
+
+  test("test_riscv_normal_process", async () => {
     const code = readFileSync("../../services/riscv/src/tests/simple_storage");
     const addr = await deploy(code, "set k init", "Binary");
     // console.log(addr);
@@ -102,7 +180,7 @@ describe("riscv service", () => {
     ]);
   });
 
-  test("test invalid contract", async () => {
+  test("test_riscv_invalid_contract", async () => {
     const code = str2hex("invalid contract");
     try {
       const addr = await deploy(code, "invalid params", "Binary");

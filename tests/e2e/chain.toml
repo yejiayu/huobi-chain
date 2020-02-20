@@ -22,7 +22,7 @@ broadcast_txs_interval = 200
 light = false
 
 [logger]
-filter = "info"
+filter = "error"
 log_to_console = true
 console_show_file_and_line = false
 log_path = "./target/tests/e2e/logs/"
