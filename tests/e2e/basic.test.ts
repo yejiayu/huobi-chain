@@ -13,6 +13,56 @@ describe("basic API test via muta-sdk-js", () => {
     expect(block.header.height).toBe("0000000000000001");
   });
 
+  test("send_tx_exceed_cycles_limit", async () => {
+    const tx = await client.composeTransaction({
+      method: "create_asset",
+      payload: {
+        name: "Muta Token",
+        symbol: "MT",
+        supply: 1000000000
+      },
+      serviceName: "asset"
+    });
+    tx.cyclesLimit = "0xE8D4A51FFF";
+    const account = accounts[0];
+    const signed_tx = account.signTransaction(tx);
+    // console.log(signed_tx);
+    try {
+      const hash = await client.sendTransaction(signed_tx);
+      expect(true).toBe(false);
+    } catch (err) {
+      // console.log(err);
+      expect(err.response.errors[0].message.includes("ExceedCyclesLimit")).toBe(
+        true
+      );
+    }
+  });
+
+  test("send_tx_exceed_tx_size_limit", async () => {
+    const tx = await client.composeTransaction({
+      method: "create_asset",
+      payload: {
+        name: "Muta Token",
+        symbol: "MT",
+        supply: 1000000000,
+        bigdata: "a".repeat(30000)
+      },
+      serviceName: "asset"
+    });
+    const account = accounts[0];
+    const signed_tx = account.signTransaction(tx);
+    // console.log(signed_tx);
+    try {
+      const hash = await client.sendTransaction(signed_tx);
+      expect(true).toBe(false);
+    } catch (err) {
+      // console.log(err);
+      expect(err.response.errors[0].message.includes("ExceedSizeLimit")).toBe(
+        true
+      );
+    }
+  });
+
   test("send tx, get tx and receipt", async () => {
     const tx = await client.composeTransaction({
       method: "create_asset",

@@ -5,7 +5,5 @@ module.exports = {
     "^.+\\.ts?$": "ts-jest"
   },
   moduleFileExtensions: ["ts", "js", "json"],
-  setupFilesAfterEnv: [
-    "./jest.setup.js"
-  ]
+  setupFilesAfterEnv: ["./jest.setup.js"]
 };

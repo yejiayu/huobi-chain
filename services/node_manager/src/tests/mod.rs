@@ -241,6 +241,10 @@ impl Storage for MockStorage {
     ) -> ProtocolResult<Vec<SignedTransaction>> {
         unimplemented!()
     }
+
+    async fn remove_wal_transactions(&self, _block_hash: Hash) -> ProtocolResult<()> {
+        unimplemented!()
+    }
 }
 
 pub struct MockServiceMapping;

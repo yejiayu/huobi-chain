@@ -1,17 +1,15 @@
 [package]
 name = "huobi-chain"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
 
 [dependencies]
-muta = { git = "https://github.com/nervosnetwork/muta", rev = "417bfa85" }
-protocol = { git = "https://github.com/nervosnetwork/muta", rev = "417bfa85", package = "muta-protocol" }
+muta = { git = "https://github.com/nervosnetwork/muta", rev = "28e685a" }
+protocol = { git = "https://github.com/nervosnetwork/muta", rev = "28e685a", package = "muta-protocol" }
 
-tokio = { version = "0.2", features = ["macros", "rt-core"]}
 derive_more = "0.15"
-runtime = "0.3.0-alpha.7"
-runtime-tokio = "0.3.0-alpha.6"
+tokio = { version = "0.2", features = ["macros", "rt-core", "rt-util"]}
 clap = "2.33"
 
 metadata = { path = "services/metadata" }

@@ -103,7 +103,9 @@ fn mock_metadata_1() -> Metadata {
         propose_ratio:   10,
         prevote_ratio:   10,
         precommit_ratio: 10,
-        brake_ratio: 1
+        brake_ratio: 1,
+        tx_num_limit: 20000,
+        max_tx_size: 1_048_576,
     }
 }
 fn mock_metadata_2() -> Metadata {
@@ -134,7 +136,9 @@ fn mock_metadata_2() -> Metadata {
         propose_ratio:   1,
         prevote_ratio:   1,
         precommit_ratio: 1,
-        brake_ratio: 1
+        brake_ratio: 1,
+        tx_num_limit: 20000,
+        max_tx_size: 1_048_576,
     }
 }
 
@@ -246,6 +250,10 @@ impl Storage for MockStorage {
         &self,
         _block_hash: Hash,
     ) -> ProtocolResult<Vec<SignedTransaction>> {
+        unimplemented!()
+    }
+
+    async fn remove_wal_transactions(&self, _block_hash: Hash) -> ProtocolResult<()> {
         unimplemented!()
     }
 }

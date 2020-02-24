@@ -8,6 +8,8 @@ data_path = "./data"
 listening_address = "0.0.0.0:8000"
 graphql_uri = "/graphql"
 graphiql_uri = "/graphiql"
+workers = 0 # if 0, uses number of available logical cpu as threads count.
+maxconn = 25000
 
 [network]
 listening_address = "0.0.0.0:1337"
@@ -32,5 +34,4 @@ console_show_file_and_line = false
 log_path = "logs/"
 log_to_file = true
 metrics = true
-# you can specify log level for modules with config below
-# modules_level = { "overlord::state::process" = "debug", core_consensus = "error" }
+modules_level = { riscv_debug = "debug" }

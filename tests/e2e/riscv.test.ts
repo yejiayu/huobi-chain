@@ -5,7 +5,7 @@ import {
   client,
   accounts,
   admin,
-  str2hex,
+  str2hex
 } from "./utils";
 import { readFileSync } from "fs";
 import { Muta } from "muta-sdk";
@@ -26,7 +26,9 @@ async function deploy(code, init_args, intp_type, acc = null) {
     serviceName: "riscv"
   });
   // console.log(tx);
-  const tx_hash = await client.sendTransaction(account_to_sign.signTransaction(tx));
+  const tx_hash = await client.sendTransaction(
+    account_to_sign.signTransaction(tx)
+  );
   // console.log(tx_hash);
 
   const receipt = await client.getReceipt(tx_hash);
@@ -74,7 +76,6 @@ async function exec(address, args) {
   return exec_receipt;
 }
 
-
 describe("riscv service", () => {
   test("test_riscv_deploy_auth", async () => {
     const acc = accounts[1];
@@ -94,7 +95,7 @@ describe("riscv service", () => {
       serviceName: "riscv",
       method: "check_deploy_auth",
       payload: JSON.stringify({
-        addresses: [acc.address, accounts[2].address],
+        addresses: [acc.address, accounts[2].address]
       })
     });
     // console.log({deploy_auth_res});
@@ -105,7 +106,7 @@ describe("riscv service", () => {
     let tx = await client.composeTransaction({
       method: "grant_deploy_auth",
       payload: {
-        addresses: [acc.address],
+        addresses: [acc.address]
       },
       serviceName: "riscv"
     });
@@ -118,18 +119,20 @@ describe("riscv service", () => {
       serviceName: "riscv",
       method: "check_deploy_auth",
       payload: JSON.stringify({
-        addresses: [acc.address, accounts[2].address],
+        addresses: [acc.address, accounts[2].address]
       })
     });
     // console.log({deploy_auth_res});
     expect(deploy_auth_res.isError).toBe(false);
-    expect(JSON.parse(deploy_auth_res.ret).addresses).toStrictEqual([acc.address.slice(2)]);
+    expect(JSON.parse(deploy_auth_res.ret).addresses).toStrictEqual([
+      acc.address.slice(2)
+    ]);
 
     // revoke auth
     tx = await client.composeTransaction({
       method: "revoke_deploy_auth",
       payload: {
-        addresses: [acc.address],
+        addresses: [acc.address]
       },
       serviceName: "riscv"
     });
@@ -141,7 +144,7 @@ describe("riscv service", () => {
       serviceName: "riscv",
       method: "check_deploy_auth",
       payload: JSON.stringify({
-        addresses: [acc.address, accounts[2].address],
+        addresses: [acc.address, accounts[2].address]
       })
     });
     // console.log({deploy_auth_res});
