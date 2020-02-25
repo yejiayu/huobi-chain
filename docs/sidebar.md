@@ -24,3 +24,5 @@
 	- [JS-SDK](/js_sdk.md)
 - **贡献说明**
 	- [贡献说明](/contribute.md)
+- **常见问题**
+	- [FAQ](/faq.md)

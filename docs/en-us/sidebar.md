@@ -24,4 +24,5 @@
 	- [JS-SDK](en-us/js_sdk.md)
 - **Contributing**
 	- [Contributing](en-us/contribute.md)
-
+- **FAQ**
+	- [Huobi Chain FAQ](en-us/faq.md)
