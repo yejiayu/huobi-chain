@@ -43,7 +43,9 @@ payload = '''
     "propose_ratio": 15,
     "prevote_ratio": 10,
     "precommit_ratio": 10,
-    "brake_ratio": 7
+    "brake_ratio": 7,
+    "tx_num_limit": 20000,
+    "max_tx_size": 1048576
 }
 '''
 
@@ -52,19 +54,39 @@ name = "node_manager"
 # private key of this admin:
 # 2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2
 payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
+
+# you can enable whitelist in riscv with init payload below
+# [[services]]
+# name = 'riscv'
+# payload = '''
+# {
+#     "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
+#     "enable_whitelist": true,
+#     "whitelist": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
+# }
+# '''
 ```
 
-`services` 为各个 service 的初始化参数。
+创世块的初始化参数：
 
-各 service 的初始化参数说明：
+- `timestamp`: 创世块的时间戳，可以随意设置，配置成 0，或者当天 0 点的时间都可以。
+- `prevhash`: 可以随意设置，只会影响查询创世块时的字段显示。
+
+`services` 为各个 service 的初始化参数。各 service 的初始化参数说明：
+
 - `asset`: 如果链需要发行原生资产，可以参考上面的例子填写，否则可以去掉
+  - `id`: 资产的唯一 id，建议设置成 hash ，以免在之后和链上其他资产重复
+  - `name`: 资产名字
+  - `symbol`: 资产简称
+  - `supply`: 资产发行总量
+  - `issuer`: 发行方地址
 - `metadata`: 链的元数据，必须填写
-  - `chain_id`: 链唯一 id
+  - `chain_id`: 链唯一 id，建议设置为任意 hash
   - `common_ref`: BLS 签名需要
-  - `timeout_gap`: 交易池能接受的最大超时块范围。用户在发送交易的时候，需要填写 `timeout` 字段，表示块高度超过这个值后，如果该交易还没有被打包，则以后都不会被打包，这样可以确保之前的某笔交易超时后一定会失败，避免用户的交易很长时间未被打包后换 `nonce` 重发交易，结果两笔交易都上链的情况。当用户填写的 `timeout` > `chain_current_height` + `timeout_gap` 时，交易池会拒绝这笔交易。
-  - `cycles_limit`: 区块最大 `cycle` 限制
+  - `timeout_gap`: 交易池能接受的最大超时块范围。用户在发送交易的时候，需要填写 `timeout` 字段，表示块高度超过这个值后，如果该交易还没有被打包，则以后都不会被打包，这样可以确保之前的某笔交易超时后一定会失败，避免用户的交易很长时间未被打包后换 `nonce` 重发交易，结果两笔交易都上链的情况。当用户填写的 `timeout` > `chain_current_height` + `timeout_gap` 时，交易池会拒绝这笔交易。考虑到一些特殊情况（比如一些冷钱包对交易签名后较长时间才发出），该值可以适当调大
+  - `cycles_limit`: 10进制，链级别对单个交易可以消耗的最大 `cycle` 的限制
   - `cycles_price`: 最小 cycle 价格，目前没有使用
-  - `interval`: 出块间隔，单位为 ms
+  - `interval`: 出块间隔，单位为 ms。当设置为 3s 的时候，出块间隔并不是严格的 3s，而是在 3s 附近波动，这是因为 Overlord 共识在响应性上的优化。当网络状况较好的时候，会小于 3s，网络情况较差，则会略大于 3s。
   - `verifier_list`: 共识列表
     - `bls_pub_key`: 节点的 BLS 公钥
     - `address`: 节点的地址
@@ -74,23 +96,32 @@ payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
   - `prevote_ratio`: prevote 阶段的超时时间与出块时间的比例
   - `precommit_ratio`: precommit 阶段的超时时间与出块时间的比例
   - `brake_ratio`: brake 阶段的超时时间与出块时间的比例
+  - `tx_num_limit`: 每一个块里最多可以打包的交易数
+  - `max_tx_size`: 单个交易最大的字节数
 - `node_manager`:
   - 如果有共同认可的超级管理员，则将其地址填入此处，否则可以填写全零地址
-
+- `riscv`
+  - `admins`: 管理员地址，可设置多个，和上面的 `node_manager` 的 `admin` 地址是独立开来的
+  - `enable_whitelist`: 是否开启白名单功能，需在起链时设置好
+  - `whitelist`: 用户的白名单地址，如果 `enable_whitelist` 设置为 `true`，则只有在白名单里的地址才被允许部署合约
 
 ## 链的运行配置
 
 `chain.toml`:
 
 ```toml
+# crypto
 privkey = "45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
 
+# db config
 data_path = "./data"
 
 [graphql]
 listening_address = "0.0.0.0:8000"
 graphql_uri = "/graphql"
 graphiql_uri = "/graphiql"
+workers = 0 # if 0, uses number of available logical cpu as threads count.
+maxconn = 25000
 
 [network]
 listening_address = "0.0.0.0:1337"
@@ -101,7 +132,6 @@ pubkey = "031288a6788678c25952eba8693b2f278f66e2187004b64ac09416d07f83f96d5b"
 address = "0.0.0.0:1888"
 
 [mempool]
-
 pool_size = 20000
 broadcast_txs_size = 200
 broadcast_txs_interval = 200
@@ -116,25 +146,27 @@ console_show_file_and_line = false
 log_path = "logs/"
 log_to_file = true
 metrics = true
-# you can specify log level for modules with config below
-# modules_level = { "overlord::state::process" = "debug", core_consensus = "error" }
+modules_level = { riscv_debug = "debug" }
 ```
-
 
 - `privkey`: 节点私钥，节点的唯一标识，在作为 bootstraps 节点时，需要给出地址和该私钥对应的公钥让其他节点连接；如果是出块节点，该私钥对应的地址需要在 consensus verifier_list 中
 - `data_path`: 链数据所在目录
-- `graphql`
+- `graphql`:
   - `listening_address`: GraphQL 监听地址
   - `graphql_uri`: GraphQL 服务访问路径
   - `graphiql_uri`: GraphiQL 访问路径
+  - `workers`: 处理 http 的线程数量，填 0 的话，会默认按 CPU 的核数
+  - `maxconn`: 最大连接数
 - `network`:
   - `listening_address`: 链 p2p 网络监听地址
   - `rpc_timeout`: RPC 调用（例如从其它节点拉交易）超时时间，单位为秒
-  - `bootstraps`: 起链时连接的初始节点信息
+- `network.bootstraps`: 起链时连接的初始节点信息
+  - `pubkey`: 公钥
+  - `address`: 网络地址
 - `mempool`: 交易池相关配置
   - `pool_size`: 交易池大小
   - `broadcast_txs_size`: 一次批量广播的交易数量
-  - `broadcast_txs_interval`: 交易广播间隔
+  - `broadcast_txs_interval`: 每次广播交易的时间间隔，单位 ms
 - `executor`:
   - `light`: 设为 true 时，节点将只保存最新高度的 state
 - `logger`: 日志相关配置
@@ -145,7 +177,6 @@ metrics = true
   - `metrics`: 是否输出 metrics。logger 模块中有专门的 metrics 输出函数，如有需要，可以用来输出 metrics 日志，不受全局日志级别的影响，且对应的日志会输出到专门的文件。
   - `log_path`: 会在该路径生成两个日志文件：`muta.log` 和 `metrics.log`。`metrics.log`中包含了专门的 metrics 日志，`muta.log` 中包含了其它所有 log 输出。
   - `modules_level`: 对特定模块指定不同于全局的日志级别
-
 
 ## 日志示例
 
