@@ -37,7 +37,7 @@ fn get_metadata(&self, ctx: ServiceContext) -> ProtocolResult<Metadata>；
 
 GraphiQL 示例：
 
-```
+```graphql
 query get_metadata{
   queryService(
   caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"

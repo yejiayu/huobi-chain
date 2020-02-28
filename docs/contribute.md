@@ -11,7 +11,7 @@
  1. Fork Huobi-chain 到自己的仓库中并 clone 到本地
 
     ```
-    $ git clone https://github.com/HuobiGroup/huobi-chain.git
+    $ git clone https://github.com/<your github id>/huobi-chain.git
     ```
 
  2. 创建新的分支

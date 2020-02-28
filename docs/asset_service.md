@@ -40,7 +40,7 @@ pub struct CreateAssetPayload {
 
 GraphiQL 示例：
 
-```
+```graphql
 mutation create_asset{
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
@@ -66,8 +66,11 @@ fn get_asset(&self, ctx: ServiceContext, payload: GetAssetPayload) -> ProtocolRe
 pub struct GetAssetPayload {
     pub id: Hash, // 资产 ID
 }
+```
 
-// Example: graphiql send tx 
+GraphiQL 示例：
+
+```graphql 
 query get_asset{
   queryService(
   caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
@@ -93,8 +96,11 @@ pub struct TransferPayload {
     pub to:       Address,
     pub value:    u64,
 }
+```
 
-// Example: graphiql send tx 
+GraphiQL 示例：
+
+```graphql
 mutation transfer{
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
@@ -128,8 +134,11 @@ pub struct GetBalanceResponse {
     pub user:     Address,
     pub balance:  u64,
 }
+```
 
-// Example: graphiql send tx 
+GraphiQL 示例： 
+
+```graphql
 query get_balance{
   queryService(
   caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
@@ -155,8 +164,11 @@ pub struct ApprovePayload {
     pub to:       Address,
     pub value:    u64,
 }
+```
 
-// Example: graphiql send tx 
+GraphiQL 示例： 
+
+```graphql
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
     method:"approve",
@@ -184,8 +196,11 @@ pub struct TransferFromPayload {
     pub recipient: Address,
     pub value:     u64,
 }
+```
 
-// Example: graphiql send tx 
+GraphiQL 示例：
+
+```graphql
 mutation transfer_from{
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
@@ -221,8 +236,11 @@ pub struct GetAllowanceResponse {
     pub grantee:  Address,
     pub value:    u64,
 }
+```
 
-// Example: graphiql send tx 
+GraphiQL 示例：
+
+```graphql
 query get_allowance{
   queryService(
   caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"

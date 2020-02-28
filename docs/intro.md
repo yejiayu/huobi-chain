@@ -17,7 +17,7 @@
 
 ## 简介
 
-火币公链是 [火币集团](https://www.huobigroup.com/) 和 [Nervos Foundation](https://www.nervos.org/) 联合开发的高性能公链。它基于 Muta、CKB-VM、Overlord、Nervos-p2p 等开源组件深度定制，并面向金融应用的场景进行了扩展与优化。
+火币公链是 [火币集团](https://www.huobigroup.com/) 和 [Nervos Foundation](https://www.nervos.org/) 联合开发的高性能公链。它基于 [Muta](https://github.com/nervosnetwork/muta)、[CKB-VM](https://github.com/nervosnetwork/ckb-vm)、[Overlord](https://github.com/nervosnetwork/overlord)、[Nervos-p2p](https://github.com/nervosnetwork/p2p) 等开源组件深度定制，并面向金融应用的场景进行了扩展与优化。
 
 火币公链目前的主要技术特征有：共识算法采用自适应流水线算法提高交易吞吐量；采用聚合签名技术降低共识算法延迟；使用基于账户的 CKB-VM 实现编译器和硬件友好的高性能智能合约虚拟机；内置一等资产类型，对用户资产采用内置服务管理，大幅提高安全性、通用性并降低复杂度；支持原生跨链协议，火币公链、[Nervos CKB](https://github.com/nervosnetwork/ckb) 和基于火币公链或 [Muta](https://github.com/nervosnetwork/muta) 技术开发的侧链可以直接实现跨链；支持高灵活性的 service 定制，来适应不同业务场景；支持合约开发，赋能去中心化应用。
 

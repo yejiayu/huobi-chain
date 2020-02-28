@@ -1,6 +1,6 @@
 # 贡献说明
 
-火币公链是完全开源的公链项目，代码在 Github 托管，欢迎社区成员以各种方式参与贡献。
+火币公链是完全开源的公链项目，代码在 GitHub 托管，欢迎社区成员以各种方式参与贡献。
 
 ## 提 Issue
  
@@ -11,7 +11,7 @@
  1. Fork Huobi-chain 到自己的仓库中并 clone 到本地
 
     ```
-    $ git clone https://github.com/HuobiGroup/huobi-chain.git
+    $ git clone https://github.com/<your github id>/huobi-chain.git
     ```
 
  2. 创建新的分支
@@ -43,7 +43,7 @@
 
 6. 创建并提交 PR
 
-   在同步完成后，即可通过Create pull request按钮将该分支发送给该项目的维护者等待被合并。如果你的 Pull Request 修复了在 Issues 中描述的问题，可以使用 [special magic keyword](https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue) 引用该 Issue 为参考。
+   在同步完成后，即可通过 Create pull request 按钮将该分支发送给该项目的维护者等待被合并。如果你的 Pull Request 修复了在 Issues 中描述的问题，可以使用 [special magic keyword](https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue) 引用该 Issue 为参考。
 
 以上步骤，如有对 git 命令不熟悉的，请参考[git](https://git-scm.com/doc) 使用手册。
 

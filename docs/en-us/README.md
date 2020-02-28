@@ -16,7 +16,7 @@
 
 ## Introduction
 
-Huobi Chain is a high-performance public chain jointly developed by [Huobi](https://www.huobigroup.com/)and [Nervos Foundation](https://www.nervos.org/). It is based on deep customization of open source components such as Muta, CKB-VM, Overlord, and nervos-p2p, and is extended and optimized for financial application scenarios.
+Huobi Chain is a high-performance public chain jointly developed by [Huobi](https://www.huobigroup.com/)and [Nervos Foundation](https://www.nervos.org/). It is based on deep customization of open source components such as [Muta](https://github.com/nervosnetwork/muta),[CKB-VM](https://github.com/nervosnetwork/ckb-vm),[Overlord](https://github.com/nervosnetwork/overlord),[Nervos-p2p](https://github.com/nervosnetwork/p2p), and is extended and optimized for financial application scenarios.
 
 The main technical features of the Huobi chain are: use adaptive pipeline consensus algorithm to improve transaction throughput; use aggregate signature technology to reduce the delay of consensus process; use account-based CKB-VM to implement compiler and hardware-friendly high-performance Virtual machine that support smart contract; have built-in first-class asset type, which means built-in system contract can be used to manager user assets, which greatly improving security, versatility, and complexity; support native cross-chain protocol which means Huobi public chain, Nervos CKB and other chain developed basing on Huobi chain or  Muta can be directly cross-chain communicated with each other; support for highly flexible virtual machine and high-performance native contracts to accommodate different business scenarios.
 

@@ -96,7 +96,7 @@ $ make prod
 
 ### 运行单节点
 
-```
+```bash
 $ cd /path/to/huobi-chain
 
 # 使用默认配置运行 huobi-chain
@@ -405,15 +405,15 @@ $ muta-cli repl
 1. 构建 docker 镜像
 
 ```bash
-cd /path/to/huobi-chain
+$ cd /path/to/huobi-chain
 
-make docker-build
+$ make docker-build
 ```
 
 2. 运行 docker compose 命令起链
 
 ```bash
-docker compose -f devtools/docker-compose/bft-4-node.yaml up
+$ docker compose -f devtools/docker-compose/bft-4-node.yaml up
 ```
 
 Docker compose 启动 4 个共识节点，分别暴露 GraphQL 本地端口 8001、8002、8003、8004，节点的详细配置信息可前往 `devtools/docker-compose` 目录查看。

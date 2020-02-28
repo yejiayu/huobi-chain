@@ -85,9 +85,9 @@ RISC-V service 中提供的系统调用有 4 类：
 
 我们将源码放到了 GitHub 上，读者可以将示例代码下载到本地进行查看和交互。
 
-```
-git clone https://github.com/nervosnetwork/riscv-contract-tutorials.git
-cd riscv-contract-tutorials/bank
+```bash
+$ git clone https://github.com/nervosnetwork/riscv-contract-tutorials.git
+$ cd riscv-contract-tutorials/bank
 ```
 
 [ERC20 合约](https://github.com/nervosnetwork/riscv-contract-tutorials/blob/master/bank/erc20.c) 是一个符合 ERC20 标准的 token 合约。本合约仅作为说明合约功能之用，读者如有发行自定义资产的需求，建议使用 huobi-chain 的原生资产模块，asset service。
@@ -106,14 +106,14 @@ cd riscv-contract-tutorials/bank
 读者可以在 bank 文件夹中运行：
 
 ```
-make bin_docker
+$ make bin_docker
 ```
 
 命令来使用 docker 进行编译，在 bin 文件夹下得到的两个二进制文件即为我们的合约。
 
 具体的编译可以参考项目的 Makefile:
 
-```Makefile
+```makefile
 TARGET := riscv64-unknown-elf
 CC := $(TARGET)-gcc
 LD := $(TARGET)-gcc
@@ -218,7 +218,7 @@ RISC-V service 提供了两种 `exec` 和 `call` 两个交互接口。前者为�
 
 示例（继续使用刚才的 client）：
 
-```
+```bash
 # 查询接口
 > await client.queryService({ serviceName: 'riscv', method: 'call', payload: JSON.stringify({ address, args: JSON.stringify({method: 'total_supply'}) })})
 { isError: false, ret: '"1000000000"' }
