@@ -316,7 +316,7 @@ where
             args: String::from_utf8_lossy(args.as_ref()).to_string(),
         };
         let payload_str = serde_json::to_string(&payload).map_err(ServiceError::Serde)?;
-        self.service_call("riscv", "exec", &payload_str, current_cycle)
+        self.service_call("riscv", "exec", &payload_str, current_cycle, false)
     }
 
     fn service_call(
@@ -325,17 +325,28 @@ where
         method: &str,
         payload: &str,
         current_cycle: u64,
+        readonly: bool,
     ) -> ProtocolResult<(String, u64)> {
         let vm_cycle = current_cycle - self.all_cycles_used;
         self.ctx.sub_cycles(vm_cycle)?;
         let extra = self.payload.address.as_hex();
-        let call_ret = self.sdk.borrow_mut().write(
-            &self.ctx,
-            Some(Bytes::from(extra)),
-            service,
-            method,
-            payload,
-        )?;
+        let call_ret = if readonly {
+            self.sdk.borrow().read(
+                &self.ctx,
+                Some(Bytes::from(extra)),
+                service,
+                method,
+                payload,
+            )
+        } else {
+            self.sdk.borrow_mut().write(
+                &self.ctx,
+                Some(Bytes::from(extra)),
+                service,
+                method,
+                payload,
+            )
+        }?;
         self.all_cycles_used = self.ctx.get_cycles_used();
         Ok((call_ret, self.all_cycles_used))
     }

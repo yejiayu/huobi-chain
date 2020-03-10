@@ -11,6 +11,7 @@ pub trait ChainInterface {
         method: &str,
         payload: &str,
         current_cycle: u64,
+        readonly: bool,
     ) -> ProtocolResult<(String, u64)>;
 
     fn contract_call(

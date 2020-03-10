@@ -54,6 +54,8 @@ static inline long __internal_syscall(long n, long _a0, long _a1, long _a2,
 #define SYSCODE_SET_STORAGE 4001
 #define SYSCODE_CONTRACT_CALL 4002
 #define SYSCODE_SERVICE_CALL 4003
+#define SYSCODE_SERVICE_WRITE 4004
+#define SYSCODE_SERVICE_READ 4005
 
 /**
  * @brief print debug message
@@ -396,6 +398,28 @@ uint64_t pvm_contract_call(const uint8_t *addr, const uint8_t *args,
  * @throw IO(Other) if service call failure
  */
 uint64_t pvm_service_call(const char *service, const char *method,
+                          const uint8_t *payload, uint64_t payload_size,
+                          uint8_t *ret);
+
+/**
+ * @brief call a service write method
+ *
+ * Function pvm_service_write invokes a service write method.
+ * The args and returns are the same with pvm_service_call.
+ *
+ */
+uint64_t pvm_service_write(const char *service, const char *method,
+                          const uint8_t *payload, uint64_t payload_size,
+                          uint8_t *ret);
+
+/**
+ * @brief call a service read method
+ *
+ * Function pvm_service_read invokes a service read method.
+ * The args and returns are the same with pvm_service_call.
+ *
+ */
+uint64_t pvm_service_read(const char *service, const char *method,
                           const uint8_t *payload, uint64_t payload_size,
                           uint8_t *ret);
 

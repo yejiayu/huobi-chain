@@ -183,6 +183,27 @@ describe("riscv service", () => {
     ]);
   });
 
+  test("test_service_call", async () => {
+    const code = readFileSync("./riscv_contracts/contract_test");
+    const addr = await deploy(code, "", "Binary");
+    console.log(addr);
+
+    // invoke pvm_service_call failed
+    let exec_res = await exec(addr, "test_service_call_read_fail");
+    console.log(exec_res);
+    expect(
+      exec_res.response.ret.includes(
+        "[ProtocolError] Kind: Service Error: CkbVm(EcallError"
+      )
+    ).toBe(true);
+    expect(exec_res.response.ret.includes("NotFoundMethod")).toBe(true);
+
+    // invoke pvm_service_read success
+    exec_res = await exec(addr, "test_service_read");
+    console.log(exec_res);
+    expect(exec_res.response.isError).toBe(false);
+  });
+
   test("test_riscv_invalid_contract", async () => {
     const code = str2hex("invalid contract");
     try {

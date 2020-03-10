@@ -91,6 +91,7 @@ LDFLAGS := -lm -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections
 CURRENT_DIR := $(shell pwd)
 DOCKER_BUILD := docker run --rm -it -v $(CURRENT_DIR):/src nervos/ckb-riscv-gnu-toolchain:xenial bash -c
 TEST_SRC := $(CURRENT_DIR)/services/riscv/src/tests
+E2E_TEST_SRC := $(CURRENT_DIR)/tests/e2e/riscv_contracts
 RISCV_SRC := $(CURRENT_DIR)/services/riscv/src/vm/c
 DUKTAPE_SRC := $(RISCV_SRC)/duktape
 
@@ -99,6 +100,12 @@ simple_storage:
 
 simple_storage_docker:
 	$(DOCKER_BUILD) "cd /src && make simple_storage"
+
+contract_test: libpvm.a
+	$(CC) -I$(RISCV_SRC) $(E2E_TEST_SRC)/contract_test.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(E2E_TEST_SRC)/contract_test
+
+contract_test_docker:
+	$(DOCKER_BUILD) "cd /src && make contract_test"
 
 duktape: libpvm.a
 	$(CC) -I$(DUKTAPE_SRC) -I$(RISCV_SRC) $(DUKTAPE_SRC)/duktape.c $(RISCV_SRC)/duktape_ee.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(RISCV_SRC)/duktape_ee.bin

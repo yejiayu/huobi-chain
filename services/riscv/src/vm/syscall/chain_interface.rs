@@ -9,7 +9,8 @@ use protocol::{types::Address, Bytes};
 use crate::vm::cost_model::CONTRACT_CALL_FIXED_CYCLE;
 use crate::vm::syscall::common::{get_arr, get_str};
 use crate::vm::syscall::convention::{
-    SYSCODE_CONTRACT_CALL, SYSCODE_GET_STORAGE, SYSCODE_SERVICE_CALL, SYSCODE_SET_STORAGE,
+    SYSCODE_CONTRACT_CALL, SYSCODE_GET_STORAGE, SYSCODE_SERVICE_CALL, SYSCODE_SERVICE_READ,
+    SYSCODE_SERVICE_WRITE, SYSCODE_SET_STORAGE,
 };
 use crate::ChainInterface;
 
@@ -114,7 +115,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
 
                 Ok(true)
             }
-            SYSCODE_SERVICE_CALL => {
+            SYSCODE_SERVICE_CALL | SYSCODE_SERVICE_WRITE | SYSCODE_SERVICE_READ => {
                 machine.add_cycles(CONTRACT_CALL_FIXED_CYCLE)?;
 
                 let service_ptr = machine.registers()[ckb_vm::registers::A0].to_u64();
@@ -139,11 +140,13 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                 };
                 let payload = String::from_utf8_lossy(&payload);
 
+                let readonly = code == SYSCODE_SERVICE_READ;
+
                 let (ret, current_cycle) = self
                     .chain
                     .borrow_mut()
-                    .service_call(&service, &method, &payload, machine.cycles())
-                    .map_err(|_| ckb_vm::Error::IO(io::ErrorKind::Other))?;
+                    .service_call(&service, &method, &payload, machine.cycles(), readonly)
+                    .map_err(|e| ckb_vm::Error::EcallError(code, format!("{:?}", e)))?;
 
                 machine.set_cycles(current_cycle);
                 if ret_ptr != 0 {

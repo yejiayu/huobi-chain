@@ -84,3 +84,17 @@ uint64_t pvm_service_call(const char *service, const char *method,
   return syscall(SYSCODE_SERVICE_CALL, service, method, payload, payload_size,
                  ret, 0);
 }
+
+uint64_t pvm_service_write(const char *service, const char *method,
+                          const uint8_t *payload, uint64_t payload_size,
+                          uint8_t *ret) {
+  return syscall(SYSCODE_SERVICE_WRITE, service, method, payload, payload_size,
+                 ret, 0);
+}
+
+uint64_t pvm_service_read(const char *service, const char *method,
+                          const uint8_t *payload, uint64_t payload_size,
+                          uint8_t *ret) {
+  return syscall(SYSCODE_SERVICE_READ, service, method, payload, payload_size,
+                 ret, 0);
+}
