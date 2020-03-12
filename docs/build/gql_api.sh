@@ -11,7 +11,8 @@ fi
 }
 
 check node
-check graphql-markdown "run npm install graphql-markdown --global"
+check graphql-markdown "run npm install graphql-markdown -g"
+check get-graphql-schema "run npm install get-graphql-schema -g"
 
 endpoint="http://127.0.0.1:8000/graphql"
 if [ ! -z "$1" ]; then
@@ -19,7 +20,8 @@ if [ ! -z "$1" ]; then
 fi
 
 res_code=$(curl --write-out %{http_code} --silent --output /dev/null \
-            -X POST -d '{"query":"query { getLatestEpoch { header { epochId }}}"}' \
+            -H "Accept: application/json" -H "Content-type: application/json" \
+            -X POST -d '{"query":"query { getBlock { hash } }"}' \
             $endpoint)
 
 if [ $res_code -ne 200 ]; then
@@ -39,3 +41,4 @@ node, and then try open http://127.0.0.1:8000/graphiql in the browser.
 "
 
 graphql-markdown $endpoint --title "Huobi-chain GraphQL API" --prologue "$prologue" > $BASEDIR/../graphql_api.md
+get-graphql-schema $endpoint  > $BASEDIR/../schema.graphql
