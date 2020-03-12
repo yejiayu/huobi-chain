@@ -7,8 +7,8 @@ use std::collections::BTreeMap;
 use bytes::Bytes;
 use derive_more::{Display, From};
 
-use binding_macro::{cycles, genesis, service, write};
-use protocol::traits::{ExecutorParams, ServiceSDK, StoreMap};
+use binding_macro::{cycles, genesis, service, tx_hook_before, write};
+use protocol::traits::{ExecutorParams, ServiceSDK, StoreMap, StoreUint64};
 use protocol::types::{Address, Hash, ServiceContext};
 use protocol::{ProtocolError, ProtocolErrorKind, ProtocolResult};
 
@@ -18,23 +18,28 @@ use crate::types::{
     InitGenesisPayload, TransferEvent, TransferFromEvent, TransferFromPayload, TransferPayload,
 };
 
+const FEE_ASSET_KEY: &str = "fee_asset";
+const FEE_ACCOUNT_KEY: &str = "fee_account";
+
 pub struct AssetService<SDK> {
     sdk:    SDK,
     assets: Box<dyn StoreMap<Hash, Asset>>,
+    fee:    Box<dyn StoreUint64>,
 }
 
 #[service]
 impl<SDK: ServiceSDK> AssetService<SDK> {
     pub fn new(mut sdk: SDK) -> ProtocolResult<Self> {
         let assets: Box<dyn StoreMap<Hash, Asset>> = sdk.alloc_or_recover_map("assets")?;
+        let fee = sdk.alloc_or_recover_uint64("fee")?;
 
-        Ok(Self { sdk, assets })
+        Ok(Self { sdk, assets, fee })
     }
 
     #[genesis]
     fn init_genesis(&mut self, payload: InitGenesisPayload) -> ProtocolResult<()> {
         let asset = Asset {
-            id:     payload.id,
+            id:     payload.id.clone(),
             name:   payload.name,
             symbol: payload.symbol,
             supply: payload.supply,
@@ -48,8 +53,28 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             allowance: BTreeMap::new(),
         };
 
+        self.sdk.set_value(FEE_ASSET_KEY.to_owned(), payload.id)?;
+        self.sdk
+            .set_value(FEE_ACCOUNT_KEY.to_owned(), payload.fee_account)?;
+        self.fee.set(payload.fee)?;
         self.sdk
             .set_account_value(&asset.issuer, asset.id, asset_balance)
+    }
+
+    #[tx_hook_before]
+    fn tx_hook_before_(&mut self, ctx: ServiceContext) -> ProtocolResult<()> {
+        let caller = ctx.get_caller();
+        let asset_id: Hash = self
+            .sdk
+            .get_value(&FEE_ASSET_KEY.to_owned())?
+            .expect("fee asset should not be empty");
+        let to: Address = self
+            .sdk
+            .get_value(&FEE_ACCOUNT_KEY.to_owned())?
+            .expect("fee account should not be empty");
+        let value = self.fee.get()?;
+        self._transfer(caller, to, asset_id, value)
+            .map_err(|_e| ServiceError::FeeNotEnough.into())
     }
 
     #[cycles(100_00)]
@@ -363,6 +388,8 @@ pub enum ServiceError {
         expect: u64,
         real:   u64,
     },
+
+    FeeNotEnough,
 
     U64Overflow,
 

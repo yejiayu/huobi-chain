@@ -9,7 +9,10 @@ payload = '''
     "name": "Muta Token",
     "symbol": "MT",
     "supply": 1000000000,
-    "issuer": "f8389d774afdad8755ef8e629e5a154fddc6325a"
+    "issuer": "0xcff1002107105460941f797828f468667aa1a2db",
+
+    "fee": 1,
+    "fee_account": "0xcff1002107105460941f797828f468667aa1a2db"
 }
 '''
 

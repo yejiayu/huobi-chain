@@ -41,8 +41,7 @@ impl ServiceMapping for DefaultServiceMapping {
     }
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let matches = clap::App::new("Huobi-chain")
         .version("v0.1.0-rc.2")
         .author("Muta Dev <muta@nervos.org>")
@@ -71,7 +70,7 @@ async fn main() {
 
     let muta = builer.build().unwrap();
 
-    muta.run().await.unwrap()
+    muta.run().unwrap()
 }
 
 #[derive(Debug, Display, From)]

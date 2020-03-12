@@ -7,6 +7,7 @@ import {
   admin,
   str2hex
 } from "./utils";
+import { add_fee_token_to_accounts } from "./helper";
 import { readFileSync } from "fs";
 import { Muta } from "muta-sdk";
 
@@ -77,6 +78,12 @@ async function exec(address, args) {
 }
 
 describe("riscv service", () => {
+  beforeAll(async () => {
+    let accounts_to_add_fee = accounts.map(a => a.address);
+    accounts_to_add_fee.push(account.address);
+    await add_fee_token_to_accounts(accounts_to_add_fee);
+  });
+
   test("test_riscv_deploy_auth", async () => {
     const acc = accounts[1];
     const code = readFileSync("../../services/riscv/src/tests/simple_storage");
@@ -186,11 +193,11 @@ describe("riscv service", () => {
   test("test_service_call", async () => {
     const code = readFileSync("./riscv_contracts/contract_test");
     const addr = await deploy(code, "", "Binary");
-    console.log(addr);
+    // console.log(addr);
 
     // invoke pvm_service_call failed
     let exec_res = await exec(addr, "test_service_call_read_fail");
-    console.log(exec_res);
+    // console.log(exec_res);
     expect(
       exec_res.response.ret.includes(
         "[ProtocolError] Kind: Service Error: CkbVm(EcallError"
@@ -200,7 +207,7 @@ describe("riscv service", () => {
 
     // invoke pvm_service_read success
     exec_res = await exec(addr, "test_service_read");
-    console.log(exec_res);
+    // console.log(exec_res);
     expect(exec_res.response.isError).toBe(false);
   });
 
