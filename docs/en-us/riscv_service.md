@@ -104,7 +104,7 @@ pub struct ExecPayload {
 ```javascript
 // payload 示例
 {
-  addresses: ["cff1002107105460941f797828f468667aa1a2db"]
+  addresses: ["0xcff1002107105460941f797828f468667aa1a2db"]
 }
 ```
 

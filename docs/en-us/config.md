@@ -8,17 +8,20 @@
 
 ```toml
 timestamp = 0
-prevhash = "44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
+prevhash = "0x44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
 
 [[services]]
 name = "asset"
 payload = '''
 {
-    "id": "f56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c",
-    "name": "Muta Token",
-    "symbol": "MT",
-    "supply": 1000000000,
-    "issuer": "f8389d774afdad8755ef8e629e5a154fddc6325a"
+    "id": "0xf56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c",
+    "name": "Huobi Token Test",
+    "symbol": "HTTest",
+    "supply": 50000000000000000,
+    "precision": 8,
+    "issuer": "0xcff1002107105460941f797828f468667aa1a2db",
+    "fee": 1,
+    "fee_account": "0xcff1002107105460941f797828f468667aa1a2db"
 }
 '''
 
@@ -26,16 +29,16 @@ payload = '''
 name = "metadata"
 payload = '''
 {
-    "chain_id": "b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
-    "common_ref": "703873635a6b51513451",
+    "chain_id": "0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    "common_ref": "0x703873635a6b51513451",
     "timeout_gap": 20,
     "cycles_limit": 999999999999,
     "cycles_price": 1,
     "interval": 3000,
     "verifier_list": [
         {
-            "bls_pub_key": "04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22",
-            "address": "f8389d774afdad8755ef8e629e5a154fddc6325a",
+            "bls_pub_key": "0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22",
+            "address": "0xf8389d774afdad8755ef8e629e5a154fddc6325a",
             "propose_weight": 1,
             "vote_weight": 1
         }
@@ -47,7 +50,6 @@ payload = '''
     "tx_num_limit": 20000,
     "max_tx_size": 1048576
 }
-'''
 
 [[services]]
 name = "node_manager"
@@ -79,7 +81,10 @@ payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
   - `name`: 资产名字
   - `symbol`: 资产简称
   - `supply`: 资产发行总量
+  - `precision`: 资产精度
   - `issuer`: 发行方地址
+  - `fee`: 交易固定手续费
+  - `fee_account`: 交易手续费收取地址
 - `metadata`: 链的元数据，必须填写
   - `chain_id`: 链唯一 id，建议设置为任意 hash
   - `common_ref`: BLS 签名需要
@@ -111,7 +116,7 @@ payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
 
 ```toml
 # crypto
-privkey = "45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
+privkey = "0x45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
 
 # db config
 data_path = "./data"
@@ -128,7 +133,7 @@ listening_address = "0.0.0.0:1337"
 rpc_timeout = 10
 
 [[network.bootstraps]]
-pubkey = "031288a6788678c25952eba8693b2f278f66e2187004b64ac09416d07f83f96d5b"
+pubkey = "0x031288a6788678c25952eba8693b2f278f66e2187004b64ac09416d07f83f96d5b"
 address = "0.0.0.0:1888"
 
 [mempool]
@@ -184,8 +189,8 @@ modules_level = { riscv_debug = "debug" }
 
 ```bash
 $ tail logs/muta.log -n 1
-{"time":"2020-02-12T17:11:04.187149+08:00","message":"update_after_exec cache: height 2, exec height 0, prev_hash 039d2f399864dba72c5b0f26ec989cba9bdcb9fca23ce48c8bc8c4398cb2ad0b,latest_state_root de37f62c1121e283ad52fe5b3e260c899f03d42da29fdfe08e82655185d9b772 state root [de37f62c1121e283ad52fe5b3e260c899f03d42da29fdfe08e82655185d9b772], receipt root [], confirm root [], cycle used []","module_path":"core_consensus::status","file":"/Users/huwenchao/.cargo/git/checkouts/muta-cad92efdb84944c1/34d052a/core/consensus/src/status.rs","line":114,"level":"INFO","target":"core_consensus::status","thread":"main","thread_id":4576796096,"mdc":{}}
+{"time":"2020-02-12T17:11:04.187149+08:00","message":"update_after_exec cache: height 2, exec height 0, prev_hash 0x039d2f399864dba72c5b0f26ec989cba9bdcb9fca23ce48c8bc8c4398cb2ad0b,latest_state_root 0xde37f62c1121e283ad52fe5b3e260c899f03d42da29fdfe08e82655185d9b772 state root [0xde37f62c1121e283ad52fe5b3e260c899f03d42da29fdfe08e82655185d9b772], receipt root [], confirm root [], cycle used []","module_path":"core_consensus::status","file":"/Users/huwenchao/.cargo/git/checkouts/muta-cad92efdb84944c1/34d052a/core/consensus/src/status.rs","line":114,"level":"INFO","target":"core_consensus::status","thread":"main","thread_id":4576796096,"mdc":{}}
 
 $ tail logs/metrics.log -n 1
-{"time":"2020-02-12T17:11:04.187240+08:00","message":"{\"timestamp\":1581498664187,\"event_name\":\"update_exec_info\",\"event_type\":\"custom\",\"tag\":{\"confirm_root\":\"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\"exec_height\":1,\"receipt_root\":\"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\"state_root\":\"de37f62c1121e283ad52fe5b3e260c899f03d42da29fdfe08e82655185d9b772\"},\"metadata\":{\"address\":\"f8389d774afdad8755ef8e629e5a154fddc6325a\",\"v\":\"0.3.0\"}}","module_path":"core_consensus::trace","file":"/Users/huwenchao/.cargo/git/checkouts/muta-cad92efdb84944c1/34d052a/core/consensus/src/trace.rs","line":24,"level":"TRACE","target":"metrics","thread":"main","thread_id":4576796096,"mdc":{}}
+{"time":"2020-02-12T17:11:04.187240+08:00","message":"{\"timestamp\":1581498664187,\"event_name\":\"update_exec_info\",\"event_type\":\"custom\",\"tag\":{\"confirm_root\":\"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\"exec_height\":1,\"receipt_root\":\"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\"state_root\":\"0xde37f62c1121e283ad52fe5b3e260c899f03d42da29fdfe08e82655185d9b772\"},\"metadata\":{\"address\":\"0xf8389d774afdad8755ef8e629e5a154fddc6325a\",\"v\":\"0.3.0\"}}","module_path":"core_consensus::trace","file":"/Users/huwenchao/.cargo/git/checkouts/muta-cad92efdb84944c1/34d052a/core/consensus/src/trace.rs","line":24,"level":"TRACE","target":"metrics","thread":"main","thread_id":4576796096,"mdc":{}}
 ```

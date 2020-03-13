@@ -22,7 +22,8 @@ pub struct Asset {
     pub id:     Hash,
     pub name:   String,
     pub symbol: String,
-    pub supply: u64,
+    pub supply: u64, // 发行量：supply 为 100，precision 为 1 时，表示发行 10 个 token
+    pub precision: u64, // 资产数值精度，1 表示 10 的一次方，以此类推
     pub issuer: Address,
 }
 
@@ -35,6 +36,7 @@ pub struct CreateAssetPayload {
     pub name:   String,
     pub symbol: String,
     pub supply: u64,
+    pub precision: u64
 }
 
 // Example: graphiql send tx 
@@ -42,10 +44,10 @@ mutation create_asset{
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
     method:"create_asset",
-    payload:"{\"name\":\"Test Coin\",\"symbol\":\"TC\",\"supply\":100000000}",
+    payload:"{\"name\":\"Test Coin\",\"symbol\":\"TC\",\"supply\":100000000, \"precision\":2}",
     timeout:"0x172",
     nonce:"0x9db2d7efe2b61a88827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999"
   }, inputPrivkey: "0x30269d47fcf602b889243722b666881bf953f1213228363d34cf04ddcd51dfd2"
@@ -67,10 +69,10 @@ pub struct GetAssetPayload {
 // Example: graphiql send tx 
 query get_asset{
   queryService(
-  caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
+  caller: "0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
   serviceName: "asset"
   method: "get_asset"
-  payload: "{\"id\": \"5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\"}"
+  payload: "{\"id\": \"0x5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\"}"
   ){
     ret,
     isError
@@ -96,10 +98,10 @@ mutation transfer{
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
     method:"transfer",
-    payload:"{\"asset_id\":\"5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\",\"to\":\"f8389d774afdad8755ef8e629e5a154fddc6325a\", \"value\":10000}",
+    payload:"{\"asset_id\":\"0x5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\",\"to\":\"0xf8389d774afdad8755ef8e629e5a154fddc6325a\", \"value\":10000}",
     timeout:"0x289",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x30269d47fcf602b889243722b666881bf953f1213228363d34cf04ddcd51dfd2"
@@ -126,13 +128,13 @@ pub struct GetBalanceResponse {
     pub balance:  u64,
 }
 
-// Example: graphiql send tx 
+// Example: graphiql send query
 query get_balance{
   queryService(
-  caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
+  caller: "0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
   serviceName: "asset"
   method: "get_balance"
-  payload: "{\"asset_id\": \"5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\", \"user\": \"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\"}"
+  payload: "{\"asset_id\": \"0x5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\", \"user\": \"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1\"}"
   ){
     ret,
     isError
@@ -157,10 +159,10 @@ pub struct ApprovePayload {
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
     method:"approve",
-    payload:"{\"asset_id\":\"5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\",\"to\":\"f8389d774afdad8755ef8e629e5a154fddc6325a\", \"value\":10000}",
+    payload:"{\"asset_id\":\"0x5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\",\"to\":\"0xf8389d774afdad8755ef8e629e5a154fddc6325a\", \"value\":10000}",
     timeout:"0x378",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x30269d47fcf602b889243722b666881bf953f1213228363d34cf04ddcd51dfd2"
@@ -187,10 +189,10 @@ mutation transfer_from{
   unsafeSendTransaction(inputRaw: {
     serviceName:"asset",
     method:"transfer_from",
-    payload:"{\"asset_id\":\"5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\",\"sender\":\"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"recipient\":\"fffffd774afdad8755ef8e629e5a154fddc6325a\", \"value\":5000}",
+    payload:"{\"asset_id\":\"0x5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\",\"sender\":\"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"recipient\":\"0xfffffd774afdad8755ef8e629e5a154fddc6325a\", \"value\":5000}",
     timeout:"0x12c",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
@@ -219,13 +221,35 @@ pub struct GetAllowanceResponse {
     pub value:    u64,
 }
 
-// Example: graphiql send tx 
+// Example: graphiql send query
 query get_allowance{
   queryService(
-  caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
+  caller: "0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
   serviceName: "asset"
   method: "get_allowance"
-  payload: "{\"asset_id\": \"5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\", \"grantor\": \"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"grantee\": \"f8389d774afdad8755ef8e629e5a154fddc6325a\"}"
+  payload: "{\"asset_id\": \"0x5f1364a8e6230f68ccc18bc9d1000cedd522d6d63cef06d0062f832bdbe1a78a\", \"grantor\": \"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"grantee\": \"0xf8389d774afdad8755ef8e629e5a154fddc6325a\"}"
+  ){
+    ret,
+    isError
+  }
+}
+```
+
+8. 查询链的原生资产
+
+链的原生资产为创世启动时发行的资产，资产信息写在 `Asset Service` 创世配置文件中。
+
+```rust
+// 查询接口：返回原生资产
+fn get_native_asset(&self, ctx: ServiceContext) -> ProtocolResult<Asset>;
+
+// Example: graphiql send query
+query get_native_asset{
+  queryService(
+  caller: "0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
+  serviceName: "asset"
+  method: "get_native_asset"
+  payload: ""
   ){
     ret,
     isError

@@ -28,28 +28,28 @@ OPTIONS:
 # 或者一个人先用 muta-keypair 生成，把随机产生的 common_ref 分发给其它人
 $ muta-keypair -n 1
 {
-  "common_ref": "37537a3658476b334a71",
+  "common_ref": "0x37537a3658476b334a71",
   "keypairs": [
     {
       "index": 1,
-      "private_key": "33e10486adf1b64dbcf9a2c9531ebd78c9c651daf97bd6d2d170b0743f3dd789",
-      "public_key": "02bccb67683203d8b2157c6c2b36796094dfe86302250eb823c67e93929a7a8265",
-      "address": "7529ec67eccf908a4ec49d119b5a47e45eeaceba",
-      "bls_public_key": "0406367be42b1373981cc1e7a65881b7e17931e11a3af54ce7016317f7fb84bd674f9ee2c95ff9833d197c43ca97363322056ed9acee03142c8923a36a39ce339c56dd215d9e262b3df66b4756e476df9cc796d9cc21b59be9e1b2abe9fcbbf6bd"
+      "private_key": "0x33e10486adf1b64dbcf9a2c9531ebd78c9c651daf97bd6d2d170b0743f3dd789",
+      "public_key": "0x02bccb67683203d8b2157c6c2b36796094dfe86302250eb823c67e93929a7a8265",
+      "address": "0x7529ec67eccf908a4ec49d119b5a47e45eeaceba",
+      "bls_public_key": "0x0406367be42b1373981cc1e7a65881b7e17931e11a3af54ce7016317f7fb84bd674f9ee2c95ff9833d197c43ca97363322056ed9acee03142c8923a36a39ce339c56dd215d9e262b3df66b4756e476df9cc796d9cc21b59be9e1b2abe9fcbbf6bd"
     }
   ]
 }
 
 $ muta-keypair -n 1 -c 37537a3658476b334a71
 {
-  "common_ref": "37537a3658476b334a71",
+  "common_ref": "0x37537a3658476b334a71",
   "keypairs": [
     {
       "index": 1,
-      "private_key": "9024ebaef92ce541bbfd2cf55a6c1f8ea797393cb6234db550f84b6526d7b9ab",
-      "public_key": "02ff12550ee3a923a0c7cc4fc2bea0670ec3057f8a368fb4d375957cdc26e0bce9",
-      "address": "c2c456378a72ec16a50264e36232ab9654a81b62",
-      "bls_public_key": "04037457b7c7b88683d2affa5b2a0045bb8816d8f67412490d82fd447cc77b96f04090854a38b39f0d2aedb264a01120350df3bb0acd85abfa8a1462af0512ba14032ffc71099a92ed9cb9d2f4046bafb9438ac97d30890dbf7c5213a81ecd3622"
+      "private_key": "0x9024ebaef92ce541bbfd2cf55a6c1f8ea797393cb6234db550f84b6526d7b9ab",
+      "public_key": "0x02ff12550ee3a923a0c7cc4fc2bea0670ec3057f8a368fb4d375957cdc26e0bce9",
+      "address": "0xc2c456378a72ec16a50264e36232ab9654a81b62",
+      "bls_public_key": "0x04037457b7c7b88683d2affa5b2a0045bb8816d8f67412490d82fd447cc77b96f04090854a38b39f0d2aedb264a01120350df3bb0acd85abfa8a1462af0512ba14032ffc71099a92ed9cb9d2f4046bafb9438ac97d30890dbf7c5213a81ecd3622"
     }
   ]
 }
@@ -69,17 +69,17 @@ $ muta-keypair -n 1 -c 37537a3658476b334a71
 
 ```toml
 timestamp = 0
-prevhash = "44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
+prevhash = "0x44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
 
 [[services]]
 name = "asset"
 payload = '''
 {
-    "id": "f56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c",
+    "id": "0xf56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c",
     "name": "Huobi Token",
     "symbol": "HT",
     "supply": 1000000000,
-    "issuer": "f8389d774afdad8755ef8e629e5a154fddc6325a"
+    "issuer": "0xf8389d774afdad8755ef8e629e5a154fddc6325a"
 }
 '''
 
@@ -87,16 +87,16 @@ payload = '''
 name = "metadata"
 payload = '''
 {
-    "chain_id": "b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
-    "common_ref": "703873635a6b51513451",
+    "chain_id": "0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    "common_ref": "0x703873635a6b51513451",
     "timeout_gap": 20,
     "cycles_limit": 999999999999,
     "cycles_price": 1,
     "interval": 3000,
     "verifier_list": [
         {
-            "bls_pub_key": "04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22",
-            "address": "f8389d774afdad8755ef8e629e5a154fddc6325a",
+            "bls_pub_key": "0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22",
+            "address": "0xf8389d774afdad8755ef8e629e5a154fddc6325a",
             "propose_weight": 1,
             "vote_weight": 1
         }
@@ -121,7 +121,7 @@ payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
 
 ```
 # crypto
-privkey = "45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
+privkey = "0x45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
 
 # db config
 data_path = "./data"
@@ -136,7 +136,7 @@ listening_address = "0.0.0.0:1337"
 rpc_timeout = 10
 
 [[network.bootstraps]]
-pubkey = "031288a6788678c25952eba8693b2f278f66e2187004b64ac09416d07f83f96d5b"
+pubkey = "0x031288a6788678c25952eba8693b2f278f66e2187004b64ac09416d07f83f96d5b"
 address = "0.0.0.0:1888"
 
 [mempool]
@@ -167,7 +167,7 @@ listening_address = "0.0.0.0:1337"
 
 # 该配置为起链时连接的节点
 [[network.bootstraps]]
-pubkey = "031288a6788678c25952eba8693b2f278f66e2187004b64ac09416d07f83f96d5b"
+pubkey = "0x031288a6788678c25952eba8693b2f278f66e2187004b64ac09416d07f83f96d5b"
 address = "44.55.66.77:1337"
 ```
 

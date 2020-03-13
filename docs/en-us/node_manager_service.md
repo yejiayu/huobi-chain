@@ -17,7 +17,7 @@ GraphiQL 示例：
 ```graphql
 query get_admin{
   queryService(
-  caller: "016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
+  caller: "0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1"
   serviceName: "node_manager"
   method: "get_admin"
   payload: ""
@@ -47,10 +47,10 @@ mutation set_admin{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
     method:"set_admin",
-    payload:"{\"admin\": \"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\"}",
+    payload:"{\"admin\": \"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1\"}",
     timeout:"0x14",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
@@ -89,10 +89,10 @@ mutation update_metadata{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
     method:"update_metadata",
-    payload:"{\"verifier_list\": [{\"bls_pub_key\": \"04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22\", \"address\": \"f8389d774afdad8755ef8e629e5a154fddc6325a\", \"propose_weight\": 5, \"vote_weight\": 5}], \"interval\": 5000, \"propose_ratio\": 5, \"prevote_ratio\": 5, \"precommit_ratio\": 5, \"brake_ratio\": 5}",
+    payload:"{\"verifier_list\": [{\"bls_pub_key\": \"0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22\", \"address\": \"0xf8389d774afdad8755ef8e629e5a154fddc6325a\", \"propose_weight\": 5, \"vote_weight\": 5}], \"interval\": 5000, \"propose_ratio\": 5, \"prevote_ratio\": 5, \"precommit_ratio\": 5, \"brake_ratio\": 5}",
     timeout:"0xbe",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x30269d47fcf602b889243722b666881bf953f1213228363d34cf04ddcd51dfd2"
@@ -122,7 +122,7 @@ mutation update_interval{
     payload:"{\"interval\": 666}",
     timeout:"0x20",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
@@ -156,10 +156,10 @@ mutation update_validators{
   unsafeSendTransaction(inputRaw: {
     serviceName:"node_manager",
     method:"update_validators",
-    payload:"{\"verifier_list\": [{\"bls_pub_key\": \"04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22\", \"address\": \"016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"propose_weight\": 5, \"vote_weight\": 5}]}",
+    payload:"{\"verifier_list\": [{\"bls_pub_key\": \"0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22\", \"address\": \"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1\", \"propose_weight\": 5, \"vote_weight\": 5}]}",
     timeout:"0xbe",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x30269d47fcf602b889243722b666881bf953f1213228363d34cf04ddcd51dfd2"
@@ -192,7 +192,7 @@ mutation update_ratio{
     payload:"{\"propose_ratio\": 5, \"prevote_ratio\": 5, \"precommit_ratio\": 5, \"brake_ratio\": 5}",
     timeout:"0xbe",
     nonce:"0x9db2d7efe2b61a28827e4836e2775d913a442ed2f9096ca1233e479607c27cf7",
-    chainId:"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
+    chainId:"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
     cyclesPrice:"0x9999",
     cyclesLimit:"0x9999",
     }, inputPrivkey: "0x30269d47fcf602b889243722b666881bf953f1213228363d34cf04ddcd51dfd2"
