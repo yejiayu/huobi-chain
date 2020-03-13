@@ -39,7 +39,7 @@ payload = '''
     "precommit_ratio": 10,
     "brake_ratio": 7,
     "tx_num_limit": 20000,
-    "max_tx_size": 1048576
+    "max_tx_size": 10485760
 }
 '''
 
