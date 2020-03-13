@@ -1,10 +1,11 @@
 import { muta, CHAIN_CONFIG, delay, client, accounts, admin, fee_asset_id, fee_account } from "./utils";
 
-async function createAsset(txSender, name, symbol, supply) {
+async function createAsset(txSender, name, symbol, supply, precision) {
   const payload = {
     name,
     symbol,
-    supply
+    supply,
+    precision
   };
   const tx = await client.composeTransaction({
     method: "create_asset",
@@ -111,7 +112,7 @@ async function transferFrom(txSender, assetID, sender, recipient, value) {
 describe("asset service API test via muta-sdk-js", () => {
   test("test normal process", async () => {
     // fee not enough
-    let caReceipt = await createAsset(accounts[0], "Test Token", "TT", 8888);
+    let caReceipt = await createAsset(accounts[0], "Test Token", "TT", 8888, 10000);
     expect(caReceipt.response.isError).toBe(true);
     expect(caReceipt.response.ret).toBe('[ProtocolError] Kind: Service Error: FeeNotEnough');
     // add fee token to accounts
@@ -119,7 +120,7 @@ describe("asset service API test via muta-sdk-js", () => {
 
     // Create asset
     const fee_account_balance_before = await getBalance(fee_asset_id, fee_account);
-    caReceipt = await createAsset(accounts[0], "Test Token", "TT", 8888);
+    caReceipt = await createAsset(accounts[0], "Test Token", "TT", 8888, 10000);
     expect(caReceipt.response.isError).toBe(false);
     const fee_account_balance_after = await getBalance(fee_asset_id, fee_account);
     const caRet = JSON.parse(caReceipt.response.ret);
@@ -135,7 +136,8 @@ describe("asset service API test via muta-sdk-js", () => {
     expect(gaRet.name).toBe("Test Token");
     expect(gaRet.symbol).toBe("TT");
     expect(gaRet.supply).toBe(8888);
-    expect("0x" + gaRet.issuer).toBe(accounts[0].address);
+    expect(gaRet.precision).toBe(10000);
+    expect(gaRet.issuer).toBe(accounts[0].address);
 
     // Transfer
     const tranReceipt = await transfer(

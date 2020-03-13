@@ -9,7 +9,7 @@ use framework::binding::sdk::{DefalutServiceSDK, DefaultChainQuerier};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
 use protocol::traits::{NoopDispatcher, ServiceSDK, Storage};
 use protocol::types::{
-    Address, Block, Hash, Metadata, Proof, Receipt, ServiceContext, ServiceContextParams,
+    Address, Block, Hash, Hex, Metadata, Proof, Receipt, ServiceContext, ServiceContextParams,
     SignedTransaction, ValidatorExtend, METADATA_KEY,
 };
 use protocol::{types::Bytes, ProtocolResult};
@@ -88,14 +88,14 @@ fn new_metadata_service(
 fn mock_metadata_1() -> Metadata {
     Metadata {
         chain_id:        Hash::digest(Bytes::from("test")),
-        common_ref:      "703873635a6b51513451".to_string(),
+        common_ref:      Hex::from_string("0x703873635a6b51513451".to_string()).unwrap(),
         timeout_gap:     20,
         cycles_limit:    99_999_999,
         cycles_price:    1,
         interval:        3000,
         verifier_list:   [ValidatorExtend {
-            bls_pub_key: "04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned(),
-            address:        Address::from_hex("CAB8EEA4799C21379C20EF5BAA2CC8AF1BEC475B").unwrap(),
+            bls_pub_key: Hex::from_string("0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned()).unwrap(),
+            address:        Address::from_hex("0xCAB8EEA4799C21379C20EF5BAA2CC8AF1BEC475B").unwrap(),
             propose_weight: 1,
             vote_weight:    1,
         }]
@@ -111,22 +111,22 @@ fn mock_metadata_1() -> Metadata {
 fn mock_metadata_2() -> Metadata {
     Metadata {
         chain_id:        Hash::digest(Bytes::from("test")),
-        common_ref:      "703873635a6b51513451".to_string(),
+        common_ref:      Hex::from_string("0x703873635a6b51513451".to_string()).unwrap(),
         timeout_gap:     20,
         cycles_limit:    99_999_999,
         cycles_price:    1,
         interval:        6000,
         verifier_list:   [
             ValidatorExtend {
-                bls_pub_key: "FFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned(),
-                address:        Address::from_hex("CAB8EEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
+                bls_pub_key: Hex::from_string("0xFFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned()).unwrap(),
+                address:        Address::from_hex("0xCAB8EEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
                     .unwrap(),
                 propose_weight: 3,
                 vote_weight:    13,
             },
             ValidatorExtend {
-                bls_pub_key: "FFFFFFf9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402edFFFFFF".to_owned(),
-                address:        Address::from_hex("FFFFFEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
+                bls_pub_key: Hex::from_string("0xFFFFFFf9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402edFFFFFF".to_owned()).unwrap(),
+                address:        Address::from_hex("0xFFFFFEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
                     .unwrap(),
                 propose_weight: 3,
                 vote_weight:    13,

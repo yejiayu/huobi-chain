@@ -172,7 +172,7 @@ fn should_support_pvm_caller() {
 
     let ret = service.exec(context.make(), payload).expect("load caller");
 
-    assert_eq!(format!("0x{}", ret), CALLER);
+    assert_eq!(ret, CALLER);
 }
 
 #[test]
@@ -211,7 +211,7 @@ fn should_support_pvm_origin() {
 
     let ret: ExpectRet = serde_json::from_str(&ret).expect("decode test origin ret");
     assert_eq!(ret.caller, address.as_hex());
-    assert_eq!(format!("0x{}", ret.origin), CALLER);
+    assert_eq!(ret.origin, CALLER);
 }
 
 #[test]

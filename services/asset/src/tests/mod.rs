@@ -28,12 +28,15 @@ fn test_create_asset() {
     let mut service = new_asset_service();
 
     let supply = 1024 * 1024;
+    let precision = 2;
+
     // test create_asset
     let asset = service
         .create_asset(context.clone(), CreateAssetPayload {
             name: "test".to_owned(),
             symbol: "test".to_owned(),
             supply,
+            precision,
         })
         .unwrap();
 
@@ -63,12 +66,14 @@ fn test_transfer() {
     let mut service = new_asset_service();
 
     let supply = 1024 * 1024;
+    let precision = 2;
     // test create_asset
     let asset = service
         .create_asset(context.clone(), CreateAssetPayload {
             name: "test".to_owned(),
             symbol: "test".to_owned(),
             supply,
+            precision,
         })
         .unwrap();
 
@@ -108,11 +113,13 @@ fn test_approve() {
     let mut service = new_asset_service();
 
     let supply = 1024 * 1024;
+    let precision = 2;
     let asset = service
         .create_asset(context.clone(), CreateAssetPayload {
             name: "test".to_owned(),
             symbol: "test".to_owned(),
             supply,
+            precision,
         })
         .unwrap();
 
@@ -146,11 +153,13 @@ fn test_transfer_from() {
     let mut service = new_asset_service();
 
     let supply = 1024 * 1024;
+    let precision = 2;
     let asset = service
         .create_asset(context.clone(), CreateAssetPayload {
             name: "test".to_owned(),
             symbol: "test".to_owned(),
             supply,
+            precision,
         })
         .unwrap();
 

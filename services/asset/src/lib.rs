@@ -18,6 +18,7 @@ use crate::types::{
     InitGenesisPayload, TransferEvent, TransferFromEvent, TransferFromPayload, TransferPayload,
 };
 
+const NATIVE_ASSET_KEY: &str = "native_asset";
 const FEE_ASSET_KEY: &str = "fee_asset";
 const FEE_ACCOUNT_KEY: &str = "fee_account";
 
@@ -39,14 +40,17 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     #[genesis]
     fn init_genesis(&mut self, payload: InitGenesisPayload) -> ProtocolResult<()> {
         let asset = Asset {
-            id:     payload.id.clone(),
-            name:   payload.name,
-            symbol: payload.symbol,
-            supply: payload.supply,
-            issuer: payload.issuer.clone(),
+            id:        payload.id.clone(),
+            name:      payload.name,
+            symbol:    payload.symbol,
+            supply:    payload.supply,
+            precision: payload.precision,
+            issuer:    payload.issuer.clone(),
         };
 
         self.assets.insert(asset.id.clone(), asset.clone())?;
+        self.sdk
+            .set_value(NATIVE_ASSET_KEY.to_owned(), payload.id.clone())?;
 
         let asset_balance = AssetBalance {
             value:     payload.supply,
@@ -73,8 +77,22 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             .get_value(&FEE_ACCOUNT_KEY.to_owned())?
             .expect("fee account should not be empty");
         let value = self.fee.get()?;
+        if caller == to {
+            return Ok(());
+        }
         self._transfer(caller, to, asset_id, value)
             .map_err(|_e| ServiceError::FeeNotEnough.into())
+    }
+
+    #[cycles(100_00)]
+    #[read]
+    fn get_native_asset(&self, ctx: ServiceContext) -> ProtocolResult<Asset> {
+        let asset_id: Hash = self
+            .sdk
+            .get_value(&NATIVE_ASSET_KEY.to_owned())?
+            .expect("native asset id should not be empty");
+
+        self.assets.get(&asset_id)
     }
 
     #[cycles(100_00)]
@@ -166,11 +184,12 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             return Err(ServiceError::Exists { id }.into());
         }
         let asset = Asset {
-            id:     id.clone(),
-            name:   payload.name,
-            symbol: payload.symbol,
-            supply: payload.supply,
-            issuer: caller,
+            id:        id.clone(),
+            name:      payload.name,
+            symbol:    payload.symbol,
+            supply:    payload.supply,
+            precision: payload.precision,
+            issuer:    caller,
         };
         self.assets.insert(id, asset.clone())?;
 
@@ -191,7 +210,12 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     #[cycles(210_00)]
     #[write]
     fn transfer(&mut self, ctx: ServiceContext, payload: TransferPayload) -> ProtocolResult<()> {
-        let caller = ctx.get_caller();
+        let sender = if let Some(addr_hex) = ctx.get_extra() {
+            Address::from_hex(&String::from_utf8(addr_hex.to_vec()).expect("extra should be hex"))?
+        } else {
+            ctx.get_caller()
+        };
+
         let asset_id = payload.asset_id.clone();
         let value = payload.value;
         let to = payload.to;
@@ -200,11 +224,11 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             return Err(ServiceError::NotFoundAsset { id: asset_id }.into());
         }
 
-        self._transfer(caller.clone(), to.clone(), asset_id.clone(), value)?;
+        self._transfer(sender.clone(), to.clone(), asset_id.clone(), value)?;
 
         let event = TransferEvent {
             asset_id,
-            from: caller,
+            from: sender,
             to,
             value,
         };

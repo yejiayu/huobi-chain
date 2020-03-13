@@ -325,7 +325,7 @@ checksum = "d7b8a9123b8027467bce0099fe556c628a53c8d83df0507084c31e9ba2e39aff"
 [[package]]
 name = "asset"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "binding-macro",
  "byteorder",
@@ -496,7 +496,7 @@ dependencies = [
 [[package]]
 name = "binding-macro"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "derive_more 0.15.0",
  "muta-protocol",
@@ -732,7 +732,7 @@ dependencies = [
 [[package]]
 name = "common-config-parser"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "reqwest",
  "serde",
@@ -744,7 +744,7 @@ dependencies = [
 [[package]]
 name = "common-crypto"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "ophelia",
  "ophelia-bls-amcl",
@@ -754,7 +754,7 @@ dependencies = [
 [[package]]
 name = "common-logger"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "backtrace",
  "json",
@@ -765,7 +765,7 @@ dependencies = [
 [[package]]
 name = "common-merkle"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "muta-protocol",
  "rayon",
@@ -809,7 +809,7 @@ checksum = "6ff9c56c9fb2a49c05ef0e431485a22400af20d33226dc0764d891d09e724127"
 [[package]]
 name = "core-api"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -830,7 +830,7 @@ dependencies = [
 [[package]]
 name = "core-consensus"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "async-trait",
  "bincode",
@@ -876,7 +876,7 @@ checksum = "b3a71ab494c0b5b860bdc8407ae08978052417070c2ced38573a9157ad75b8ac"
 [[package]]
 name = "core-mempool"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "async-trait",
  "bytes 0.5.4",
@@ -901,7 +901,7 @@ dependencies = [
 [[package]]
 name = "core-network"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "async-trait",
  "bincode",
@@ -928,7 +928,7 @@ dependencies = [
 [[package]]
 name = "core-storage"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "async-trait",
  "derive_more 0.15.0",
@@ -1267,7 +1267,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "framework"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "asset 0.1.0-alpha.0",
  "byteorder",
@@ -1787,9 +1787,9 @@ dependencies = [
 
 [[package]]
 name = "json"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a38661a28126f8621fb246611288ae28935ddf180f5e21f2d0fbfe5e4131dbe"
+checksum = "53cbc99268c271e1b373440fb5e59cd231c86805d4923c144697898d827edc61"
 
 [[package]]
 name = "juniper"
@@ -2020,7 +2020,7 @@ dependencies = [
 [[package]]
 name = "metadata"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "binding-macro",
  "byteorder",
@@ -2135,7 +2135,7 @@ dependencies = [
 [[package]]
 name = "muta"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "actix-rt",
  "binding-macro",
@@ -2167,7 +2167,7 @@ dependencies = [
 [[package]]
 name = "muta-protocol"
 version = "0.1.0-alpha.1"
-source = "git+https://github.com/nervosnetwork/muta?rev=6e0cd81e#6e0cd81e1ce8932fcc70e217338edd4db8474ae5"
+source = "git+https://github.com/nervosnetwork/muta?rev=cdeb9fd#cdeb9fd1e18e198636fa59d91aead85d65cf9852"
 dependencies = [
  "async-trait",
  "bincode",

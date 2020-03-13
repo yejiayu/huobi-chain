@@ -5,7 +5,7 @@ import {
   fee_asset_id,
 } from "./utils";
 
-async function transfer(txSender, assetID, to, value) {
+export async function transfer(txSender, assetID, to, value) {
   const payload = {
     asset_id: assetID,
     to,
@@ -26,4 +26,16 @@ async function transfer(txSender, assetID, to, value) {
 export async function add_fee_token_to_accounts(accounts_address) {
   const res = await Promise.all(accounts_address.map(address => transfer(admin, fee_asset_id, address, 10000)));
   // console.log({accounts_address, res});
+}
+
+export async function getBalance(assetID, user) {
+  const res = await client.queryService({
+    serviceName: "asset",
+    method: "get_balance",
+    payload: JSON.stringify({
+      asset_id: assetID,
+      user: user
+    })
+  });
+  return res;
 }

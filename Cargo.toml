@@ -5,8 +5,8 @@ authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
 
 [dependencies]
-muta = { git = "https://github.com/nervosnetwork/muta", rev = "6e0cd81e"}
-protocol = { git = "https://github.com/nervosnetwork/muta", rev = "6e0cd81e", package = "muta-protocol" }
+muta = { git = "https://github.com/nervosnetwork/muta", rev = "cdeb9fd"}
+protocol = { git = "https://github.com/nervosnetwork/muta", rev = "cdeb9fd", package = "muta-protocol" }
 
 derive_more = "0.15"
 tokio = { version = "0.2", features = ["macros", "rt-core", "rt-util"]}

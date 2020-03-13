@@ -1,5 +1,5 @@
 # crypto
-privkey = "45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
+privkey = "0x45c56be699dca666191ad3446897e0f480da234da896270202514a0e1a587c3f"
 
 # db config
 data_path = "./target/tests/e2e/data"

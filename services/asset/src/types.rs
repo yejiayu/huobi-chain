@@ -15,6 +15,7 @@ pub struct InitGenesisPayload {
     pub name:        String,
     pub symbol:      String,
     pub supply:      u64,
+    pub precision:   u64,
     pub issuer:      Address,
     pub fee_account: Address,
     pub fee:         u64,
@@ -22,9 +23,10 @@ pub struct InitGenesisPayload {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct CreateAssetPayload {
-    pub name:   String,
-    pub symbol: String,
-    pub supply: u64,
+    pub name:      String,
+    pub symbol:    String,
+    pub supply:    u64,
+    pub precision: u64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -104,11 +106,12 @@ pub struct GetAllowanceResponse {
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct Asset {
-    pub id:     Hash,
-    pub name:   String,
-    pub symbol: String,
-    pub supply: u64,
-    pub issuer: Address,
+    pub id:        Hash,
+    pub name:      String,
+    pub symbol:    String,
+    pub supply:    u64,
+    pub precision: u64,
+    pub issuer:    Address,
 }
 
 pub struct AssetBalance {
@@ -124,22 +127,24 @@ struct AllowanceCodec {
 impl rlp::Decodable for Asset {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         Ok(Self {
-            id:     rlp.at(0)?.as_val()?,
-            name:   rlp.at(1)?.as_val()?,
-            symbol: rlp.at(2)?.as_val()?,
-            supply: rlp.at(3)?.as_val()?,
-            issuer: rlp.at(4)?.as_val()?,
+            id:        rlp.at(0)?.as_val()?,
+            name:      rlp.at(1)?.as_val()?,
+            symbol:    rlp.at(2)?.as_val()?,
+            supply:    rlp.at(3)?.as_val()?,
+            precision: rlp.at(4)?.as_val()?,
+            issuer:    rlp.at(5)?.as_val()?,
         })
     }
 }
 
 impl rlp::Encodable for Asset {
     fn rlp_append(&self, s: &mut rlp::RlpStream) {
-        s.begin_list(5)
+        s.begin_list(6)
             .append(&self.id)
             .append(&self.name)
             .append(&self.symbol)
             .append(&self.supply)
+            .append(&self.precision)
             .append(&self.issuer);
     }
 }

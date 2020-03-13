@@ -10,7 +10,7 @@ describe("basic API test via muta-sdk-js", () => {
   test("getBlock", async () => {
     const block = await client.getBlock("0x1");
     // console.log(block);
-    expect(block.header.height).toBe("0000000000000001");
+    expect(block.header.height).toBe("0x0000000000000001");
   });
 
   test("send_tx_exceed_cycles_limit", async () => {

@@ -5,9 +5,10 @@ import {
   client,
   accounts,
   admin,
-  str2hex
+  str2hex,
+  fee_asset_id,
 } from "./utils";
-import { add_fee_token_to_accounts } from "./helper";
+import { add_fee_token_to_accounts, getBalance, transfer } from "./helper";
 import { readFileSync } from "fs";
 import { Muta } from "muta-sdk";
 
@@ -132,7 +133,7 @@ describe("riscv service", () => {
     // console.log({deploy_auth_res});
     expect(deploy_auth_res.isError).toBe(false);
     expect(JSON.parse(deploy_auth_res.ret).addresses).toStrictEqual([
-      acc.address.slice(2)
+      acc.address
     ]);
 
     // revoke auth
@@ -209,6 +210,26 @@ describe("riscv service", () => {
     exec_res = await exec(addr, "test_service_read");
     // console.log(exec_res);
     expect(exec_res.response.isError).toBe(false);
+
+    // transfer via asset service
+    let b = await getBalance(fee_asset_id, addr);
+    expect(JSON.parse(b.ret).balance).toBe(0);
+    const amount = 10000;
+    const transfer_receipt = await transfer(admin, fee_asset_id, addr, amount);
+    b = await getBalance(fee_asset_id, addr);
+    expect(JSON.parse(b.ret).balance).toBe(10000);
+    const to_addr = '0x0000000000000000000000000000000000000001';
+    b = await getBalance(fee_asset_id, to_addr);
+    const to_balance_before = JSON.parse(b.ret).balance;
+    // transfer 100 from contract to to_addr via contract
+    exec_res = await exec(addr, "test_transfer_from_contract");
+    // console.log(exec_res);
+    expect(exec_res.response.isError).toBe(false);
+    b = await getBalance(fee_asset_id, to_addr);
+    const to_balance_after = JSON.parse(b.ret).balance;
+    expect(to_balance_before + 100).toBe(to_balance_after);
+    b = await getBalance(fee_asset_id, addr);
+    expect(JSON.parse(b.ret).balance).toBe(9900);
   });
 
   test("test_riscv_invalid_contract", async () => {

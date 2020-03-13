@@ -83,7 +83,7 @@ describe("node manager service API test via muta-sdk-js", () => {
     // Get admin
     let res = await getAdmin();
     let ret = JSON.parse(res.ret);
-    expect("0x" + ret).toBe(accounts[0].address);
+    expect(ret).toBe(accounts[0].address);
 
     // Update interval
     receipt = await updateInterval(admin, 666);

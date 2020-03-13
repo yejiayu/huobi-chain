@@ -96,7 +96,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                 };
 
                 let address = {
-                    let hex = String::from_utf8(get_arr(machine, addr_ptr, 40)?)
+                    let hex = String::from_utf8(get_arr(machine, addr_ptr, 42)?)
                         .map_err(|_| IO(InvalidData))?;
                     Address::from_hex(&hex).map_err(|_| IO(InvalidData))?
                 };
