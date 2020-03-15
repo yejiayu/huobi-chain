@@ -448,3 +448,80 @@ $ docker compose -f devtools/docker-compose/bft-4-node.yaml up
 ```
 
 Docker compose 启动 4 个共识节点，分别暴露 GraphQL 本地端口 8001、8002、8003、8004，节点的详细配置信息可前往 `devtools/docker-compose` 目录查看。
+
+## 通过 sdk 手动构造交易的方法
+
+目前 huobi-chain 开放了通过区块链浏览器发送转账交易的功能。
+我们可以通过 JS-SDK 手动构造一笔交易，通过区块链浏览器发送。
+更多 JS-SDK 的使用方法请参见 [JS-SDK](./js_sdk.md) 文档。
+
+```javascript
+const muta_sdk = require('muta-sdk');
+const Muta = muta_sdk.Muta;
+
+async function main() {
+  //  通过随机生成的助记词来生成 account，也可以自行修改助记词为自己的已有助记词
+  const mnemonic = Muta.hdWallet.generateMnemonic();
+  const wallet = new Muta.hdWallet(mnemonic);
+  const account = wallet.deriveAccount(0);
+
+  // 直接通过私钥生成 account
+  // const account = Muta.accountFromPrivateKey(
+  //   '0x937d1dbf3d64b512ba3fd25d13e6ef0184b35313e83d25ea599b4935d4fa359a',
+  // );
+
+  // 将下面的原始交易根据需要进行修改：
+  // 1. 将 chainId 修改为 testnet 使用的 chainId
+  // 2. 发送多笔相同交易需要修改 nonce 以避免重复交易被拒绝；
+  // 3. 修改 timeout 字段为当前 块高度 + 10；
+  // 4. 根据你的转账需要修改 asset_id, to, value 字段；
+  const rawTx = {
+    chainId:
+      '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
+    cyclesLimit: '0xffff',
+    cyclesPrice: '0x1',
+    nonce: '0xea838f1890c1ab67b129b7f832d0973a79722e6254eef1715d5ff0f5eb96ca69',
+    timeout: '0x3173',
+    serviceName: 'asset',
+    method: 'transfer',
+    payload: JSON.stringify({
+      asset_id: '0x2000000000000000000000000000000000000000',
+      to: '0xe08d31131a27f4fee1e76415b067226248c4749d',
+      value: 100,
+    }),
+  };
+  const signed_tx = account.signTransaction(rawTx);
+  const query = {
+    query:
+      'mutation sendTransaction($inputRaw: InputRawTransaction!, $inputEncryption: InputTransactionEncryption!) {\n  sendTransaction(inputRaw: $inputRaw, inputEncryption: $inputEncryption)\n}\n',
+    variables: {
+      inputEncryption: {
+        pubkey: signed_tx.pubkey,
+        signature: signed_tx.signature,
+        txHash: signed_tx.txHash,
+      },
+      inputRaw: {
+        chainId: signed_tx.chainId,
+        cyclesLimit: signed_tx.cyclesLimit,
+        cyclesPrice: signed_tx.cyclesPrice,
+        method: signed_tx.method,
+        nonce: signed_tx.nonce,
+        payload: signed_tx.payload,
+        serviceName: signed_tx.serviceName,
+        timeout: signed_tx.timeout,
+      },
+    },
+  };
+  console.log(JSON.stringify(query));
+}
+
+main();
+```
+
+输出结果示例：
+
+```json
+{"query":"mutation sendTransaction($inputRaw: InputRawTransaction!, $inputEncryption: InputTransactionEncryption!) {\n  sendTransaction(inputRaw: $inputRaw, inputEncryption: $inputEncryption)\n}\n","variables":{"inputEncryption":{"pubkey":"0x023faee119371e7f714b64363a030fc0ca4c62686f30b5a1a2a3f1a64f819a388d","signature":"0x0ba95792e450c9d7ebf69aebfac690403a4a538aa64b9cbf9c41275d9e3be83e7f1ac814039bec33a1151cd978f74ee8de9a577822e423c3b190b741bb8bc385","txHash":"0x0c7cd0b3a08aef80edb5db8626ac932c8e5cde8994f66e2789e421fb98dcbcfd"},"inputRaw":{"chainId":"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036","cyclesLimit":"0xffff","cyclesPrice":"0x1","method":"transfer","nonce":"0xea838f1890c1ab67b129b7f832d0973a79722e6254eef1715d5ff0f5eb96ca69","payload":"{\"asset_id\":\"0x2000000000000000000000000000000000000000\",\"to\":\"0xe08d31131a27f4fee1e76415b067226248c4749d\",\"value\":100}","serviceName":"asset","timeout":"0x3173"}}}
+```
+
+将该输出直接贴到区块链浏览器发送交易页面进行提交，即可发送交易。
