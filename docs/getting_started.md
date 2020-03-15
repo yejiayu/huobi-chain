@@ -145,32 +145,32 @@ $ muta-cli repl
 > await client.getLatestBlockHeight()
 2081
 > await client.getBlock('0x1')
-{ header:
-   { chainId:
-      'b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
-     confirmRoot: [],
-     cyclesUsed: [ '0000000000000000' ],
-     height: '0000000000000001',
-     execHeight: '0000000000000000',
-     orderRoot:
-      '56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-     preHash:
-      '87f07b8f60bd6198ba52deacfe9ecf9870198edb60a706a1d0fea1f5df1c6a26',
-     proposer: 'f8389d774afdad8755ef8e629e5a154fddc6325a',
-     receiptRoot: [],
-     stateRoot:
-      'f846a8c0af225b0d3a4ea5c90e2adfbf207b0accd9a1046832f84aa92947d1f1',
-     timestamp: '000000005e3ebfea',
-     validatorVersion: '0000000000000000',
-     proof:
-      { bitmap: '',
-        blockHash:
-         '56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-        height: '0000000000000000',
-        round: '0000000000000000',
-        signature: '' },
-     validators: [ [Object] ] },
-  orderedTxHashes: [] }
+{
+  header: {
+    chainId: '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
+    confirmRoot: [],
+    cyclesUsed: [],
+    height: '0x0000000000000001',
+    execHeight: '0x0000000000000000',
+    orderRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+    preHash: '0xa384912d97e717091537b8fbc126d06387661ef6bc65d16629fb670f1c8a012e',
+    proposer: '0xf8389d774afdad8755ef8e629e5a154fddc6325a',
+    receiptRoot: [],
+    stateRoot: '0x6116242b3f08157d9efc825e8b8a6183592e1bbec8144a445978dec3c60c94f9',
+    timestamp: '0x00000170d37db1c6',
+    validatorVersion: '0x0000000000000000',
+    proof: {
+      bitmap: '0x',
+      blockHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      height: '0x0000000000000000',
+      round: '0x0000000000000000',
+      signature: '0x'
+    },
+    validators: [ [Object] ]
+  },
+  orderedTxHashes: [],
+  hash: '0x253466c6611ce338b78882777c320990db32ca0da156bec0e7c2e9e1489c5419'
+}
 ```
 
 该 REPL 是基于 nodejs 的封装，你可以使用任何符合 nodejs 语法的语句。
@@ -194,138 +194,174 @@ $ muta-cli repl
 2081
 
 > client.getBlock('0x1')
-{ header:
-   { chainId:
-      'b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
-     confirmRoot: [],
-     cyclesUsed: [ '0000000000000000' ],
-     height: '0000000000000001',
-     execHeight: '0000000000000000',
-     orderRoot:
-      '56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-     preHash:
-      '87f07b8f60bd6198ba52deacfe9ecf9870198edb60a706a1d0fea1f5df1c6a26',
-     proposer: 'f8389d774afdad8755ef8e629e5a154fddc6325a',
-     receiptRoot: [],
-     stateRoot:
-      'f846a8c0af225b0d3a4ea5c90e2adfbf207b0accd9a1046832f84aa92947d1f1',
-     timestamp: '000000005e3eecac',
-     validatorVersion: '0000000000000000',
-     proof:
-      { bitmap: '',
-        blockHash:
-         '56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-        height: '0000000000000000',
-        round: '0000000000000000',
-        signature: '' },
-     validators: [ [Object] ] },
-  orderedTxHashes: [] }
+{
+  header: {
+    chainId: '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
+    confirmRoot: [],
+    cyclesUsed: [],
+    height: '0x0000000000000001',
+    execHeight: '0x0000000000000000',
+    orderRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+    preHash: '0xa384912d97e717091537b8fbc126d06387661ef6bc65d16629fb670f1c8a012e',
+    proposer: '0xf8389d774afdad8755ef8e629e5a154fddc6325a',
+    receiptRoot: [],
+    stateRoot: '0x6116242b3f08157d9efc825e8b8a6183592e1bbec8144a445978dec3c60c94f9',
+    timestamp: '0x00000170d37db1c6',
+    validatorVersion: '0x0000000000000000',
+    proof: {
+      bitmap: '0x',
+      blockHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      height: '0x0000000000000000',
+      round: '0x0000000000000000',
+      signature: '0x'
+    },
+    validators: [ [Object] ]
+  },
+  orderedTxHashes: [],
+  hash: '0x253466c6611ce338b78882777c320990db32ca0da156bec0e7c2e9e1489c5419'
+}
 
 # asset service 操作
-> const account = accounts[0]
+
+# 起链后只有 admin 的账户有 HTTest，由于后续的一些写操作需要以 HTTest 支付手续费，所以这里通过 admin 的私钥创建 account
+> const account = muta_sdk.Account.fromPrivateKey('0x2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2')
 
 > const service = new muta_sdk.AssetService(client, account)
 
 # 发行资产
-> MT = await service.createAsset({name: 'Muta Token', supply: 1000000000, symbol: 'MT'})
-{ name: 'Muta Token',
-  symbol: 'MT',
-  supply: 1000000000,
-  issuer: '9d1d1bb11c44500603971a245f55a23f65148eee',
-  asset_id:
-   'e8c2c6606030bc93da018cec5e6400845489b471527d507357b3316ae884a3f3' }
+> MT = await service.create_asset({name: 'Muta Token', supply: 1000000000, symbol: 'MT', precision: 8})
+{
+  txHash: '0x3b7d58e017906aa09c63a7dadc7a770543750467f9a7cf9dc284a1119504fd03',
+  height: '0x0000000000003088',
+  cyclesUsed: '0x0000000000005208',
+  events: [
+    {
+      data: '{"id":"0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac","name":"Muta Token","symbol":"MT","supply":1000000000,"precision":8,"issuer":"0xcff1002107105460941f797828f468667aa1a2db"}',
+      service: 'asset'
+    }
+  ],
+  stateRoot: '0x9c0c17a8c035516050ea459a0f5a9e7aee10cb80e9e42d6bd3b46ff16f717eba',
+  response: {
+    serviceName: 'asset',
+    method: 'create_asset',
+    ret: {
+      id: '0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac',
+      name: 'Muta Token',
+      symbol: 'MT',
+      supply: 1000000000,
+      precision: 8,
+      issuer: '0xcff1002107105460941f797828f468667aa1a2db'
+    },
+    isError: false
+  }
 
 # 发行者即为发交易的账户地址
 > account.address
-'0x9d1d1bb11c44500603971a245f55a23f65148eee'
+'0xcff1002107105460941f797828f468667aa1a2db'
 
 # 查询发行者余额
-> await client.queryService({serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.asset_id, user: account.address})})
-{ isError: false,
-  ret:
-   '{"asset_id":"e8c2c6606030bc93da018cec5e6400845489b471527d507357b3316ae884a3f3","user":"9d1d1bb11c44500603971a245f55a23f65148eee","balance":1000000000}' }
+
+> await client.queryService({serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.net.id, user: account.address})})
+{
+  isError: false,
+  ret: '{"asset_id":"0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac","user":"0xcff1002107105460941f797828f468667aa1a2db","balance":1000000000}'
+}
 
 # 转账
 > const to = accounts[1].address;
 
-> await service.transfer({asset_id: MT.asset_id, to, value: 100});
+> await service.transfer({asset_id: MT.responce.net.id, to, value: 100});
 
 # 查看转账结果
-> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.asset_id, user: account.address})})
-{ isError: false,
-  ret:
-   '{"asset_id":"e8c2c6606030bc93da018cec5e6400845489b471527d507357b3316ae884a3f3","user":"9d1d1bb11c44500603971a245f55a23f65148eee","balance":999999900}' }
-
-> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.asset_id, user: to})})
-{ isError: false,
-  ret:
-   '{"asset_id":"e8c2c6606030bc93da018cec5e6400845489b471527d507357b3316ae884a3f3","user":"9b13a4625e63b0c475c4a6f5dabb761d1c315f2b","balance":100}' }
+> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.net.id, user: account.address})})
+{
+  isError: false,
+  ret: '{"asset_id":"0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac","user":"0xcff1002107105460941f797828f468667aa1a2db","balance":999999900}'
+}
+> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.net.id, user: to})})
+{
+  isError: false,
+  ret: '{"asset_id":"0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac","user":"0x21409229fb79b996e68a2273b98a305ac0a7a785","balance":100}'
+}
 
 # 链上管理
-> admin = muta_sdk.Muta.account.fromPrivateKey('2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2')
+> admin = muta_sdk.Muta.account.fromPrivateKey('0x2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2')
 
 > admin.address
 '0xcff1002107105460941f797828f468667aa1a2db'
 
 > metadata_raw = await client.queryService({serviceName: 'metadata', method: 'get_metadata', payload: ''})
-{ isError: false,
-  ret:
-   '{"chain_id":"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036","common_ref":"703873635a6b51513451","timeout_gap":20,"cycles_limit":99999999,"cycles_price":1,"interval":999,"verifier_list":[{"address":"f8389d774afdad8755ef8e629e5a154fddc6325a","propose_weight":1,"vote_weight":1}],"propose_ratio":15,"prevote_ratio":10,"precommit_ratio":10}' }
+{
+  isError: false,
+  ret: '{"chain_id":"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036","common_ref":"0x703873635a6b51513451","timeout_gap":20,"cycles_limit":999999999999,"cycles_price":1,"interval":3000,"verifier_list":[{"bls_pub_key":"0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22","address":"0xf8389d774afdad8755ef8e629e5a154fddc6325a","propose_weight":1,"vote_weight":1}],"propose_ratio":15,"prevote_ratio":10,"precommit_ratio":10,"brake_ratio":7,"tx_num_limit":20000,"max_tx_size":1048576}'
+}
 
 > metadata = JSON.parse(metadata_raw.ret)
-{ chain_id:
-   'b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
-  common_ref: '703873635a6b51513451',
+{
+  chain_id: '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
+  common_ref: '0x703873635a6b51513451',
   timeout_gap: 20,
-  cycles_limit: 99999999,
+  cycles_limit: 999999999999,
   cycles_price: 1,
-  interval: 999,
-  verifier_list:
-   [ { address: 'f8389d774afdad8755ef8e629e5a154fddc6325a',
-       propose_weight: 1,
-       vote_weight: 1 } ],
+  interval: 3000,
+  verifier_list: [
+    {
+      bls_pub_key: '0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22',
+      address: '0xf8389d774afdad8755ef8e629e5a154fddc6325a',
+      propose_weight: 1,
+      vote_weight: 1
+    }
+  ],
   propose_ratio: 15,
   prevote_ratio: 10,
-  precommit_ratio: 10 }
+  precommit_ratio: 10,
+  brake_ratio: 7,
+  tx_num_limit: 20000,
+  max_tx_size: 1048576
+}
 
 # 构造交易修改 interval
 > update_metadata_tx = await client.composeTransaction({ method: 'update_interval', payload: { interval: metadata.interval - 1, }, serviceName: 'node_manager' })
-{ chainId:
-   '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
+{
+  chainId: '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
   cyclesLimit: '0xffff',
   cyclesPrice: '0xffff',
-  nonce:
-   '0x982547f7d2cbb2045991f0d98c935dff3d7741036717c913b6d56e0bae6ddd4e',
-  timeout: '0x0542',
+  nonce: '0x891c39980034dc5d5dc0cd38c5fd48a78a6499fb2976fa230bd8df300df39334',
+  timeout: '0x35b4',
   method: 'update_interval',
-  payload: '{"interval":998}',
-  serviceName: 'node_manager' }
+  payload: '{"interval":2999}',
+  serviceName: 'node_manager'
+}
 
 > hash = await client.sendTransaction(admin.signTransaction(update_metadata_tx))
-'4a291505feb75c01769b2d80c57f3db168681b07be1d31bce604fb31f9b0dbe2'
+'0x9e360cc732328cabe844290cd24d3eb74060125c7c10f67736760aec67ddc4dd'
 
 > await client.getReceipt(hash)
-{ txHash:
-   '4a291505feb75c01769b2d80c57f3db168681b07be1d31bce604fb31f9b0dbe2',
-  height: '000000000000036f',
-  cyclesUsed: '000000000000f618',
-  events:
-   [ { data: '{"topic":"Interval Updated","interval":998}',
-       service: 'node_manager' } ],
-  stateRoot:
-   'a052b0485718bc7d1b7f004b57473a4922b0dacb19307ce1c50c2e52a3ed2584',
-  response:
-   { serviceName: 'node_manager',
-     method: 'update_interval',
-     ret: '',
-     isError: false } }
+{
+  txHash: '0x9e360cc732328cabe844290cd24d3eb74060125c7c10f67736760aec67ddc4dd',
+  height: '0x00000000000035a6',
+  cyclesUsed: '0x000000000000f618',
+  events: [
+    {
+      data: '{"topic":"Interval Updated","interval":2999}',
+      service: 'node_manager'
+    }
+  ],
+  stateRoot: '0xfaf9040beada4e7390a3f23e0e210ad050c04b74a20195dd74bbb5f01dedb14b',
+  response: {
+    serviceName: 'node_manager',
+    method: 'update_interval',
+    ret: '',
+    isError: false
+  }
+}
 
 # 再查一次可以发现 interval 已经改变了
 > metadata_raw = await client.queryService({serviceName: 'metadata', method: 'get_metadata', payload: ''})
-{ isError: false,
-  ret:
-   '{"chain_id":"b6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036","common_ref":"703873635a6b51513451","timeout_gap":20,"cycles_limit":99999999,"cycles_price":1,"interval":998,"verifier_list":[{"address":"f8389d774afdad8755ef8e629e5a154fddc6325a","propose_weight":1,"vote_weight":1}],"propose_ratio":15,"prevote_ratio":10,"precommit_ratio":10}' }
-
+{
+  isError: false,
+  ret: '{"chain_id":"0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036","common_ref":"0x703873635a6b51513451","timeout_gap":20,"cycles_limit":999999999999,"cycles_price":1,"interval":2999,"verifier_list":[{"bls_pub_key":"0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22","address":"0xf8389d774afdad8755ef8e629e5a154fddc6325a","propose_weight":1,"vote_weight":1}],"propose_ratio":15,"prevote_ratio":10,"precommit_ratio":10,"brake_ratio":7,"tx_num_limit":20000,"max_tx_size":1048576}'
+}
 
 # riscv service 演示
 
@@ -340,25 +376,25 @@ $ muta-cli repl
 > const tx = await client.composeTransaction({ method: 'deploy', payload: { intp_type: 'Binary', init_args: '', code: code.toString('hex') }, serviceName: 'riscv' })
 
 > txHash = await client.sendTransaction(account.signTransaction(tx))
-'4a8baf53d59bed2ef016526030203a0d15ed838e0dfcc717495b56142cc0c77a'
+'0xa9bc79abe6bc087d0530561c9d1893c60bf6c622ce087e08f727a1a17502e757'
 
 > receipt = await client.getReceipt(txHash)
-{ txHash:
-   '4a8baf53d59bed2ef016526030203a0d15ed838e0dfcc717495b56142cc0c77a',
-  height: '0000000000000510',
-  cyclesUsed: '0000000000024e50',
+{
+  txHash: '0xa9bc79abe6bc087d0530561c9d1893c60bf6c622ce087e08f727a1a17502e757',
+  height: '0x0000000000003bdf',
+  cyclesUsed: '0x0000000000019550',
   events: [],
-  stateRoot:
-   '64b18096bf322b74d3f6ae206d5fe3154fa19a876fe849130f9b5f70d627c850',
-  response:
-   { serviceName: 'riscv',
-     method: 'deploy',
-     ret:
-      '{"address":"7598a35834c5c1f544edd9ba48013c361f71bf3b","init_ret":""}',
-     isError: false } }
+  stateRoot: '0xdc8f9d29d8b53177b9b3255a9eaf1e5fcafe6d90a58f5e031a67ca92c8a47f5f',
+  response: {
+    serviceName: 'riscv',
+    method: 'deploy',
+    ret: '{"address":"0xe73da76a97bb8d052b691f903382ef11efe11e51","init_ret":""}',
+    isError: false
+  }
+}
 
 > address = JSON.parse(receipt.response.ret).address
-'7598a35834c5c1f544edd9ba48013c361f71bf3b'
+'0xe73da76a97bb8d052b691f903382ef11efe11e51'
 
 # 查询 k 这个 key 的值
 > await client.queryService({ serviceName: 'riscv', method: 'call', payload: JSON.stringify({ address, args: 'get k' })})
@@ -366,32 +402,27 @@ $ muta-cli repl
 
 # 发交易，将 k 的值置为 v
 > set_tx = await client.composeTransaction({ method: 'exec', payload: { address, args: 'set k v' }, serviceName: 'riscv' })
-{ chainId:
-   '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
+{
+  chainId: '0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036',
   cyclesLimit: '0xffffff',
   cyclesPrice: '0xffff',
-  nonce:
-   '0x1811fc291c71184e6a1170cce328135e94072910c30b9f31c861375ae6aaf48a',
-  timeout: '0x05a8',
+  nonce: '0xa2bc6e40c6988ed7e9404a03fed8796ceb9c8080286b1d7edb4be14bb29feca1',
+  timeout: '0x3c10',
   method: 'exec',
-  payload:
-   '{"address":"7598a35834c5c1f544edd9ba48013c361f71bf3b","args":"set k v"}',
-  serviceName: 'riscv' }
+  payload: '{"address":"0xe73da76a97bb8d052b691f903382ef11efe11e51","args":"set k v"}',
+  serviceName: 'riscv'
+}
 > set_tx_hash = await client.sendTransaction(account.signTransaction(set_tx))
-'ec8b475ce6908368e21905ba2f79095bd3cb59dcb110c55be8e2b829fbb3e020'
+'0x64f5d4d55ea3b2db0103c9eee9ccf1a0d0eaf7e1b4f669de037b1b7102554441'
 > await client.getReceipt(set_tx_hash)
-{ txHash:
-   'ec8b475ce6908368e21905ba2f79095bd3cb59dcb110c55be8e2b829fbb3e020',
-  height: '00000000000005a3',
-  cyclesUsed: '0000000000000d34',
+{
+  txHash: '0x64f5d4d55ea3b2db0103c9eee9ccf1a0d0eaf7e1b4f669de037b1b7102554441',
+  height: '0x0000000000003c07',
+  cyclesUsed: '0x0000000000000d28',
   events: [],
-  stateRoot:
-   '6d7beb07e96978344acb2ec9ede1225723a299cbaae68b468ba08295c9604f69',
-  response:
-   { serviceName: 'riscv',
-     method: 'exec',
-     ret: '""',
-     isError: false } }
+  stateRoot: '0x4d29fdc6e5b707269b64c56ab1d0a8c359117a8ea8c2b2b58a431e39648e2690',
+  response: { serviceName: 'riscv', method: 'exec', ret: '""', isError: false }
+}
 
 # 再次查询，发现 k 的值已经修改
 > await client.queryService({ serviceName: 'riscv', method: 'call', payload: JSON.stringify({ address, args: 'get k' })})

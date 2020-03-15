@@ -25,8 +25,8 @@ In terms of optimization for financial applications, Huobi chain plans to suppor
 ## Get Started
 
 - If you want to build your own blockchain based on Huobi Chain technology, you can refer to Quick [Start](./docs/getting_started.md).
-- If you want to know the architecture design of the Huobi Chain, you can refer to the [architecture design and module design](./arch).
-- If you want to develop decentralized applications on Huobi Chain, you can refer to the [contract development tutorial](./contract_demo).
+- If you want to know the architecture design of the Huobi Chain, you can refer to the [architecture design and module design](./arch.md).
+- If you want to develop decentralized applications on Huobi Chain, you can refer to the [contract development tutorial](./contract_demo.md).
 
 ## Key Features
 

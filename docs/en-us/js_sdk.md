@@ -122,7 +122,7 @@ const account = hdWallet.deriveAccount(2);//我们派生accountIndex=2 的账户
 当然，如果你有自己私钥，也可以通过指定私钥创建 Account：
 
 ```js
-const account = Account.fromPrivateKey(
+const account = Muta.accountFromPrivateKey(
     '0x1000000000000000000000000000000000000000000000000000000000000000',
   );
 ```
@@ -284,7 +284,7 @@ export interface Balance {
 ```
 可以看到，发送一笔交易，和大多数区块链类似，需要一笔被**签名**的交易
 
-那么我们先来构建一笔**创建** Asset 交易，然后对其签名。
+那么我们先来构建一笔 **创建** Asset 交易，然后对其签名。
 
 通过查询 GraphQL API 接口文档,
 
@@ -292,7 +292,7 @@ export interface Balance {
 
  - 接口的方法为: create_asset,
  
- - 接受接受的参数为: CreateAssetParam
+ - 接受的参数为: CreateAssetParam
 
 ```typescript
     export interface CreateAssetParam {
@@ -305,7 +305,7 @@ export interface Balance {
 那么我们通过 Client 的工具方法 composeTransaction 来构建一个这样的交易对象：
 
 ```typescript
-    const tx = await client.composeTransaction<CreateAssetParam>({
+    const tx = await client.composeTransaction({
         method: 'create_asset',
         payload: { name: 'MY_COIN', symbol: 'SC', supply: 10000000 },
         serviceName: 'asset',
@@ -331,8 +331,7 @@ export interface Balance {
 当区块链认为一笔交易比成功的提交了，他会返回一张 Receipt 交易凭证，给出了交易的诸多信息，以及交易执行后的返回，我们可以通过getReceipt 来获得凭证：
 
 ```typescript
-    const receipt: Receipt = await this.client.getReceipt(utils.toHex(txHash));
-
+    const receipt: Receipt = await client.getReceipt(txHash);
 ```
 
 Receipt 凭证的数据类型如下:
@@ -361,11 +360,12 @@ export interface ReceiptResponse {
 
 ```typescript
 export interface Asset {
-  asset_id: Hash;
+  id: Hash;
   name: string;
   symbol: string;
   supply: number | BigNumber;
   issuer: Address;
+  precision: number | BigNumber;
 }
 ```
 
@@ -404,7 +404,8 @@ export interface Asset {
     name: 'LOVE_COIN',
     supply: 1314,
     symbol: 'LUV',
-  });
+    precision: 8,
+   });
   
   // 
   const asset = assetReceipt.response.ret;
