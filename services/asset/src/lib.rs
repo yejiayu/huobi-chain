@@ -285,7 +285,11 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         ctx: ServiceContext,
         payload: TransferFromPayload,
     ) -> ProtocolResult<()> {
-        let caller = ctx.get_caller();
+        let caller = if let Some(addr_hex) = ctx.get_extra() {
+            Address::from_hex(&String::from_utf8(addr_hex.to_vec()).expect("extra should be hex"))?
+        } else {
+            ctx.get_caller()
+        };
         let sender = payload.sender;
         let recipient = payload.recipient;
         let asset_id = payload.asset_id;
