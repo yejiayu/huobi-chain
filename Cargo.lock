@@ -339,7 +339,7 @@ dependencies = [
 
 [[package]]
 name = "asset"
-version = "0.1.0-rc.2"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "binding-macro",
@@ -1623,12 +1623,12 @@ dependencies = [
 
 [[package]]
 name = "huobi-chain"
-version = "0.1.0-rc.2"
+version = "0.2.0"
 dependencies = [
- "asset 0.1.0-rc.2",
+ "asset 0.2.0",
  "clap",
  "derive_more 0.15.0",
- "metadata 0.1.0-rc.2",
+ "metadata 0.2.0",
  "muta",
  "muta-protocol",
  "node_manager",
@@ -2035,7 +2035,7 @@ dependencies = [
 
 [[package]]
 name = "metadata"
-version = "0.1.0-rc.2"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "binding-macro",
@@ -2221,7 +2221,7 @@ dependencies = [
 
 [[package]]
 name = "node_manager"
-version = "0.1.0-rc.2"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "binding-macro",
@@ -2231,7 +2231,7 @@ dependencies = [
  "derive_more 0.15.0",
  "framework",
  "hex",
- "metadata 0.1.0-rc.2",
+ "metadata 0.2.0",
  "muta-protocol",
  "rlp 0.4.4",
  "serde",
@@ -2999,7 +2999,7 @@ dependencies = [
 
 [[package]]
 name = "riscv"
-version = "0.1.0-rc.2"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "binding-macro",

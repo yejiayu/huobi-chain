@@ -11,3 +11,12 @@
 
 这个是正常现象。这是因为在共识过程中，我们让出块节点的 `interval` 保持在 3s，非出块节点则没有限制，因此实际出块时间并不是严格的 3s。通常情况下，如果网络条件较好，实际出块时间可能在 1.5s~3s 之前波动，如果网络条件较差，实际出块时间可能会略高于 3s。
 
+#### 从 release 页面下载的 binary，跑在 ubuntu16 上的时候，会报 `huobi-chain: error while loading shared libraries: libssl.so.1.1: cannot open shared object file: No such file or directory`。
+
+Huobi-chain 编译时会自动检测系统的 OpenSSL 版本，在运行时进行动态链接。
+
+release 页面的 Linux binary 是使用 [Travis](https://github.com/HuobiGroup/huobi-chain/blob/master/.travis.yml#L42) 自动编译的，其默认使用的虚拟机版本为 [Ubuntu 18](https://docs.travis-ci.com/user/reference/overview/#for-a-particular-travisyml-configuration)。
+
+Ubuntu 18 和 16 的默认 OpenSSL 版本不一致，所以运行时，动态链接会报错。
+
+遇到该问题时，可以使用在 Ubuntu 16 环境下手动编译的 binary。其它系统（如 CentOS 7）下，可类似解决。
