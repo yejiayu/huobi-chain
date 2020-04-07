@@ -21,6 +21,7 @@
     - [使用 muta-cli 与链进行交互](#%e4%bd%bf%e7%94%a8-muta-cli-%e4%b8%8e%e9%93%be%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92)
   - [使用示例](#%e4%bd%bf%e7%94%a8%e7%a4%ba%e4%be%8b)
   - [使用 docker 本地部署多节点链](#%e4%bd%bf%e7%94%a8-docker-%e6%9c%ac%e5%9c%b0%e9%83%a8%e7%bd%b2%e5%a4%9a%e8%8a%82%e7%82%b9%e9%93%be)
+  - [通过 sdk 手动构造交易的方法](#%e9%80%9a%e8%bf%87-sdk-%e6%89%8b%e5%8a%a8%e6%9e%84%e9%80%a0%e4%ba%a4%e6%98%93%e7%9a%84%e6%96%b9%e6%b3%95)
 
   </details>
 
@@ -261,7 +262,7 @@ $ muta-cli repl
 
 # 查询发行者余额
 
-> await client.queryService({serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.net.id, user: account.address})})
+> await client.queryService({serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.ret.id, user: account.address})})
 {
   isError: false,
   ret: '{"asset_id":"0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac","user":"0xcff1002107105460941f797828f468667aa1a2db","balance":1000000000}'
@@ -270,15 +271,15 @@ $ muta-cli repl
 # 转账
 > const to = accounts[1].address;
 
-> await service.transfer({asset_id: MT.responce.net.id, to, value: 100});
+> await service.transfer({asset_id: MT.responce.ret.id, to, value: 100});
 
 # 查看转账结果
-> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.net.id, user: account.address})})
+> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.ret.id, user: account.address})})
 {
   isError: false,
   ret: '{"asset_id":"0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac","user":"0xcff1002107105460941f797828f468667aa1a2db","balance":999999900}'
 }
-> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.net.id, user: to})})
+> await client.queryService({ serviceName: 'asset', method: 'get_balance', payload: JSON.stringify({asset_id: MT.responce.ret.id, user: to})})
 {
   isError: false,
   ret: '{"asset_id":"0x82273a8a250b5dcc6fd0e6abb28669f46a0118d420fe9da536762d7d458432ac","user":"0x21409229fb79b996e68a2273b98a305ac0a7a785","balance":100}'
