@@ -106,7 +106,7 @@ $ cd /path/to/huobi-chain
 
 # 查看帮助
 $ ./target/release/huobi-chain  -h
-Huobi-chain v0.2.0
+Huobi-chain v0.3.0
 Muta Dev <muta@nervos.org>
 
 USAGE:
