@@ -77,10 +77,15 @@ e2e-test:
 	@echo "                                                                 "
 	@echo "rm -rf ./target/tests/e2e/data && cargo run --release -- -c tests/e2e/chain.toml -g tests/e2e/genesis.toml"
 	@echo "-----------------------------------------------------------------"
-	cd tests/e2e && yarn && ./wait-for-it.sh -t 300 localhost:8000 -- yarn run test
+	cd tests/e2e && npm i && ./wait-for-it.sh -t 300 localhost:8000 -- npm run test
 
 e2e-test-via-docker:
 	docker-compose -f tests/e2e/docker-compose-e2e-test.yaml up --exit-code-from e2e-test --force-recreate
+
+change-validator-test-via-docker:
+	@echo "if you changed the binary code, you may want to run `make docker-build` first"
+	cd tests/e2e && npm i && npx ts-node change_validators/create_configs.ts
+	docker-compose -f tests/e2e/change_validators/configs/docker-compose.yml up --exit-code-from change-validators-test --force-recreate --remove-orphans
 
 # For riscv service
 TARGET := riscv64-unknown-elf

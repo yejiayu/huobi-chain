@@ -1,0 +1,58 @@
+version: '2'
+
+services:
+<% _.forEach(keypairs, function(k) { %>
+  bft_node<%= k.index %>:
+    container_name: bft_node<%= k.index %>
+    image: huobi:latest
+    hostname: bft_node<%= k.index %>
+    environment:
+      - RUST_LOG
+      - RUST_BACKTRACE
+    volumes:
+      - ./chain-<%= k.index %>.toml:/app/config/chain.toml
+      - ./genesis.toml:/app/config/genesis.toml
+      # - ../../../../target/tests/change_validators/data/<%= k.index %>:/app/data
+      # - ../../../../target/tests/change_validators/logs/<%= k.index %>:/app/logs
+    # ports:
+    #   - <%= k.index + 8000 %>:8000
+    networks:
+      bft:
+        aliases:
+          - bft_node<%= k.index %>
+        ipv4_address: <%= k.ip %>
+    command: |
+      sh -c '
+      cd /app;
+      ./huobi-chain;'
+<% }); %>
+  change-validators-test:
+    image: node:10.15
+    depends_on:
+      - bft_node1
+    working_dir: /app/tests/e2e
+    volumes:
+      - ../../../..:/app
+      - ../../../../target/tests/e2e/node_modules:/app/tests/e2e/node_modules
+    networks:
+      bft:
+        aliases:
+          - change-validators-test
+        ipv4_address: 173.20.0.19
+    environment:
+      - ENDPOINT=http://<%= keypairs[0].ip %>:8000/graphql
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app/tests/e2e
+        npm install
+        chmod +x ./wait-for-it.sh
+        ./wait-for-it.sh -t 7200 bft_node1:8000 -- npx ts-node change_validators/change_validators_test.ts
+
+
+networks:
+  bft:
+    ipam:
+     config:
+       - subnet: 173.20.0.0/24
