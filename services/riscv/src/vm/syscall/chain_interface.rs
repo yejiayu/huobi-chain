@@ -105,7 +105,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                     .chain
                     .borrow_mut()
                     .contract_call(address, call_args, machine.cycles())
-                    .map_err(|_| ckb_vm::Error::IO(io::ErrorKind::Other))?;
+                    .map_err(|e| ckb_vm::Error::EcallError(code, format!("{:?}", e)))?;
 
                 machine.set_cycles(current_cycle);
                 if ret_ptr != 0 {

@@ -1,4 +1,13 @@
-import { muta, CHAIN_CONFIG, delay, client, accounts, admin, fee_asset_id, fee_account } from "./utils";
+import {
+  muta,
+  CHAIN_CONFIG,
+  delay,
+  client,
+  accounts,
+  admin,
+  fee_asset_id,
+  fee_account
+} from "./utils";
 
 async function createAsset(txSender, name, symbol, supply, precision) {
   const payload = {
@@ -112,22 +121,43 @@ async function transferFrom(txSender, assetID, sender, recipient, value) {
 describe("asset service API test via muta-sdk-js", () => {
   test("test normal process", async () => {
     // fee not enough
-    let caReceipt = await createAsset(accounts[0], "Test Token", "TT", 8888, 10000);
+    let caReceipt = await createAsset(
+      accounts[0],
+      "Test Token",
+      "TT",
+      8888,
+      10000
+    );
     expect(caReceipt.response.isError).toBe(true);
-    expect(caReceipt.response.ret).toBe('[ProtocolError] Kind: Service Error: FeeNotEnough');
+    expect(caReceipt.response.ret).toBe(
+      "[ProtocolError] Kind: Service Error: FeeNotEnough"
+    );
     // add fee token to accounts
-    await Promise.all(accounts.map(account => transfer(admin, fee_asset_id, account.address, 10000)));
+    await Promise.all(
+      accounts.map(account =>
+        transfer(admin, fee_asset_id, account.address, 10000)
+      )
+    );
 
     // Create asset
-    const fee_account_balance_before = await getBalance(fee_asset_id, fee_account);
+    const fee_account_balance_before = await getBalance(
+      fee_asset_id,
+      fee_account
+    );
     caReceipt = await createAsset(accounts[0], "Test Token", "TT", 8888, 10000);
     expect(caReceipt.response.isError).toBe(false);
-    const fee_account_balance_after = await getBalance(fee_asset_id, fee_account);
+    const fee_account_balance_after = await getBalance(
+      fee_asset_id,
+      fee_account
+    );
     const caRet = JSON.parse(caReceipt.response.ret);
     const assetID = caRet.id;
 
     // check fee account balance
-    expect(JSON.parse(fee_account_balance_before.ret).balance < JSON.parse(fee_account_balance_after.ret).balance).toBe(true);
+    expect(
+      JSON.parse(fee_account_balance_before.ret).balance <
+        JSON.parse(fee_account_balance_after.ret).balance
+    ).toBe(true);
 
     // Get asset
     const gaRes = await getAsset(assetID);

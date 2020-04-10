@@ -316,7 +316,10 @@ where
             args: String::from_utf8_lossy(args.as_ref()).to_string(),
         };
         let payload_str = serde_json::to_string(&payload).map_err(ServiceError::Serde)?;
-        self.service_call("riscv", "exec", &payload_str, current_cycle, false)
+        let (serde_ret, cycle) =
+            self.service_call("riscv", "exec", &payload_str, current_cycle, false)?;
+        let raw_ret: String = serde_json::from_str(&serde_ret).map_err(ServiceError::Serde)?;
+        Ok((raw_ret, cycle))
     }
 
     fn service_call(

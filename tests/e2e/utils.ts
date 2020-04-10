@@ -43,7 +43,9 @@ export const admin = Muta.accountFromPrivateKey(
   "0x2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2"
 );
 
-const asset_genesis = JSON.parse(_.find(GENESIS.services, o => o.name === 'asset').payload);
+const asset_genesis = JSON.parse(
+  _.find(GENESIS.services, o => o.name === "asset").payload
+);
 // console.log(asset_genesis);
 export const fee_asset_id = asset_genesis.id;
 export const fee_account = asset_genesis.fee_account;

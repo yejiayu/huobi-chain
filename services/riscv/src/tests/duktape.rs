@@ -449,5 +449,5 @@ fn should_support_pvm_service_call() {
         .exec(context.make(), payload)
         .expect("exec service call");
 
-    assert_eq!(ret, "self");
+    assert_eq!(ret, "\"self\"");
 }

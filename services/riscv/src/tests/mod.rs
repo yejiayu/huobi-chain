@@ -132,7 +132,7 @@ impl Dispatcher for MockDispatcher {
             let mut service = cell.borrow_mut();
 
             Ok(ExecResp {
-                ret:      service.exec(context.clone(), payload)?,
+                ret:      serde_json::to_string(&service.exec(context.clone(), payload)?).unwrap(),
                 is_error: false,
             })
         })

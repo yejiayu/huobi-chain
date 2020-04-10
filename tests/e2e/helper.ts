@@ -1,9 +1,4 @@
-import {
-  client,
-  accounts,
-  admin,
-  fee_asset_id,
-} from "./utils";
+import { client, accounts, admin, fee_asset_id } from "./utils";
 
 export async function transfer(txSender, assetID, to, value) {
   const payload = {
@@ -24,7 +19,11 @@ export async function transfer(txSender, assetID, to, value) {
 }
 
 export async function add_fee_token_to_accounts(accounts_address) {
-  const res = await Promise.all(accounts_address.map(address => transfer(admin, fee_asset_id, address, 10000)));
+  const res = await Promise.all(
+    accounts_address.map(address =>
+      transfer(admin, fee_asset_id, address, 10000)
+    )
+  );
   // console.log({accounts_address, res});
 }
 
