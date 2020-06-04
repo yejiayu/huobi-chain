@@ -44,7 +44,7 @@ pub struct DeployPayload {
     pub init_args: String,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct DeployResp {
     pub address:  Address,
     pub init_ret: String,

@@ -6,9 +6,8 @@ use bytes::Bytes;
 use derive_more::{Display, From};
 
 use binding_macro::{cycles, genesis, service};
-use protocol::traits::{ExecutorParams, ServiceSDK};
+use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK};
 use protocol::types::{Metadata, ServiceContext, METADATA_KEY};
-use protocol::{ProtocolError, ProtocolErrorKind, ProtocolResult};
 
 use crate::types::UpdateMetadataPayload;
 
@@ -20,23 +19,24 @@ pub struct MetadataService<SDK> {
 
 #[service]
 impl<SDK: ServiceSDK> MetadataService<SDK> {
-    pub fn new(sdk: SDK) -> ProtocolResult<Self> {
-        Ok(Self { sdk })
+    pub fn new(sdk: SDK) -> Self {
+        Self { sdk }
     }
 
     #[genesis]
-    fn init_genesis(&mut self, metadata: Metadata) -> ProtocolResult<()> {
+    fn init_genesis(&mut self, metadata: Metadata) {
         self.sdk.set_value(METADATA_KEY.to_string(), metadata)
     }
 
     #[cycles(210_00)]
     #[read]
-    fn get_metadata(&self, ctx: ServiceContext) -> ProtocolResult<Metadata> {
+    fn get_metadata(&self, ctx: ServiceContext) -> ServiceResponse<Metadata> {
         let metadata: Metadata = self
             .sdk
-            .get_value(&METADATA_KEY.to_owned())?
+            .get_value(&METADATA_KEY.to_owned())
             .expect("Metadata should always be in the genesis block");
-        Ok(metadata)
+
+        ServiceResponse::from_succeed(metadata)
     }
 
     #[cycles(210_00)]
@@ -45,25 +45,27 @@ impl<SDK: ServiceSDK> MetadataService<SDK> {
         &mut self,
         ctx: ServiceContext,
         payload: UpdateMetadataPayload,
-    ) -> ProtocolResult<()> {
-        if let Some(extra) = ctx.get_extra() {
-            if extra == ADMISSION_TOKEN {
+    ) -> ServiceResponse<()> {
+        match ctx.get_extra() {
+            Some(extra) if extra == ADMISSION_TOKEN => {
                 let mut metadata: Metadata = self
                     .sdk
-                    .get_value(&METADATA_KEY.to_owned())?
+                    .get_value(&METADATA_KEY.to_owned())
                     .expect("Metadata should always be in the genesis block");
+
                 metadata.verifier_list = payload.verifier_list;
                 metadata.interval = payload.interval;
                 metadata.precommit_ratio = payload.precommit_ratio;
                 metadata.prevote_ratio = payload.prevote_ratio;
                 metadata.propose_ratio = payload.propose_ratio;
                 metadata.brake_ratio = payload.brake_ratio;
-                self.sdk.set_value(METADATA_KEY.to_string(), metadata)
-            } else {
-                Err(ServiceError::AdmissionFail.into())
+
+                self.sdk.set_value(METADATA_KEY.to_string(), metadata);
+
+                ServiceResponse::from_succeed(())
             }
-        } else {
-            Err(ServiceError::NoneAdmission.into())
+            Some(_) => ServiceError::AdmissionFail.into(),
+            None => ServiceError::NoneAdmission.into(),
         }
     }
 }
@@ -71,14 +73,20 @@ impl<SDK: ServiceSDK> MetadataService<SDK> {
 #[derive(Debug, Display, From)]
 pub enum ServiceError {
     NoneAdmission,
-
     AdmissionFail,
 }
 
-impl std::error::Error for ServiceError {}
+impl ServiceError {
+    fn code(&self) -> u64 {
+        match self {
+            ServiceError::NoneAdmission => 101,
+            ServiceError::AdmissionFail => 102,
+        }
+    }
+}
 
-impl From<ServiceError> for ProtocolError {
-    fn from(err: ServiceError) -> ProtocolError {
-        ProtocolError::new(ProtocolErrorKind::Service, Box::new(err))
+impl<T: Default> From<ServiceError> for ServiceResponse<T> {
+    fn from(err: ServiceError) -> ServiceResponse<T> {
+        ServiceResponse::from_error(err.code(), err.to_string())
     }
 }

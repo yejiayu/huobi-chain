@@ -1,3 +1,6 @@
+#[macro_use]
+pub mod macros;
+
 pub mod duktape;
 
 use std::cell::RefCell;
@@ -10,7 +13,7 @@ use cita_trie::MemoryDB;
 
 use framework::binding::sdk::{DefalutServiceSDK, DefaultChainQuerier};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
-use protocol::traits::{Dispatcher, ExecResp, Storage};
+use protocol::traits::{Context, Dispatcher, ServiceResponse, Storage};
 use protocol::types::{
     Address, Block, Hash, Proof, Receipt, ServiceContext, ServiceContextParams, SignedTransaction,
 };
@@ -31,13 +34,16 @@ thread_local! {
     static RISCV_SERVICE: RefCell<TestRiscvService> = RefCell::new(new_riscv_service());
 }
 
-fn with_dispatcher_service<R: for<'a> serde::Deserialize<'a>>(
-    f: impl FnOnce(&mut TestRiscvService) -> ProtocolResult<R>,
-) -> ProtocolResult<R> {
+fn with_dispatcher_service<R: for<'a> serde::Deserialize<'a> + Default>(
+    f: impl FnOnce(&mut TestRiscvService) -> ServiceResponse<R>,
+) -> R {
     RISCV_SERVICE.with(|cell| {
         let mut service = cell.borrow_mut();
 
-        f(&mut service)
+        let resp = f(&mut service);
+        assert!(!resp.is_error());
+
+        resp.succeed_data
     })
 }
 
@@ -55,29 +61,28 @@ fn test_deploy_and_run() {
 
     let mut service = new_riscv_service();
 
-    let mut file = std::fs::File::open("src/tests/simple_storage").unwrap();
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer).unwrap();
-    let buffer = Bytes::from(buffer);
-    let code = hex::encode(buffer.as_ref());
-    let deploy_payload = DeployPayload {
+    let code = {
+        let mut file = std::fs::File::open("src/tests/simple_storage").unwrap();
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).unwrap();
+        let buffer = Bytes::from(buffer);
+        hex::encode(buffer.as_ref())
+    };
+
+    let deploy_result = service!(service, deploy, context.clone(), DeployPayload {
         code:      code.clone(),
         intp_type: InterpreterType::Binary,
         init_args: "set k init".into(),
-    };
-    let deploy_result = service.deploy(context.clone(), deploy_payload).unwrap();
+    });
     assert_eq!(&deploy_result.init_ret, "");
-    let address = deploy_result.address;
 
     // test get_contract
-    let get_contract_payload = GetContractPayload {
+    let address = deploy_result.address;
+    let get_contract_resp = service!(service, get_contract, context.clone(), GetContractPayload {
         address:      address.clone(),
         get_code:     true,
         storage_keys: vec![hex::encode("k"), "".to_owned(), "3a".to_owned()],
-    };
-    let get_contract_resp = service
-        .get_contract(context.clone(), get_contract_payload)
-        .unwrap();
+    });
     assert_eq!(&get_contract_resp.code, &code);
     assert_eq!(&get_contract_resp.storage_values, &vec![
         hex::encode("init"),
@@ -85,56 +90,64 @@ fn test_deploy_and_run() {
         "".to_owned()
     ]);
 
-    let exec_result = service.call(context.clone(), ExecPayload {
+    let exec_result = service!(service, call, context.clone(), ExecPayload {
         address: address.clone(),
         args:    "get k".into(),
     });
-    assert_eq!(&exec_result.unwrap(), "init");
-    let exec_payload = ExecPayload {
+    assert_eq!(&exec_result, "init");
+
+    let exec_result = service!(service, exec, context.clone(), ExecPayload {
         address: address.clone(),
         args:    "set k v".into(),
-    };
-    let exec_result = service.exec(context.clone(), exec_payload);
-    assert_eq!(&exec_result.unwrap(), "");
-    let exec_result = service.call(context.clone(), ExecPayload {
+    });
+    assert_eq!(&exec_result, "");
+
+    let exec_result = service!(service, exec, context.clone(), ExecPayload {
         address: address.clone(),
         args:    "get k".into(),
     });
-    assert_eq!(&exec_result.unwrap(), "v");
+    assert_eq!(&exec_result, "v");
 
     // wrong command
     let exec_result = service.exec(context.clone(), ExecPayload {
         address: address.clone(),
         args:    "clear k v".into(),
     });
-    assert!(exec_result.is_err());
+    assert!(exec_result.is_error());
 
     // wrong command 2
     let exec_result = service.exec(context, ExecPayload {
         address,
         args: "set k".into(),
     });
-    assert!(exec_result.is_err());
+    assert!(exec_result.is_error());
 }
 
 struct MockDispatcher;
 
 impl Dispatcher for MockDispatcher {
-    fn read(&self, _context: ServiceContext) -> ProtocolResult<ExecResp> {
+    fn read(&self, _context: ServiceContext) -> ServiceResponse<String> {
         unimplemented!()
     }
 
-    fn write(&self, context: ServiceContext) -> ProtocolResult<ExecResp> {
+    fn write(&self, context: ServiceContext) -> ServiceResponse<String> {
         let payload: ExecPayload =
             serde_json::from_str(context.get_payload()).expect("dispatcher payload");
 
         RISCV_SERVICE.with(|cell| {
             let mut service = cell.borrow_mut();
 
-            Ok(ExecResp {
-                ret:      serde_json::to_string(&service.exec(context.clone(), payload)?).unwrap(),
-                is_error: false,
-            })
+            // binding-macro/src/service.rs => fn write_()
+            let resp = service.exec(context, payload);
+            if resp.is_error() {
+                return resp;
+            }
+
+            let mut data_json = serde_json::to_string(&resp.succeed_data).expect("json encode");
+            if data_json == "null" {
+                data_json = "".to_owned();
+            }
+            ServiceResponse::<String>::from_succeed(data_json)
         })
     }
 }
@@ -156,7 +169,7 @@ fn new_riscv_service() -> RiscvService<
         MockDispatcher {},
     );
 
-    RiscvService::init(sdk).unwrap()
+    RiscvService::init(sdk)
 }
 
 fn mock_context(cycles_limit: u64, caller: Address, tx_hash: Hash, nonce: Hash) -> ServiceContext {
@@ -183,59 +196,74 @@ struct MockStorage;
 
 #[async_trait]
 impl Storage for MockStorage {
-    async fn insert_transactions(&self, _: Vec<SignedTransaction>) -> ProtocolResult<()> {
+    async fn insert_transactions(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<SignedTransaction>,
+    ) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn insert_block(&self, _: Block) -> ProtocolResult<()> {
+    async fn get_transactions(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<Hash>,
+    ) -> ProtocolResult<Vec<Option<SignedTransaction>>> {
         unimplemented!()
     }
 
-    async fn insert_receipts(&self, _: Vec<Receipt>) -> ProtocolResult<()> {
+    async fn get_transaction_by_hash(
+        &self,
+        _: Context,
+        _: Hash,
+    ) -> ProtocolResult<Option<SignedTransaction>> {
         unimplemented!()
     }
 
-    async fn update_latest_proof(&self, _: Proof) -> ProtocolResult<()> {
+    async fn insert_block(&self, _: Context, _: Block) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_transaction_by_hash(&self, _: Hash) -> ProtocolResult<SignedTransaction> {
+    async fn get_block(&self, _: Context, _: u64) -> ProtocolResult<Option<Block>> {
         unimplemented!()
     }
 
-    async fn get_transactions(&self, _: Vec<Hash>) -> ProtocolResult<Vec<SignedTransaction>> {
+    async fn insert_receipts(&self, _: Context, _: u64, _: Vec<Receipt>) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_latest_block(&self) -> ProtocolResult<Block> {
+    async fn get_receipt_by_hash(&self, _: Context, _: Hash) -> ProtocolResult<Option<Receipt>> {
         unimplemented!()
     }
 
-    async fn get_block_by_height(&self, _: u64) -> ProtocolResult<Block> {
+    async fn get_receipts(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<Hash>,
+    ) -> ProtocolResult<Vec<Option<Receipt>>> {
         unimplemented!()
     }
 
-    async fn get_block_by_hash(&self, _: Hash) -> ProtocolResult<Block> {
+    async fn update_latest_proof(&self, _: Context, _: Proof) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_receipt(&self, _: Hash) -> ProtocolResult<Receipt> {
+    async fn get_latest_proof(&self, _: Context) -> ProtocolResult<Proof> {
         unimplemented!()
     }
 
-    async fn get_receipts(&self, _: Vec<Hash>) -> ProtocolResult<Vec<Receipt>> {
+    async fn get_latest_block(&self, _: Context) -> ProtocolResult<Block> {
         unimplemented!()
     }
 
-    async fn get_latest_proof(&self) -> ProtocolResult<Proof> {
+    async fn update_overlord_wal(&self, _: Context, _: Bytes) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn update_overlord_wal(&self, _info: Bytes) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn load_overlord_wal(&self) -> ProtocolResult<Bytes> {
+    async fn load_overlord_wal(&self, _: Context) -> ProtocolResult<Bytes> {
         unimplemented!()
     }
 }

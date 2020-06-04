@@ -3,7 +3,6 @@ use std::io;
 
 use ckb_vm::instructions::Register;
 use ckb_vm::memory::Memory;
-use log::error;
 use protocol::{types::ServiceContext, Bytes};
 
 use crate::vm::syscall::common::get_arr;
@@ -137,11 +136,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallEnvironment {
 
                 let msg = String::from_utf8(get_arr(machine, ptr, len)?)
                     .map_err(|_| ckb_vm::Error::IO(std::io::ErrorKind::InvalidData))?;
-
-                // Note: Right now, emit event is infallible
-                if let Err(e) = self.context.emit_event(msg) {
-                    error!("impossible emit event failed {}", e);
-                }
+                self.context.emit_event(msg);
 
                 Ok(true)
             }

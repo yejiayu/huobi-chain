@@ -73,7 +73,7 @@ macro_rules! deploy_test_code {
             init_args: "".into(),
         };
 
-        let ret = service.deploy(context.make(), payload).expect("deploy");
+        let ret = service!(service, deploy, context.make(), payload);
         assert_eq!(ret.init_ret, "");
 
         (service, context, ret.address)
@@ -91,7 +91,7 @@ fn should_support_pvm_init() {
         init_args: "do init".into(),
     };
 
-    let ret = service.deploy(context.make(), payload).expect("deploy");
+    let ret = service!(service, deploy, context.make(), payload);
     assert_eq!(ret.init_ret, "do init");
 }
 
@@ -102,8 +102,7 @@ fn should_support_pvm_load_args() {
     let args = json!({"method": "test_load_args"}).to_string();
     let payload = ExecPayload::new(address, args.clone());
 
-    let ret = service.exec(context.make(), payload).expect("load args");
-
+    let ret = service!(service, exec, context.make(), payload);
     assert_eq!(ret, args);
 }
 
@@ -114,10 +113,7 @@ fn should_support_pvm_load_json_args() {
     let args = json!({"method": "test_load_json_args"}).to_string();
     let payload = ExecPayload::new(address, args.clone());
 
-    let ret = service
-        .exec(context.make(), payload)
-        .expect("load jsonn args");
-
+    let ret = service!(service, exec, context.make(), payload);
     assert_eq!(ret, args);
 }
 
@@ -128,10 +124,7 @@ fn should_support_pvm_cycle_limit() {
     let args = json!({"method": "test_cycle_limit"}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ret = service
-        .exec(context.make(), payload)
-        .expect("load cycle limit");
-
+    let ret = service!(service, exec, context.make(), payload);
     assert_eq!(ret.parse::<u64>().expect("cycle limit"), CYCLE_LIMIT);
 }
 
@@ -142,9 +135,7 @@ fn should_support_pvm_cycle_used() {
     let args = json!({"method": "test_cycle_used"}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ctx = context.make();
-    let ret = service.exec(ctx, payload).expect("load cycle used");
-
+    let ret = service!(service, exec, context.make(), payload);
     // Hardcode in context make
     assert_eq!(ret.parse::<u64>().expect("cycle used"), 3);
 }
@@ -156,9 +147,7 @@ fn should_support_pvm_cycle_price() {
     let args = json!({"method": "test_cycle_price"}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ctx = context.make();
-    let ret = service.exec(ctx, payload).expect("load cycle price");
-
+    let ret = service!(service, exec, context.make(), payload);
     // Hardcode in context make
     assert_eq!(ret.parse::<u64>().expect("cycle price"), 1);
 }
@@ -170,8 +159,7 @@ fn should_support_pvm_caller() {
     let args = json!({"method": "test_caller"}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ret = service.exec(context.make(), payload).expect("load caller");
-
+    let ret = service!(service, exec, context.make(), payload);
     assert_eq!(ret, CALLER);
 }
 
@@ -190,18 +178,14 @@ fn should_support_pvm_origin() {
     let tc_ctx = context.make();
     let tc_ret = with_dispatcher_service(move |dispatcher_service| {
         dispatcher_service.deploy(tc_ctx, payload)
-    })
-    .expect("deploy another test code");
+    });
 
     let args =
         json!({"method": "test_origin", "address": tc_ret.address.as_hex(), "call_args": json!({"method": "_ret_caller_and_origin"}).to_string()})
             .to_string();
 
     let payload = ExecPayload::new(address.clone(), args);
-
-    let ret = service
-        .exec(context.make(), payload)
-        .expect("call contract _ret_caller_and_origin");
+    let ret = service!(service, exec, context.make(), payload);
 
     #[derive(Debug, Deserialize)]
     struct ExpectRet {
@@ -221,8 +205,7 @@ fn should_support_pvm_address() {
     let args = json!({"method": "test_address"}).to_string();
     let payload = ExecPayload::new(address.clone(), args);
 
-    let ret = service.exec(context.make(), payload).expect("load address");
-
+    let ret = service!(service, exec, context.make(), payload);
     assert_eq!(ret, address.as_hex());
 }
 
@@ -234,9 +217,7 @@ fn should_support_pvm_block_height() {
     let payload = ExecPayload::new(address, args);
 
     let ctx = context.make();
-    let ret = service
-        .exec(ctx.clone(), payload)
-        .expect("load block height");
+    let ret = service!(service, exec, ctx.clone(), payload);
 
     assert_eq!(
         ret.parse::<u64>().expect("block height"),
@@ -251,10 +232,7 @@ fn should_support_pvm_extra() {
     let args = json!({"method": "test_no_extra"}).to_string();
     let payload = ExecPayload::new(address.clone(), args);
 
-    let ret = service
-        .exec(context.make(), payload)
-        .expect("test no extra");
-
+    let ret = service!(service, exec, context.make(), payload);
     assert_eq!(ret, "no extra");
 
     // Should return extra data
@@ -266,8 +244,7 @@ fn should_support_pvm_extra() {
     let args = json!({"method": "test_extra"}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ret = service.exec(ctx, payload).expect("test extra");
-
+    let ret = service!(service, exec, ctx, payload);
     assert_eq!(ret, extra);
 }
 
@@ -287,7 +264,7 @@ fn should_support_pvm_timestamp() {
     ctx_params.timestamp = now;
     let ctx = ServiceContext::new(ctx_params);
 
-    let ret = service.exec(ctx.clone(), payload).expect("load timestamp");
+    let ret = service!(service, exec, ctx.clone(), payload);
     assert_eq!(ret.parse::<u64>().expect("timestamp"), ctx.get_timestamp());
 }
 
@@ -300,7 +277,7 @@ fn should_support_pvm_emit_event() {
     let payload = ExecPayload::new(address, args);
 
     let ctx = context.make();
-    let ret = service.exec(ctx.clone(), payload).expect("emit event");
+    let ret = service!(service, exec, ctx.clone(), payload);
     assert_eq!(ret, "emit success");
 
     let events = ctx.get_events();
@@ -315,7 +292,7 @@ fn should_support_pvm_tx_hash() {
     let payload = ExecPayload::new(address.clone(), args);
 
     let ctx = context.make();
-    let ret = service.exec(ctx.clone(), payload).expect("test tx hash");
+    let ret = service!(service, exec, ctx.clone(), payload);
 
     assert_eq!(
         Some(ret),
@@ -331,8 +308,7 @@ fn should_support_pvm_tx_hash() {
     let args = json!({"method": "test_no_tx_hash"}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ret = service.exec(ctx, payload).expect("test no tx hash");
-
+    let ret = service!(service, exec, ctx, payload);
     assert_eq!(ret, "no tx hash");
 }
 
@@ -344,7 +320,7 @@ fn should_support_pvm_tx_nonce() {
     let payload = ExecPayload::new(address.clone(), args);
 
     let ctx = context.make();
-    let ret = service.exec(ctx, payload).expect("tx no nonce");
+    let ret = service!(service, exec, ctx, payload);
 
     assert_eq!(ret, "no tx nonce");
 
@@ -356,8 +332,7 @@ fn should_support_pvm_tx_nonce() {
     let args = json!({"method": "test_tx_nonce"}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ret = service.exec(ctx.clone(), payload).expect("test tx nonce");
-
+    let ret = service!(service, exec, ctx.clone(), payload);
     assert_eq!(Some(ret), ctx.get_nonce().map(|n| n.as_hex()));
 }
 
@@ -374,8 +349,7 @@ fn should_support_pvm_storage() {
     let args = json!({"method": "test_storage", "key": "carmen", "val": carmen}).to_string();
     let payload = ExecPayload::new(address, args);
 
-    let ret = service.exec(context.make(), payload).expect("load storage");
-
+    let ret = service!(service, exec, context.make(), payload);
     let ret: Carmen = serde_json::from_str(&ret).expect("get json storage");
 
     assert_eq!(ret.color, "red");
@@ -396,8 +370,7 @@ fn should_support_pvm_contract_call() {
     let tc_ctx = context.make();
     let tc_ret = with_dispatcher_service(move |dispatcher_service| {
         dispatcher_service.deploy(tc_ctx, payload)
-    })
-    .expect("deploy another test code");
+    });
 
     let args =
         json!({"method": "test_contract_call", "address": tc_ret.address.as_hex(), "call_args": json!({"method": "_ret_self"}).to_string()})
@@ -405,10 +378,7 @@ fn should_support_pvm_contract_call() {
 
     let payload = ExecPayload::new(address, args);
 
-    let ret = service
-        .exec(context.make(), payload)
-        .expect("exec contract call");
-
+    let ret = service!(service, exec, context.make(), payload);
     assert_eq!(ret, "self");
 }
 
@@ -427,8 +397,7 @@ fn should_support_pvm_service_call() {
     let tc_ctx = context.make();
     let tc_ret = with_dispatcher_service(move |dispatcher_service| {
         dispatcher_service.deploy(tc_ctx, payload)
-    })
-    .expect("deploy another test code");
+    });
 
     let args = json!({
         "method": "test_service_call",
@@ -445,9 +414,7 @@ fn should_support_pvm_service_call() {
 
     let payload = ExecPayload::new(address, args);
 
-    let ret = service
-        .exec(context.make(), payload)
-        .expect("exec service call");
-
-    assert_eq!(ret, "\"self\"");
+    let ret = service!(service, exec, context.make(), payload);
+    let expect_ret = serde_json::to_string("self").expect("should be json encoded");
+    assert_eq!(ret, expect_ret);
 }

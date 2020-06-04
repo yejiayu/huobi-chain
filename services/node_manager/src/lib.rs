@@ -4,11 +4,11 @@ mod types;
 
 use bytes::Bytes;
 use derive_more::{Display, From};
+use serde::Serialize;
 
 use binding_macro::{cycles, genesis, service};
-use protocol::traits::{ExecutorParams, ServiceSDK};
+use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK};
 use protocol::types::{Address, Metadata, ServiceContext};
-use protocol::{ProtocolError, ProtocolErrorKind, ProtocolResult};
 
 use crate::types::{
     InitGenesisPayload, SetAdminEvent, SetAdminPayload, UpdateIntervalEvent, UpdateIntervalPayload,
@@ -25,41 +25,41 @@ pub struct NodeManagerService<SDK> {
 
 #[service]
 impl<SDK: ServiceSDK> NodeManagerService<SDK> {
-    pub fn new(sdk: SDK) -> ProtocolResult<Self> {
-        Ok(Self { sdk })
+    pub fn new(sdk: SDK) -> Self {
+        Self { sdk }
     }
 
     #[genesis]
-    fn init_genesis(&mut self, payload: InitGenesisPayload) -> ProtocolResult<()> {
-        self.sdk.set_value(ADMIN_KEY.to_string(), payload.admin)
+    fn init_genesis(&mut self, payload: InitGenesisPayload) {
+        self.sdk.set_value(ADMIN_KEY.to_string(), payload.admin);
     }
 
     #[cycles(210_00)]
     #[read]
-    fn get_admin(&self, ctx: ServiceContext) -> ProtocolResult<Address> {
+    fn get_admin(&self, ctx: ServiceContext) -> ServiceResponse<Address> {
         let admin: Address = self
             .sdk
-            .get_value(&ADMIN_KEY.to_owned())?
+            .get_value(&ADMIN_KEY.to_owned())
             .expect("Admin should not be none");
-        Ok(admin)
+
+        ServiceResponse::from_succeed(admin)
     }
 
     #[cycles(210_00)]
     #[write]
-    fn set_admin(&mut self, ctx: ServiceContext, payload: SetAdminPayload) -> ProtocolResult<()> {
-        if self.verify_authority(ctx.get_caller())? {
-            self.sdk
-                .set_value(ADMIN_KEY.to_owned(), payload.admin.clone())?;
-
-            let event = SetAdminEvent {
-                topic: "Set New Admin".to_owned(),
-                admin: payload.admin,
-            };
-            let event_str = serde_json::to_string(&event).map_err(ServiceError::JsonParse)?;
-            ctx.emit_event(event_str)
-        } else {
-            Err(ServiceError::NonAuthorized.into())
+    fn set_admin(&mut self, ctx: ServiceContext, payload: SetAdminPayload) -> ServiceResponse<()> {
+        if self.not_admin(&ctx) {
+            return ServiceError::NonAuthorized.into();
         }
+
+        self.sdk
+            .set_value(ADMIN_KEY.to_owned(), payload.admin.clone());
+
+        let event = SetAdminEvent {
+            topic: "Set New Admin".to_owned(),
+            admin: payload.admin,
+        };
+        Self::emit_event(&ctx, event)
     }
 
     #[cycles(210_00)]
@@ -68,32 +68,25 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
         &mut self,
         ctx: ServiceContext,
         payload: UpdateMetadataPayload,
-    ) -> ProtocolResult<()> {
-        if self.verify_authority(ctx.get_caller())? {
-            let metadata_payload_str =
-                serde_json::to_string(&payload).map_err(ServiceError::JsonParse)?;
-            self.sdk.write(
-                &ctx,
-                Some(ADMISSION_TOKEN.clone()),
-                "metadata",
-                "update_metadata",
-                &metadata_payload_str,
-            )?;
-
-            let event = UpdateMetadataEvent {
-                topic:           "Metadata Updated".to_owned(),
-                verifier_list:   payload.verifier_list,
-                interval:        payload.interval,
-                propose_ratio:   payload.propose_ratio,
-                prevote_ratio:   payload.prevote_ratio,
-                precommit_ratio: payload.precommit_ratio,
-                brake_ratio:     payload.brake_ratio,
-            };
-            let event_str = serde_json::to_string(&event).map_err(ServiceError::JsonParse)?;
-            ctx.emit_event(event_str)
-        } else {
-            Err(ServiceError::NonAuthorized.into())
+    ) -> ServiceResponse<()> {
+        if self.not_admin(&ctx) {
+            return ServiceError::NonAuthorized.into();
         }
+
+        if let Err(err) = self.write_metadata(&ctx, payload.clone()) {
+            return err;
+        }
+
+        let event = UpdateMetadataEvent {
+            topic:           "Metadata Updated".to_owned(),
+            verifier_list:   payload.verifier_list,
+            interval:        payload.interval,
+            propose_ratio:   payload.propose_ratio,
+            prevote_ratio:   payload.prevote_ratio,
+            precommit_ratio: payload.precommit_ratio,
+            brake_ratio:     payload.brake_ratio,
+        };
+        Self::emit_event(&ctx, event)
     }
 
     #[cycles(210_00)]
@@ -102,41 +95,33 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
         &mut self,
         ctx: ServiceContext,
         payload: UpdateValidatorsPayload,
-    ) -> ProtocolResult<()> {
-        if self.verify_authority(ctx.get_caller())? {
-            let metadata_str = self.sdk.read(&ctx, None, "metadata", "get_metadata", "")?;
-            let metadata: Metadata =
-                serde_json::from_str(&metadata_str).map_err(ServiceError::JsonParse)?;
-
-            let update_metadata_payload = UpdateMetadataPayload {
-                verifier_list:   payload.verifier_list.clone(),
-                interval:        metadata.interval,
-                propose_ratio:   metadata.propose_ratio,
-                prevote_ratio:   metadata.prevote_ratio,
-                precommit_ratio: metadata.precommit_ratio,
-                brake_ratio:     metadata.brake_ratio,
-            };
-
-            let metadata_payload_str =
-                serde_json::to_string(&update_metadata_payload).map_err(ServiceError::JsonParse)?;
-            self.sdk.write(
-                &ctx,
-                Some(ADMISSION_TOKEN.clone()),
-                "metadata",
-                "update_metadata",
-                &metadata_payload_str,
-            )?;
-
-            let event = UpdateValidatorsEvent {
-                topic:         "Validators Updated".to_owned(),
-                verifier_list: payload.verifier_list,
-            };
-
-            let event_str = serde_json::to_string(&event).map_err(ServiceError::JsonParse)?;
-            ctx.emit_event(event_str)
-        } else {
-            Err(ServiceError::NonAuthorized.into())
+    ) -> ServiceResponse<()> {
+        if self.not_admin(&ctx) {
+            return ServiceError::NonAuthorized.into();
         }
+
+        let metadata = match self.get_metadata(&ctx) {
+            Ok(m) => m,
+            Err(resp) => return resp,
+        };
+
+        let update_metadata_payload = UpdateMetadataPayload {
+            verifier_list:   payload.verifier_list.clone(),
+            interval:        metadata.interval,
+            propose_ratio:   metadata.propose_ratio,
+            prevote_ratio:   metadata.prevote_ratio,
+            precommit_ratio: metadata.precommit_ratio,
+            brake_ratio:     metadata.brake_ratio,
+        };
+        if let Err(err) = self.write_metadata(&ctx, update_metadata_payload) {
+            return err;
+        }
+
+        let event = UpdateValidatorsEvent {
+            topic:         "Validators Updated".to_owned(),
+            verifier_list: payload.verifier_list,
+        };
+        Self::emit_event(&ctx, event)
     }
 
     #[cycles(210_00)]
@@ -145,41 +130,33 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
         &mut self,
         ctx: ServiceContext,
         payload: UpdateIntervalPayload,
-    ) -> ProtocolResult<()> {
-        if self.verify_authority(ctx.get_caller())? {
-            let metadata_str = self.sdk.read(&ctx, None, "metadata", "get_metadata", "")?;
-            let metadata: Metadata =
-                serde_json::from_str(&metadata_str).map_err(ServiceError::JsonParse)?;
-
-            let update_metadata_payload = UpdateMetadataPayload {
-                verifier_list:   metadata.verifier_list,
-                interval:        payload.interval,
-                propose_ratio:   metadata.propose_ratio,
-                prevote_ratio:   metadata.prevote_ratio,
-                precommit_ratio: metadata.precommit_ratio,
-                brake_ratio:     metadata.brake_ratio,
-            };
-
-            let metadata_payload_str =
-                serde_json::to_string(&update_metadata_payload).map_err(ServiceError::JsonParse)?;
-            self.sdk.write(
-                &ctx,
-                Some(ADMISSION_TOKEN.clone()),
-                "metadata",
-                "update_metadata",
-                &metadata_payload_str,
-            )?;
-
-            let event = UpdateIntervalEvent {
-                topic:    "Interval Updated".to_owned(),
-                interval: payload.interval,
-            };
-
-            let event_str = serde_json::to_string(&event).map_err(ServiceError::JsonParse)?;
-            ctx.emit_event(event_str)
-        } else {
-            Err(ServiceError::NonAuthorized.into())
+    ) -> ServiceResponse<()> {
+        if self.not_admin(&ctx) {
+            return ServiceError::NonAuthorized.into();
         }
+
+        let metadata = match self.get_metadata(&ctx) {
+            Ok(m) => m,
+            Err(resp) => return resp,
+        };
+
+        let update_metadata_payload = UpdateMetadataPayload {
+            verifier_list:   metadata.verifier_list,
+            interval:        payload.interval,
+            propose_ratio:   metadata.propose_ratio,
+            prevote_ratio:   metadata.prevote_ratio,
+            precommit_ratio: metadata.precommit_ratio,
+            brake_ratio:     metadata.brake_ratio,
+        };
+        if let Err(err) = self.write_metadata(&ctx, update_metadata_payload) {
+            return err;
+        }
+
+        let event = UpdateIntervalEvent {
+            topic:    "Interval Updated".to_owned(),
+            interval: payload.interval,
+        };
+        Self::emit_event(&ctx, event)
     }
 
     #[cycles(210_00)]
@@ -188,56 +165,90 @@ impl<SDK: ServiceSDK> NodeManagerService<SDK> {
         &mut self,
         ctx: ServiceContext,
         payload: UpdateRatioPayload,
-    ) -> ProtocolResult<()> {
-        if self.verify_authority(ctx.get_caller())? {
-            let metadata_str = self.sdk.read(&ctx, None, "metadata", "get_metadata", "")?;
-            let metadata: Metadata =
-                serde_json::from_str(&metadata_str).map_err(ServiceError::JsonParse)?;
-
-            let update_metadata_payload = UpdateMetadataPayload {
-                verifier_list:   metadata.verifier_list,
-                interval:        metadata.interval,
-                propose_ratio:   payload.propose_ratio,
-                prevote_ratio:   payload.prevote_ratio,
-                precommit_ratio: payload.precommit_ratio,
-                brake_ratio:     payload.brake_ratio,
-            };
-
-            let metadata_payload_str =
-                serde_json::to_string(&update_metadata_payload).map_err(ServiceError::JsonParse)?;
-            self.sdk.write(
-                &ctx,
-                Some(ADMISSION_TOKEN.clone()),
-                "metadata",
-                "update_metadata",
-                &metadata_payload_str,
-            )?;
-
-            let event = UpdateRatioEvent {
-                topic:           "Ratio Updated".to_owned(),
-                propose_ratio:   payload.propose_ratio,
-                prevote_ratio:   payload.prevote_ratio,
-                precommit_ratio: payload.precommit_ratio,
-                brake_ratio:     payload.brake_ratio,
-            };
-
-            let event_str = serde_json::to_string(&event).map_err(ServiceError::JsonParse)?;
-            ctx.emit_event(event_str)
-        } else {
-            Err(ServiceError::NonAuthorized.into())
+    ) -> ServiceResponse<()> {
+        if self.not_admin(&ctx) {
+            return ServiceError::NonAuthorized.into();
         }
+
+        let metadata = match self.get_metadata(&ctx) {
+            Ok(m) => m,
+            Err(resp) => return resp,
+        };
+
+        let update_metadata_payload = UpdateMetadataPayload {
+            verifier_list:   metadata.verifier_list,
+            interval:        metadata.interval,
+            propose_ratio:   payload.propose_ratio,
+            prevote_ratio:   payload.prevote_ratio,
+            precommit_ratio: payload.precommit_ratio,
+            brake_ratio:     payload.brake_ratio,
+        };
+        if let Err(err) = self.write_metadata(&ctx, update_metadata_payload) {
+            return err;
+        }
+
+        let event = UpdateRatioEvent {
+            topic:           "Ratio Updated".to_owned(),
+            propose_ratio:   payload.propose_ratio,
+            prevote_ratio:   payload.prevote_ratio,
+            precommit_ratio: payload.precommit_ratio,
+            brake_ratio:     payload.brake_ratio,
+        };
+        Self::emit_event(&ctx, event)
     }
 
-    fn verify_authority(&self, caller: Address) -> ProtocolResult<bool> {
+    fn not_admin(&self, ctx: &ServiceContext) -> bool {
+        let caller = ctx.get_caller();
         let admin: Address = self
             .sdk
-            .get_value(&ADMIN_KEY.to_string())?
+            .get_value(&ADMIN_KEY.to_string())
             .expect("Admin should not be none");
 
-        if caller == admin {
-            Ok(true)
-        } else {
-            Ok(false)
+        admin != caller
+    }
+
+    fn get_metadata(&self, ctx: &ServiceContext) -> Result<Metadata, ServiceResponse<()>> {
+        let resp = self.sdk.read(ctx, None, "metadata", "get_metadata", "");
+        if resp.is_error() {
+            return Err(ServiceResponse::from_error(resp.code, resp.error_message));
+        }
+
+        let meta_json: String = resp.succeed_data;
+        let meta = serde_json::from_str(&meta_json).map_err(ServiceError::JsonParse)?;
+        Ok(meta)
+    }
+
+    fn write_metadata(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: UpdateMetadataPayload,
+    ) -> Result<(), ServiceResponse<()>> {
+        let payload_json = match serde_json::to_string(&payload) {
+            Ok(j) => j,
+            Err(err) => return Err(ServiceError::JsonParse(err).into()),
+        };
+
+        let resp = self.sdk.write(
+            &ctx,
+            Some(ADMISSION_TOKEN.clone()),
+            "metadata",
+            "update_metadata",
+            &payload_json,
+        );
+        if resp.is_error() {
+            return Err(ServiceResponse::from_error(resp.code, resp.error_message));
+        }
+
+        Ok(())
+    }
+
+    fn emit_event<T: Serialize>(ctx: &ServiceContext, event: T) -> ServiceResponse<()> {
+        match serde_json::to_string(&event) {
+            Err(err) => ServiceError::JsonParse(err).into(),
+            Ok(json) => {
+                ctx.emit_event(json);
+                ServiceResponse::from_succeed(())
+            }
         }
     }
 }
@@ -250,10 +261,17 @@ pub enum ServiceError {
     JsonParse(serde_json::Error),
 }
 
-impl std::error::Error for ServiceError {}
+impl ServiceError {
+    fn code(&self) -> u64 {
+        match self {
+            ServiceError::NonAuthorized => 101,
+            ServiceError::JsonParse(_) => 102,
+        }
+    }
+}
 
-impl From<ServiceError> for ProtocolError {
-    fn from(err: ServiceError) -> ProtocolError {
-        ProtocolError::new(ProtocolErrorKind::Service, Box::new(err))
+impl<T: Default> From<ServiceError> for ServiceResponse<T> {
+    fn from(err: ServiceError) -> ServiceResponse<T> {
+        ServiceResponse::from_error(err.code(), err.to_string())
     }
 }

@@ -7,7 +7,7 @@ use cita_trie::MemoryDB;
 
 use framework::binding::sdk::{DefalutServiceSDK, DefaultChainQuerier};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
-use protocol::traits::{NoopDispatcher, ServiceSDK, Storage};
+use protocol::traits::{Context, NoopDispatcher, ServiceResponse, ServiceSDK, Storage};
 use protocol::types::{
     Address, Block, Hash, Hex, Metadata, Proof, Receipt, ServiceContext, ServiceContextParams,
     SignedTransaction, ValidatorExtend, METADATA_KEY,
@@ -28,9 +28,10 @@ fn test_get_metadata() {
     let init_metadata = mock_metadata_1();
 
     let service = new_metadata_service(init_metadata.clone());
-    let metadata = service.get_metadata(context).unwrap();
+    let metadata = service.get_metadata(context);
+    let expect_metadata = ServiceResponse::from_succeed(init_metadata);
 
-    assert_eq!(metadata, init_metadata);
+    assert_eq!(metadata, expect_metadata);
 }
 
 #[test]
@@ -42,23 +43,23 @@ fn test_update_metadata() {
     let init_metadata = mock_metadata_1();
     let mut service = new_metadata_service(init_metadata.clone());
 
-    let metadata = service.get_metadata(context.clone()).unwrap();
-    assert_eq!(metadata, init_metadata);
+    let metadata = service.get_metadata(context.clone());
+    let expect_metadata = ServiceResponse::from_succeed(init_metadata);
+    assert_eq!(metadata, expect_metadata);
 
     let update_metadata = mock_metadata_2();
-    service
-        .update_metadata(context.clone(), UpdateMetadataPayload {
-            verifier_list:   update_metadata.verifier_list.clone(),
-            interval:        update_metadata.interval,
-            propose_ratio:   update_metadata.propose_ratio,
-            prevote_ratio:   update_metadata.prevote_ratio,
-            precommit_ratio: update_metadata.precommit_ratio,
-            brake_ratio:     update_metadata.brake_ratio,
-        })
-        .unwrap();
+    service.update_metadata(context.clone(), UpdateMetadataPayload {
+        verifier_list:   update_metadata.verifier_list.clone(),
+        interval:        update_metadata.interval,
+        propose_ratio:   update_metadata.propose_ratio,
+        prevote_ratio:   update_metadata.prevote_ratio,
+        precommit_ratio: update_metadata.precommit_ratio,
+        brake_ratio:     update_metadata.brake_ratio,
+    });
 
-    let metadata = service.get_metadata(context).unwrap();
-    assert_eq!(metadata, update_metadata);
+    let metadata = service.get_metadata(context);
+    let expect_metadata = ServiceResponse::from_succeed(update_metadata);
+    assert_eq!(metadata, expect_metadata);
 }
 
 fn new_metadata_service(
@@ -80,9 +81,9 @@ fn new_metadata_service(
         NoopDispatcher {},
     );
 
-    sdk.set_value(METADATA_KEY.to_string(), metadata).unwrap();
+    sdk.set_value(METADATA_KEY.to_string(), metadata);
 
-    MetadataService::new(sdk).unwrap()
+    MetadataService::new(sdk)
 }
 
 fn mock_metadata_1() -> Metadata {
@@ -166,59 +167,74 @@ struct MockStorage;
 
 #[async_trait]
 impl Storage for MockStorage {
-    async fn insert_transactions(&self, _: Vec<SignedTransaction>) -> ProtocolResult<()> {
+    async fn insert_transactions(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<SignedTransaction>,
+    ) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn insert_block(&self, _: Block) -> ProtocolResult<()> {
+    async fn get_transactions(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<Hash>,
+    ) -> ProtocolResult<Vec<Option<SignedTransaction>>> {
         unimplemented!()
     }
 
-    async fn insert_receipts(&self, _: Vec<Receipt>) -> ProtocolResult<()> {
+    async fn get_transaction_by_hash(
+        &self,
+        _: Context,
+        _: Hash,
+    ) -> ProtocolResult<Option<SignedTransaction>> {
         unimplemented!()
     }
 
-    async fn update_latest_proof(&self, _: Proof) -> ProtocolResult<()> {
+    async fn insert_block(&self, _: Context, _: Block) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_transaction_by_hash(&self, _: Hash) -> ProtocolResult<SignedTransaction> {
+    async fn get_block(&self, _: Context, _: u64) -> ProtocolResult<Option<Block>> {
         unimplemented!()
     }
 
-    async fn get_transactions(&self, _: Vec<Hash>) -> ProtocolResult<Vec<SignedTransaction>> {
+    async fn insert_receipts(&self, _: Context, _: u64, _: Vec<Receipt>) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_latest_block(&self) -> ProtocolResult<Block> {
+    async fn get_receipt_by_hash(&self, _: Context, _: Hash) -> ProtocolResult<Option<Receipt>> {
         unimplemented!()
     }
 
-    async fn get_block_by_height(&self, _: u64) -> ProtocolResult<Block> {
+    async fn get_receipts(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<Hash>,
+    ) -> ProtocolResult<Vec<Option<Receipt>>> {
         unimplemented!()
     }
 
-    async fn get_block_by_hash(&self, _: Hash) -> ProtocolResult<Block> {
+    async fn update_latest_proof(&self, _: Context, _: Proof) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_receipt(&self, _: Hash) -> ProtocolResult<Receipt> {
+    async fn get_latest_proof(&self, _: Context) -> ProtocolResult<Proof> {
         unimplemented!()
     }
 
-    async fn get_receipts(&self, _: Vec<Hash>) -> ProtocolResult<Vec<Receipt>> {
+    async fn get_latest_block(&self, _: Context) -> ProtocolResult<Block> {
         unimplemented!()
     }
 
-    async fn get_latest_proof(&self) -> ProtocolResult<Proof> {
+    async fn update_overlord_wal(&self, _: Context, _: Bytes) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn update_overlord_wal(&self, _info: Bytes) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn load_overlord_wal(&self) -> ProtocolResult<Bytes> {
+    async fn load_overlord_wal(&self, _: Context) -> ProtocolResult<Bytes> {
         unimplemented!()
     }
 }

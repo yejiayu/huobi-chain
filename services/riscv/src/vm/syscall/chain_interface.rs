@@ -50,8 +50,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
 
                 self.chain
                     .borrow_mut()
-                    .set_storage(Bytes::from(key), Bytes::from(val))
-                    .map_err(|_| ckb_vm::Error::IO(io::ErrorKind::Other))?;
+                    .set_storage(Bytes::from(key), Bytes::from(val));
 
                 Ok(true)
             }
@@ -64,11 +63,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                 }
 
                 let key = get_arr(machine, key_ptr, key_len)?;
-                let val = self
-                    .chain
-                    .borrow()
-                    .get_storage(&Bytes::from(key))
-                    .map_err(|_| ckb_vm::Error::IO(io::ErrorKind::Other))?;
+                let val = self.chain.borrow().get_storage(&Bytes::from(key));
 
                 if val_ptr != 0 {
                     machine.memory_mut().store_bytes(val_ptr, &val)?;
@@ -101,12 +96,15 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                     Address::from_hex(&hex).map_err(|_| IO(InvalidData))?
                 };
 
-                let (ret, current_cycle) = self
-                    .chain
-                    .borrow_mut()
-                    .contract_call(address, call_args, machine.cycles())
-                    .map_err(|e| ckb_vm::Error::EcallError(code, format!("{:?}", e)))?;
+                let call_resp =
+                    self.chain
+                        .borrow_mut()
+                        .contract_call(address, call_args, machine.cycles());
+                if call_resp.is_error() {
+                    return Err(ckb_vm::Error::EcallError(code, call_resp.error_message));
+                }
 
+                let (ret, current_cycle) = call_resp.succeed_data;
                 machine.set_cycles(current_cycle);
                 if ret_ptr != 0 {
                     machine.memory_mut().store_bytes(ret_ptr, ret.as_ref())?;
@@ -142,12 +140,18 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
 
                 let readonly = code == SYSCODE_SERVICE_READ;
 
-                let (ret, current_cycle) = self
-                    .chain
-                    .borrow_mut()
-                    .service_call(&service, &method, &payload, machine.cycles(), readonly)
-                    .map_err(|e| ckb_vm::Error::EcallError(code, format!("{:?}", e)))?;
+                let call_resp = self.chain.borrow_mut().service_call(
+                    &service,
+                    &method,
+                    &payload,
+                    machine.cycles(),
+                    readonly,
+                );
+                if call_resp.is_error() {
+                    return Err(ckb_vm::Error::EcallError(code, call_resp.error_message));
+                }
 
+                let (ret, current_cycle) = call_resp.succeed_data;
                 machine.set_cycles(current_cycle);
                 if ret_ptr != 0 {
                     machine.memory_mut().store_bytes(ret_ptr, ret.as_ref())?;

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use bytes::Bytes;
 
+use muta_codec_derive::RlpFixedCodec;
 use protocol::fixed_codec::{FixedCodec, FixedCodecError};
 use protocol::types::{Address, Hash};
 use protocol::ProtocolResult;
@@ -82,7 +83,7 @@ pub struct GetBalancePayload {
     pub user:     Address,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct GetBalanceResponse {
     pub asset_id: Hash,
     pub user:     Address,
@@ -96,7 +97,7 @@ pub struct GetAllowancePayload {
     pub grantee:  Address,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct GetAllowanceResponse {
     pub asset_id: Hash,
     pub grantor:  Address,
@@ -104,7 +105,7 @@ pub struct GetAllowanceResponse {
     pub value:    u64,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[derive(RlpFixedCodec, Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
 pub struct Asset {
     pub id:        Hash,
     pub name:      String,
@@ -119,59 +120,19 @@ pub struct AssetBalance {
     pub allowance: BTreeMap<Address, u64>,
 }
 
+impl AssetBalance {
+    pub fn new(supply: u64) -> Self {
+        AssetBalance {
+            value:     supply,
+            allowance: BTreeMap::new(),
+        }
+    }
+}
+
+#[derive(RlpFixedCodec)]
 struct AllowanceCodec {
     pub addr:  Address,
     pub total: u64,
-}
-
-impl rlp::Decodable for Asset {
-    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        Ok(Self {
-            id:        rlp.at(0)?.as_val()?,
-            name:      rlp.at(1)?.as_val()?,
-            symbol:    rlp.at(2)?.as_val()?,
-            supply:    rlp.at(3)?.as_val()?,
-            precision: rlp.at(4)?.as_val()?,
-            issuer:    rlp.at(5)?.as_val()?,
-        })
-    }
-}
-
-impl rlp::Encodable for Asset {
-    fn rlp_append(&self, s: &mut rlp::RlpStream) {
-        s.begin_list(6)
-            .append(&self.id)
-            .append(&self.name)
-            .append(&self.symbol)
-            .append(&self.supply)
-            .append(&self.precision)
-            .append(&self.issuer);
-    }
-}
-
-impl FixedCodec for Asset {
-    fn encode_fixed(&self) -> ProtocolResult<Bytes> {
-        Ok(Bytes::from(rlp::encode(self)))
-    }
-
-    fn decode_fixed(bytes: Bytes) -> ProtocolResult<Self> {
-        Ok(rlp::decode(bytes.as_ref()).map_err(FixedCodecError::from)?)
-    }
-}
-
-impl rlp::Decodable for AllowanceCodec {
-    fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
-        Ok(Self {
-            addr:  rlp.at(0)?.as_val()?,
-            total: rlp.at(1)?.as_val()?,
-        })
-    }
-}
-
-impl rlp::Encodable for AllowanceCodec {
-    fn rlp_append(&self, s: &mut rlp::RlpStream) {
-        s.begin_list(2).append(&self.addr).append(&self.total);
-    }
 }
 
 impl rlp::Decodable for AssetBalance {
@@ -214,5 +175,14 @@ impl FixedCodec for AssetBalance {
 
     fn decode_fixed(bytes: Bytes) -> ProtocolResult<Self> {
         Ok(rlp::decode(bytes.as_ref()).map_err(FixedCodecError::from)?)
+    }
+}
+
+impl Default for AssetBalance {
+    fn default() -> Self {
+        AssetBalance {
+            value:     0,
+            allowance: BTreeMap::new(),
+        }
     }
 }

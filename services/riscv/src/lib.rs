@@ -9,15 +9,23 @@ use std::rc::Rc;
 use derive_more::{Display, From};
 
 use binding_macro::{genesis, read, service, write};
-use protocol::traits::{ExecutorParams, ServiceSDK, StoreBool, StoreMap};
+use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreBool, StoreMap};
 use protocol::types::{Address, Hash, ServiceContext};
-use protocol::{Bytes, BytesMut, ProtocolError, ProtocolErrorKind, ProtocolResult};
+use protocol::{Bytes, BytesMut};
 
 use crate::types::{
     Addresses, Contract, DeployPayload, DeployResp, ExecPayload, GetContractPayload,
     GetContractResp, InitGenesisPayload,
 };
 use crate::vm::{ChainInterface, Interpreter, InterpreterConf, InterpreterParams};
+
+macro_rules! sub_cycles {
+    ($ctx:expr, $cycles:expr) => {
+        if !$ctx.sub_cycles($cycles) {
+            return ServiceError::OutOfCycles.into();
+        }
+    };
+}
 
 pub struct RiscvService<SDK> {
     sdk:              Rc<RefCell<SDK>>,
@@ -28,37 +36,37 @@ pub struct RiscvService<SDK> {
 
 #[service]
 impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
-    pub fn init(sdk: SDK) -> ProtocolResult<Self> {
+    pub fn init(sdk: SDK) -> Self {
         let sdk = Rc::new(RefCell::new(sdk));
-        let deploy_auth: Box<dyn StoreMap<Address, bool>> =
-            sdk.borrow_mut().alloc_or_recover_map("deploy_auth")?;
-        let enable_whitelist = sdk.borrow_mut().alloc_or_recover_bool("enable_whitelist")?;
-        let admins: Box<dyn StoreMap<Address, bool>> =
-            sdk.borrow_mut().alloc_or_recover_map("admins")?;
-        Ok(Self {
+
+        let deploy_auth = sdk.borrow_mut().alloc_or_recover_map("deploy_auth");
+        let enable_whitelist = sdk.borrow_mut().alloc_or_recover_bool("enable_whitelist");
+        let admins = sdk.borrow_mut().alloc_or_recover_map("admins");
+
+        Self {
             sdk,
             deploy_auth,
             enable_whitelist,
             admins,
-        })
+        }
     }
 
     #[genesis]
-    fn init_genesis(&mut self, payload: InitGenesisPayload) -> ProtocolResult<()> {
-        self.enable_whitelist.set(payload.enable_whitelist)?;
-        if payload.enable_whitelist {
-            assert!(
-                !payload.admins.is_empty(),
+    fn init_genesis(&mut self, payload: InitGenesisPayload) {
+        if payload.enable_whitelist && payload.admins.is_empty() {
+            panic!(
                 "If riscv whitelist is enabled, you should set at least one admin in genesis.toml"
             );
         }
+
+        self.enable_whitelist.set(payload.enable_whitelist);
+
         for addr in payload.whitelist {
-            self.deploy_auth.insert(addr, true)?;
+            self.deploy_auth.insert(addr, true);
         }
         for addr in payload.admins {
-            self.admins.insert(addr, true)?;
+            self.admins.insert(addr, true);
         }
-        Ok(())
     }
 
     fn run(
@@ -66,72 +74,74 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         ctx: ServiceContext,
         payload: ExecPayload,
         is_init: bool,
-    ) -> ProtocolResult<String> {
-        let contract = self
-            .sdk
-            .borrow()
-            .get_value::<Address, Contract>(&payload.address)?
-            .ok_or_else(|| ServiceError::ContractNotExists(payload.address.as_hex()))?;
-        let code: Bytes = self
-            .sdk
-            .borrow()
-            .get_value::<Hash, Bytes>(&contract.code_hash)?
-            .ok_or_else(|| ServiceError::CodeNotFound)?;
+    ) -> ServiceResponse<String> {
+        let contract = match self.sdk.borrow().get_value::<_, Contract>(&payload.address) {
+            Some(c) => c,
+            None => return ServiceError::ContractNotFound(payload.address.as_hex()).into(),
+        };
+        let code = match self.sdk.borrow().get_value::<_, Bytes>(&contract.code_hash) {
+            Some(c) => c,
+            None => return ServiceError::CodeNotFound.into(),
+        };
+
         let interpreter_params = InterpreterParams {
             address: payload.address.clone(),
             code,
             args: payload.args.clone().into(),
             is_init,
         };
+        let chain_interface =
+            ChainInterfaceImpl::new(ctx.clone(), payload, Rc::<_>::clone(&self.sdk));
+
         let mut interpreter = Interpreter::new(
             ctx.clone(),
             InterpreterConf::default(),
             contract.intp_type,
             interpreter_params,
-            Rc::new(RefCell::new(ChainInterfaceImpl::new(
-                ctx.clone(),
-                payload,
-                Rc::<RefCell<_>>::clone(&self.sdk),
-            ))),
+            Rc::new(RefCell::new(chain_interface)),
         );
 
-        let r = interpreter.run().map_err(ServiceError::CkbVm)?;
-        let ret = String::from_utf8_lossy(r.ret.as_ref()).to_string();
-        if r.ret_code != 0 {
-            return Err(ServiceError::NonZeroExitCode {
-                exitcode: r.ret_code,
-                ret,
+        match interpreter.run() {
+            Ok(int_ret) if int_ret.ret_code == 0 => {
+                sub_cycles!(ctx, int_ret.cycles_used);
+
+                let ret = String::from_utf8_lossy(int_ret.ret.as_ref()).to_string();
+                ServiceResponse::from_succeed(ret)
             }
-            .into());
+            Ok(int_ret) => ServiceError::NonZeroExitCode {
+                exitcode: int_ret.ret_code,
+                ret:      String::from_utf8_lossy(int_ret.ret.as_ref()).to_string(),
+            }
+            .into(),
+            Err(err) => ServiceError::CkbVm(err).into(),
         }
-        ctx.sub_cycles(r.cycles_used)?;
-        Ok(ret)
     }
 
     #[read]
-    fn call(&self, ctx: ServiceContext, payload: ExecPayload) -> ProtocolResult<String> {
+    fn call(&self, ctx: ServiceContext, payload: ExecPayload) -> ServiceResponse<String> {
         self.run(ctx, payload, false)
     }
 
     #[write]
-    fn exec(&mut self, ctx: ServiceContext, payload: ExecPayload) -> ProtocolResult<String> {
+    fn exec(&mut self, ctx: ServiceContext, payload: ExecPayload) -> ServiceResponse<String> {
         self.run(ctx, payload, false)
     }
 
-    fn verify_authority(&self, ctx: &ServiceContext) -> ProtocolResult<bool> {
-        self.admins.contains(&ctx.get_caller())
-    }
-
     #[write]
-    fn grant_deploy_auth(&mut self, ctx: ServiceContext, payload: Addresses) -> ProtocolResult<()> {
-        if !self.verify_authority(&ctx)? {
-            return Err(ServiceError::NonAuthorized.into());
+    fn grant_deploy_auth(
+        &mut self,
+        ctx: ServiceContext,
+        payload: Addresses,
+    ) -> ServiceResponse<()> {
+        if self.no_authority(&ctx) {
+            return ServiceError::NonAuthorized.into();
         }
-        ctx.sub_cycles(payload.addresses.len() as u64 * 10000)?;
+        sub_cycles!(ctx, payload.addresses.len() as u64 * 10_000);
+
         for addr in payload.addresses {
-            self.deploy_auth.insert(addr, true)?;
+            self.deploy_auth.insert(addr, true);
         }
-        Ok(())
+        ServiceResponse::from_succeed(())
     }
 
     #[write]
@@ -139,15 +149,16 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         &mut self,
         ctx: ServiceContext,
         payload: Addresses,
-    ) -> ProtocolResult<()> {
-        if !self.verify_authority(&ctx)? {
-            return Err(ServiceError::NonAuthorized.into());
+    ) -> ServiceResponse<()> {
+        if self.no_authority(&ctx) {
+            return ServiceError::NonAuthorized.into();
         }
-        ctx.sub_cycles(payload.addresses.len() as u64 * 10000)?;
+        sub_cycles!(ctx, payload.addresses.len() as u64 * 10_000);
+
         for addr in payload.addresses {
-            self.deploy_auth.remove(&addr)?;
+            self.deploy_auth.remove(&addr);
         }
-        Ok(())
+        ServiceResponse::from_succeed(())
     }
 
     #[read]
@@ -155,15 +166,16 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         &self,
         ctx: ServiceContext,
         payload: Addresses,
-    ) -> ProtocolResult<Addresses> {
+    ) -> ServiceResponse<Addresses> {
         let mut res = Addresses::default();
-        ctx.sub_cycles(payload.addresses.len() as u64 * 1000)?;
+        sub_cycles!(ctx, payload.addresses.len() as u64 * 1000);
+
         for addr in payload.addresses {
-            if self.deploy_auth.contains(&addr)? {
+            if self.deploy_auth.contains(&addr) {
                 res.addresses.push(addr);
             }
         }
-        Ok(res)
+        ServiceResponse::from_succeed(res)
     }
 
     #[write]
@@ -171,52 +183,65 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         &mut self,
         ctx: ServiceContext,
         payload: DeployPayload,
-    ) -> ProtocolResult<DeployResp> {
-        // check auth
-        let enable_whitelist = self.enable_whitelist.get().unwrap_or_default();
-        if enable_whitelist && !self.deploy_auth.contains(&ctx.get_caller())? {
-            return Err(ServiceError::NonAuthorized.into());
+    ) -> ServiceResponse<DeployResp> {
+        // Check authority list
+        let enable_whitelist = self.enable_whitelist.get();
+        if enable_whitelist && !self.deploy_auth.contains(&ctx.get_caller()) {
+            return ServiceError::NonAuthorized.into();
         }
 
-        let code = Bytes::from(hex::decode(&payload.code).map_err(ServiceError::HexDecode)?);
+        let code = match hex::decode(&payload.code) {
+            Ok(c) => Bytes::from(c),
+            Err(err) => return ServiceError::HexDecode(err).into(),
+        };
 
         // Save code
         let code_hash = Hash::digest(code.clone());
         let code_len = code.len() as u64;
+
         // Every bytes cost 10 cycles
-        ctx.sub_cycles(code_len * 10)?;
-        self.sdk.borrow_mut().set_value(code_hash.clone(), code)?;
+        sub_cycles!(ctx, code_len * 10);
+        self.sdk.borrow_mut().set_value(code_hash.clone(), code);
 
-        let tx_hash = ctx
-            .get_tx_hash()
-            .ok_or_else(|| ServiceError::NotInExecContext("riscv deploy".to_owned()))?;
-
-        let contract_address =
-            Address::from_bytes(Hash::digest(tx_hash.as_bytes()).as_bytes().slice(0..20))?;
+        // Generate contract address
+        let tx_hash = match ctx.get_tx_hash() {
+            Some(h) => h,
+            None => return ServiceError::NotInExecContext("riscv deploy".to_owned()).into(),
+        };
+        let addr_in_bytes = Hash::digest(tx_hash.as_bytes()).as_bytes().slice(0..20);
+        let contract_address = match Address::from_bytes(addr_in_bytes) {
+            Ok(a) => a,
+            Err(_) => return ServiceError::InvalidContractAddress.into(),
+        };
 
         let intp_type = payload.intp_type;
         let contract = Contract::new(code_hash, intp_type);
-
         self.sdk
             .borrow_mut()
-            .set_value(contract_address.clone(), contract)?;
+            .set_value(contract_address.clone(), contract);
 
-        // run init
-        let init_ret = if !payload.init_args.is_empty() {
-            let init_payload = ExecPayload {
-                address: contract_address.clone(),
-                args:    payload.init_args,
-            };
+        if payload.init_args.is_empty() {
+            return ServiceResponse::from_succeed(DeployResp {
+                address:  contract_address,
+                init_ret: String::new(),
+            });
+        }
 
-            self.run(ctx, init_payload, true)?
-        } else {
-            String::new()
+        // Run init
+        let init_payload = ExecPayload {
+            address: contract_address.clone(),
+            args:    payload.init_args,
         };
 
-        Ok(DeployResp {
-            address: contract_address,
-            init_ret,
-        })
+        let resp = self.run(ctx, init_payload, true);
+        if resp.is_error() {
+            ServiceResponse::from_error(resp.code, resp.error_message)
+        } else {
+            ServiceResponse::from_succeed(DeployResp {
+                address:  contract_address,
+                init_ret: resp.succeed_data,
+            })
+        }
     }
 
     #[read]
@@ -224,43 +249,55 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         &self,
         ctx: ServiceContext,
         payload: GetContractPayload,
-    ) -> ProtocolResult<GetContractResp> {
-        ctx.sub_cycles(21000)?;
-        let contract = self
-            .sdk
-            .borrow()
-            .get_value::<Address, Contract>(&payload.address)?
-            .ok_or_else(|| ServiceError::ContractNotExists(payload.address.as_hex()))?;
+    ) -> ServiceResponse<GetContractResp> {
+        sub_cycles!(ctx, 21000);
+
+        let contract = match self.sdk.borrow().get_value::<_, Contract>(&payload.address) {
+            Some(c) => c,
+            None => return ServiceError::ContractNotFound(payload.address.as_hex()).into(),
+        };
+
         let mut resp = GetContractResp {
             code_hash: contract.code_hash.clone(),
             intp_type: contract.intp_type,
             ..Default::default()
         };
+
         if payload.get_code {
-            let code = self
-                .sdk
-                .borrow()
-                .get_value::<Hash, Bytes>(&contract.code_hash)?
-                .ok_or_else(|| ServiceError::CodeNotFound)?;
-            ctx.sub_cycles(code.len() as u64)?;
+            let code = match self.sdk.borrow().get_value::<_, Bytes>(&contract.code_hash) {
+                Some(c) => c,
+                None => return ServiceError::CodeNotFound.into(),
+            };
+            sub_cycles!(ctx, code.len() as u64);
+
             resp.code = hex::encode(&code);
         }
+
         for key in payload.storage_keys.iter() {
-            ctx.sub_cycles(key.len() as u64)?;
-            let decoded_key =
-                hex::decode(key).map_err(|_| ServiceError::InvalidKey(key.clone()))?;
-            let mut contract_key = BytesMut::from(payload.address.as_bytes().as_ref());
-            contract_key.extend(decoded_key);
-            let contract_key = Hash::digest(contract_key.freeze());
+            sub_cycles!(ctx, key.len() as u64);
+            let decoded_key = match hex::decode(key) {
+                Ok(k) => k,
+                Err(_) => return ServiceError::InvalidKey(key.to_owned()).into(),
+            };
+
+            let addr_bytes = payload.address.as_bytes();
+            let contract_key = combine_key(addr_bytes.as_ref(), &decoded_key);
+
             let value = self
                 .sdk
                 .borrow()
-                .get_value::<Hash, Bytes>(&contract_key)?
+                .get_value::<_, Bytes>(&contract_key)
                 .unwrap_or_default();
-            ctx.sub_cycles(value.len() as u64)?;
+            sub_cycles!(ctx, value.len() as u64);
+
             resp.storage_values.push(hex::encode(value));
         }
-        Ok(resp)
+
+        ServiceResponse::from_succeed(resp)
+    }
+
+    fn no_authority(&self, ctx: &ServiceContext) -> bool {
+        self.admins.contains(&ctx.get_caller())
     }
 }
 
@@ -282,9 +319,7 @@ impl<SDK: ServiceSDK + 'static> ChainInterfaceImpl<SDK> {
     }
 
     fn contract_key(&self, key: &Bytes) -> Hash {
-        let mut contract_key = BytesMut::from(self.payload.address.as_bytes().as_ref());
-        contract_key.extend(key);
-        Hash::digest(contract_key.freeze())
+        combine_key(self.payload.address.as_bytes().as_ref(), key)
     }
 }
 
@@ -292,15 +327,16 @@ impl<SDK> ChainInterface for ChainInterfaceImpl<SDK>
 where
     SDK: ServiceSDK + 'static,
 {
-    fn get_storage(&self, key: &Bytes) -> ProtocolResult<Bytes> {
+    fn get_storage(&self, key: &Bytes) -> Bytes {
         let contract_key = self.contract_key(key);
+
         self.sdk
             .borrow()
             .get_value::<Hash, Bytes>(&contract_key)
-            .map(|v| v.unwrap_or_default())
+            .unwrap_or_default()
     }
 
-    fn set_storage(&mut self, key: Bytes, val: Bytes) -> ProtocolResult<()> {
+    fn set_storage(&mut self, key: Bytes, val: Bytes) {
         let contract_key = self.contract_key(&key);
         self.sdk.borrow_mut().set_value(contract_key, val)
     }
@@ -310,16 +346,29 @@ where
         address: Address,
         args: Bytes,
         current_cycle: u64,
-    ) -> ProtocolResult<(String, u64)> {
+    ) -> ServiceResponse<(String, u64)> {
         let payload = ExecPayload {
             address,
             args: String::from_utf8_lossy(args.as_ref()).to_string(),
         };
-        let payload_str = serde_json::to_string(&payload).map_err(ServiceError::Serde)?;
-        let (serde_ret, cycle) =
-            self.service_call("riscv", "exec", &payload_str, current_cycle, false)?;
-        let raw_ret: String = serde_json::from_str(&serde_ret).map_err(ServiceError::Serde)?;
-        Ok((raw_ret, cycle))
+
+        let payload_json = match serde_json::to_string(&payload) {
+            Ok(j) => j,
+            Err(err) => return ServiceError::Serde(err).into(),
+        };
+
+        let resp = self.service_call("riscv", "exec", &payload_json, current_cycle, false);
+        if resp.is_error() {
+            return ServiceResponse::from_error(resp.code, resp.error_message);
+        }
+
+        let (json_ret, cycle) = resp.succeed_data;
+        let raw_ret = match serde_json::from_str(&json_ret) {
+            Ok(r) => r,
+            Err(err) => return ServiceError::Serde(err).into(),
+        };
+
+        ServiceResponse::from_succeed((raw_ret, cycle))
     }
 
     fn service_call(
@@ -329,14 +378,19 @@ where
         payload: &str,
         current_cycle: u64,
         readonly: bool,
-    ) -> ProtocolResult<(String, u64)> {
-        let vm_cycle = current_cycle - self.all_cycles_used;
-        self.ctx.sub_cycles(vm_cycle)?;
-        let extra = self.payload.address.as_hex();
-        let call_ret = if readonly {
+    ) -> ServiceResponse<(String, u64)> {
+        let vm_cycle = current_cycle.wrapping_sub(self.all_cycles_used);
+        if vm_cycle != 0 {
+            sub_cycles!(self.ctx, vm_cycle);
+        } else {
+            return ServiceError::OutOfCycles.into();
+        }
+
+        let payload_addr = self.payload.address.as_hex();
+        let call_resp = if readonly {
             self.sdk.borrow().read(
                 &self.ctx,
-                Some(Bytes::from(extra)),
+                Some(Bytes::from(payload_addr)),
                 service,
                 method,
                 payload,
@@ -344,51 +398,86 @@ where
         } else {
             self.sdk.borrow_mut().write(
                 &self.ctx,
-                Some(Bytes::from(extra)),
+                Some(Bytes::from(payload_addr)),
                 service,
                 method,
                 payload,
             )
-        }?;
+        };
+        if call_resp.is_error() {
+            return ServiceResponse::from_error(call_resp.code, call_resp.error_message);
+        }
+
         self.all_cycles_used = self.ctx.get_cycles_used();
-        Ok((call_ret, self.all_cycles_used))
+        let call_ret: String = call_resp.succeed_data;
+        ServiceResponse::from_succeed((call_ret, self.all_cycles_used))
     }
+}
+
+fn combine_key(addr: &[u8], key: &[u8]) -> Hash {
+    let mut buf = BytesMut::from(addr);
+    buf.extend(key);
+    Hash::digest(buf.freeze())
 }
 
 #[derive(Debug, Display, From)]
 pub enum ServiceError {
-    #[display(fmt = "method {} can not be invoke with call", _0)]
+    #[display(fmt = "Method {} can not be invoke with call", _0)]
     NotInExecContext(String),
 
     #[display(fmt = "Contract {} not exists", _0)]
-    ContractNotExists(String),
+    ContractNotFound(String),
 
-    #[display(fmt = "code not found")]
+    #[display(fmt = "Code not found")]
     CodeNotFound,
 
-    #[display(fmt = "CKB VM return non zero, exitcode: {}, ret: {}", exitcode, ret)]
+    #[display(fmt = "None zero exit {} msg {}", exitcode, ret)]
     NonZeroExitCode { exitcode: i8, ret: String },
 
-    #[display(fmt = "ckb vm error: {:?}", _0)]
+    #[display(fmt = "VM: {:?}", _0)]
     CkbVm(ckb_vm::Error),
 
-    #[display(fmt = "json serde error: {:?}", _0)]
+    #[display(fmt = "Codec: {:?}", _0)]
     Serde(serde_json::error::Error),
 
-    #[display(fmt = "hex decode error: {:?}", _0)]
+    #[display(fmt = "Hex decode: {:?}", _0)]
     HexDecode(hex::FromHexError),
 
-    #[display(fmt = "invalid key '{:?}', should be a hex string", _0)]
+    #[display(fmt = "Invalid key '{:?}', should be a hex string", _0)]
     InvalidKey(String),
 
     #[display(fmt = "Not authorized")]
     NonAuthorized,
+
+    #[display(fmt = "Out of cycles")]
+    OutOfCycles,
+
+    #[display(fmt = "Invalid contract address")]
+    InvalidContractAddress,
 }
 
-impl std::error::Error for ServiceError {}
+impl ServiceError {
+    fn code(&self) -> u64 {
+        use ServiceError::*;
 
-impl From<ServiceError> for ProtocolError {
-    fn from(err: ServiceError) -> ProtocolError {
-        ProtocolError::new(ProtocolErrorKind::Service, Box::new(err))
+        match self {
+            NotInExecContext(_) => 101,
+            ContractNotFound(_) => 102,
+            CodeNotFound => 103,
+            NonZeroExitCode { .. } => 104,
+            CkbVm(_) => 105,
+            Serde(_) => 106,
+            HexDecode(_) => 107,
+            InvalidKey(_) => 108,
+            NonAuthorized => 109,
+            OutOfCycles => 110,
+            InvalidContractAddress => 111,
+        }
+    }
+}
+
+impl<T: Default> From<ServiceError> for ServiceResponse<T> {
+    fn from(err: ServiceError) -> ServiceResponse<T> {
+        ServiceResponse::from_error(err.code(), err.to_string())
     }
 }

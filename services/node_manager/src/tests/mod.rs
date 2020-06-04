@@ -11,7 +11,7 @@ use framework::binding::state::{GeneralServiceState, MPTTrie};
 use framework::executor::ServiceExecutor;
 use metadata::MetadataService;
 use protocol::traits::{
-    Executor, ExecutorParams, NoopDispatcher, Service, ServiceMapping, ServiceSDK, Storage,
+    Context, Executor, ExecutorParams, NoopDispatcher, Service, ServiceMapping, ServiceSDK, Storage,
 };
 use protocol::types::{
     Address, Block, Genesis, Hash, Proof, RawTransaction, Receipt, ServiceContext,
@@ -21,6 +21,21 @@ use protocol::ProtocolResult;
 
 use crate::types::SetAdminPayload;
 use crate::{NodeManagerService, ADMIN_KEY};
+
+macro_rules! service {
+    ($service:expr, $method:ident, $ctx:expr) => {{
+        let resp = $service.$method($ctx);
+        assert!(!resp.is_error());
+
+        resp.succeed_data
+    }};
+    ($service:expr, $method:ident, $ctx:expr, $payload:expr) => {{
+        let resp = $service.$method($ctx, $payload);
+        assert!(!resp.is_error());
+
+        resp.succeed_data
+    }};
+}
 
 #[test]
 fn test_update_metadata() {
@@ -77,7 +92,8 @@ fn test_update_metadata() {
     };
 
     let txs = vec![stx];
-    let executor_resp = executor.exec(&params, &txs).unwrap();
+    let ctx = Context::new();
+    let executor_resp = executor.exec(ctx, &params, &txs).unwrap();
     let receipt = &executor_resp.receipts[0];
     let event = &receipt.events[0];
 
@@ -95,15 +111,13 @@ fn test_set_admin() {
     let context = mock_context(cycles_limit, admin_1.clone());
 
     let mut service = new_node_manager_service(admin_1.clone());
-    let old_admin = service.get_admin(context.clone()).unwrap();
+    let old_admin = service!(service, get_admin, context.clone());
     assert_eq!(old_admin, admin_1);
 
-    service
-        .set_admin(context.clone(), SetAdminPayload {
-            admin: admin_2.clone(),
-        })
-        .unwrap();
-    let new_admin = service.get_admin(context).unwrap();
+    service!(service, set_admin, context.clone(), SetAdminPayload {
+        admin: admin_2.clone(),
+    });
+    let new_admin = service!(service, get_admin, context);
     assert_eq!(new_admin, admin_2);
 }
 
@@ -126,9 +140,9 @@ fn new_node_manager_service(
         NoopDispatcher {},
     );
 
-    sdk.set_value(ADMIN_KEY.to_string(), admin).unwrap();
+    sdk.set_value(ADMIN_KEY.to_string(), admin);
 
-    NodeManagerService::new(sdk).unwrap()
+    NodeManagerService::new(sdk)
 }
 
 fn mock_context(cycles_limit: u64, caller: Address) -> ServiceContext {
@@ -155,59 +169,74 @@ struct MockStorage;
 
 #[async_trait]
 impl Storage for MockStorage {
-    async fn insert_transactions(&self, _: Vec<SignedTransaction>) -> ProtocolResult<()> {
+    async fn insert_transactions(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<SignedTransaction>,
+    ) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn insert_block(&self, _: Block) -> ProtocolResult<()> {
+    async fn get_transactions(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<Hash>,
+    ) -> ProtocolResult<Vec<Option<SignedTransaction>>> {
         unimplemented!()
     }
 
-    async fn insert_receipts(&self, _: Vec<Receipt>) -> ProtocolResult<()> {
+    async fn get_transaction_by_hash(
+        &self,
+        _: Context,
+        _: Hash,
+    ) -> ProtocolResult<Option<SignedTransaction>> {
         unimplemented!()
     }
 
-    async fn update_latest_proof(&self, _: Proof) -> ProtocolResult<()> {
+    async fn insert_block(&self, _: Context, _: Block) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_transaction_by_hash(&self, _: Hash) -> ProtocolResult<SignedTransaction> {
+    async fn get_block(&self, _: Context, _: u64) -> ProtocolResult<Option<Block>> {
         unimplemented!()
     }
 
-    async fn get_transactions(&self, _: Vec<Hash>) -> ProtocolResult<Vec<SignedTransaction>> {
+    async fn insert_receipts(&self, _: Context, _: u64, _: Vec<Receipt>) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_latest_block(&self) -> ProtocolResult<Block> {
+    async fn get_receipt_by_hash(&self, _: Context, _: Hash) -> ProtocolResult<Option<Receipt>> {
         unimplemented!()
     }
 
-    async fn get_block_by_height(&self, _: u64) -> ProtocolResult<Block> {
+    async fn get_receipts(
+        &self,
+        _: Context,
+        _: u64,
+        _: Vec<Hash>,
+    ) -> ProtocolResult<Vec<Option<Receipt>>> {
         unimplemented!()
     }
 
-    async fn get_block_by_hash(&self, _: Hash) -> ProtocolResult<Block> {
+    async fn update_latest_proof(&self, _: Context, _: Proof) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn get_receipt(&self, _: Hash) -> ProtocolResult<Receipt> {
+    async fn get_latest_proof(&self, _: Context) -> ProtocolResult<Proof> {
         unimplemented!()
     }
 
-    async fn get_receipts(&self, _: Vec<Hash>) -> ProtocolResult<Vec<Receipt>> {
+    async fn get_latest_block(&self, _: Context) -> ProtocolResult<Block> {
         unimplemented!()
     }
 
-    async fn get_latest_proof(&self) -> ProtocolResult<Proof> {
+    async fn update_overlord_wal(&self, _: Context, _: Bytes) -> ProtocolResult<()> {
         unimplemented!()
     }
 
-    async fn update_overlord_wal(&self, _info: Bytes) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn load_overlord_wal(&self) -> ProtocolResult<Bytes> {
+    async fn load_overlord_wal(&self, _: Context) -> ProtocolResult<Bytes> {
         unimplemented!()
     }
 }
@@ -221,8 +250,8 @@ impl ServiceMapping for MockServiceMapping {
         sdk: SDK,
     ) -> ProtocolResult<Box<dyn Service>> {
         let service = match name {
-            "metadata" => Box::new(MetadataService::new(sdk)?) as Box<dyn Service>,
-            "node_manager" => Box::new(NodeManagerService::new(sdk)?) as Box<dyn Service>,
+            "metadata" => Box::new(MetadataService::new(sdk)) as Box<dyn Service>,
+            "node_manager" => Box::new(NodeManagerService::new(sdk)) as Box<dyn Service>,
             _ => panic!("not found service"),
         };
 

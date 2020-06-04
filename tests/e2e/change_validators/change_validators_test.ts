@@ -1,18 +1,17 @@
 import { keypairs, init_node_num, init_bp_num } from "./common";
-import { Muta, Client } from "muta-sdk";
+import { Muta } from "muta-sdk";
 import * as assert from "assert";
 import * as _ from "lodash";
 
-const muta = Muta.createDefaultMutaInstance();
+export const CHAIN_ID =
+  "0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036";
+
 const clients = keypairs.keypairs.map(keypair => {
-  const client = new Client({
-    chainId:
-      "0xb6a4d7da21443f5e816e8700eea87610e6d769657d6b8ec73028457bf2ca4036",
-    defaultCyclesLimit: "0xffffffff",
-    defaultCyclesPrice: "0x1",
-    endpoint: `http://${keypair.ip}:8000/graphql`,
-    maxTimeout: 50000
+  let muta = new Muta({
+        endpoint: `http://${keypair.ip}:8000/graphql`,
+        chainId: CHAIN_ID,
   });
+  let client = muta.client("0xffffffff", "0x1");
   return client;
 });
 const client = clients[0];
