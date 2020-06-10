@@ -44,6 +44,23 @@ pub struct InterpreterParams {
     pub is_init: bool,
 }
 
+impl InterpreterParams {
+    pub fn new(address: Address, code: Bytes, args: Bytes) -> InterpreterParams {
+        Self {
+            address,
+            code,
+            args,
+            is_init: false,
+        }
+    }
+
+    pub fn new_for_init(address: Address, code: Bytes, args: Bytes) -> InterpreterParams {
+        let mut params = Self::new(address, code, args);
+        params.is_init = true;
+        params
+    }
+}
+
 pub struct Interpreter {
     pub context: ServiceContext,
     pub cfg:     InterpreterConf,
@@ -69,7 +86,7 @@ impl Interpreter {
         }
     }
 
-    pub fn run(&mut self) -> Result<InterpreterResult, ckb_vm::Error> {
+    pub fn run(&self) -> Result<InterpreterResult, ckb_vm::Error> {
         let (code, init_payload) = match self.r#type {
             InterpreterType::Binary => (self.iparams.code.clone(), None),
             #[cfg(debug_assertions)]

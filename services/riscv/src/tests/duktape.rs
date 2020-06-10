@@ -1,69 +1,19 @@
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use protocol::{
-    types::{Address, Hash, ServiceContext, ServiceContextParams},
+    types::{Hash, ServiceContext},
     Bytes,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use super::{new_riscv_service, with_dispatcher_service};
+use super::{TestContext, TestRiscvService, CALLER, CYCLE_LIMIT};
 use crate::types::{DeployPayload, ExecPayload, InterpreterType};
-
-const CYCLE_LIMIT: u64 = 1024 * 1024 * 1024;
-const CALLER: &str = "0x0000000000000000000000000000000000000001";
-
-struct TestContext {
-    count:  usize,
-    height: u64,
-}
-
-impl Default for TestContext {
-    fn default() -> Self {
-        TestContext {
-            count:  1,
-            height: 1,
-        }
-    }
-}
-
-impl TestContext {
-    fn make(&mut self) -> ServiceContext {
-        ServiceContext::new(self.new_params())
-    }
-
-    fn new_params(&mut self) -> ServiceContextParams {
-        self.count += 1;
-        self.height += 1;
-
-        let tx_hash = Hash::digest(Bytes::from(format!("{}", self.count)));
-
-        ServiceContextParams {
-            tx_hash:         Some(tx_hash),
-            nonce:           None,
-            cycles_limit:    CYCLE_LIMIT,
-            cycles_price:    1,
-            cycles_used:     Rc::new(RefCell::new(3)),
-            caller:          Address::from_hex(CALLER).expect("ctx caller"),
-            height:          self.height,
-            timestamp:       0,
-            extra:           None,
-            service_name:    "service_name".to_owned(),
-            service_method:  "service_method".to_owned(),
-            service_payload: "service_payload".to_owned(),
-            events:          Rc::new(RefCell::new(vec![])),
-        }
-    }
-}
 
 macro_rules! deploy_test_code {
     () => {{
         let mut context = TestContext::default();
-        let mut service = new_riscv_service();
+        let mut service = TestRiscvService::new();
 
         // No init
         let code = include_str!("./test_code.js");
@@ -73,7 +23,7 @@ macro_rules! deploy_test_code {
             init_args: "".into(),
         };
 
-        let ret = service!(service, deploy, context.make(), payload);
+        let ret = service!(service, deploy, context.make_admin(), payload);
         assert_eq!(ret.init_ret, "");
 
         (service, context, ret.address)
@@ -91,7 +41,7 @@ fn should_support_pvm_init() {
         init_args: "do init".into(),
     };
 
-    let ret = service!(service, deploy, context.make(), payload);
+    let ret = service!(service, deploy, context.make_admin(), payload);
     assert_eq!(ret.init_ret, "do init");
 }
 
@@ -167,21 +117,8 @@ fn should_support_pvm_caller() {
 fn should_support_pvm_origin() {
     let (mut service, mut context, address) = deploy_test_code!();
 
-    // Deploy another test code
-    let code = include_bytes!("./test_code.js");
-    let payload = DeployPayload {
-        code:      hex::encode(Bytes::from(code.as_ref())),
-        intp_type: InterpreterType::Duktape,
-        init_args: "".into(),
-    };
-
-    let tc_ctx = context.make();
-    let tc_ret = with_dispatcher_service(move |dispatcher_service| {
-        dispatcher_service.deploy(tc_ctx, payload)
-    });
-
     let args =
-        json!({"method": "test_origin", "address": tc_ret.address.as_hex(), "call_args": json!({"method": "_ret_caller_and_origin"}).to_string()})
+        json!({"method": "test_origin", "address": address.as_hex(), "call_args": json!({"method": "_ret_caller_and_origin"}).to_string()})
             .to_string();
 
     let payload = ExecPayload::new(address.clone(), args);
@@ -359,21 +296,8 @@ fn should_support_pvm_storage() {
 fn should_support_pvm_contract_call() {
     let (mut service, mut context, address) = deploy_test_code!();
 
-    // Deploy another test code
-    let code = include_bytes!("./test_code.js");
-    let payload = DeployPayload {
-        code:      hex::encode(Bytes::from(code.as_ref())),
-        intp_type: InterpreterType::Duktape,
-        init_args: "".into(),
-    };
-
-    let tc_ctx = context.make();
-    let tc_ret = with_dispatcher_service(move |dispatcher_service| {
-        dispatcher_service.deploy(tc_ctx, payload)
-    });
-
     let args =
-        json!({"method": "test_contract_call", "address": tc_ret.address.as_hex(), "call_args": json!({"method": "_ret_self"}).to_string()})
+        json!({"method": "test_contract_call", "address": address.as_hex(), "call_args": json!({"method": "_ret_self"}).to_string()})
             .to_string();
 
     let payload = ExecPayload::new(address, args);
@@ -386,25 +310,12 @@ fn should_support_pvm_contract_call() {
 fn should_support_pvm_service_call() {
     let (mut service, mut context, address) = deploy_test_code!();
 
-    // Deploy another test code
-    let code = include_bytes!("./test_code.js");
-    let payload = DeployPayload {
-        code:      hex::encode(Bytes::from(code.as_ref())),
-        intp_type: InterpreterType::Duktape,
-        init_args: "".into(),
-    };
-
-    let tc_ctx = context.make();
-    let tc_ret = with_dispatcher_service(move |dispatcher_service| {
-        dispatcher_service.deploy(tc_ctx, payload)
-    });
-
     let args = json!({
         "method": "test_service_call",
         "call_service": "riscv",
         "call_method": "exec",
         "call_payload": json!({
-            "address": tc_ret.address.as_hex(),
+            "address": address.as_hex(),
             "args": json!({
                 "method": "_ret_self",
             }).to_string(),

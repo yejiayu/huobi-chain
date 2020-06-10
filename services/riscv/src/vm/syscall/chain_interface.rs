@@ -48,9 +48,14 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                 let key = get_arr(machine, key_ptr, key_len)?;
                 let val = get_arr(machine, val_ptr, val_len)?;
 
-                self.chain
+                let resp = self
+                    .chain
                     .borrow_mut()
                     .set_storage(Bytes::from(key), Bytes::from(val));
+                if resp.is_error() {
+                    log::error!("set storage {}", resp.error_message);
+                    return Err(ckb_vm::Error::InvalidEcall(code));
+                }
 
                 Ok(true)
             }
@@ -101,7 +106,8 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                         .borrow_mut()
                         .contract_call(address, call_args, machine.cycles());
                 if call_resp.is_error() {
-                    return Err(ckb_vm::Error::EcallError(code, call_resp.error_message));
+                    log::error!("contract call {}", call_resp.error_message);
+                    return Err(ckb_vm::Error::InvalidEcall(code));
                 }
 
                 let (ret, current_cycle) = call_resp.succeed_data;
@@ -138,20 +144,27 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                 };
                 let payload = String::from_utf8_lossy(&payload);
 
-                let readonly = code == SYSCODE_SERVICE_READ;
-
-                let call_resp = self.chain.borrow_mut().service_call(
-                    &service,
-                    &method,
-                    &payload,
-                    machine.cycles(),
-                    readonly,
-                );
-                if call_resp.is_error() {
-                    return Err(ckb_vm::Error::EcallError(code, call_resp.error_message));
+                let resp = if code == SYSCODE_SERVICE_READ {
+                    self.chain.borrow_mut().service_read(
+                        &service,
+                        &method,
+                        &payload,
+                        machine.cycles(),
+                    )
+                } else {
+                    self.chain.borrow_mut().service_write(
+                        &service,
+                        &method,
+                        &payload,
+                        machine.cycles(),
+                    )
+                };
+                if resp.is_error() {
+                    log::error!("service call {}", resp.error_message);
+                    return Err(ckb_vm::Error::InvalidEcall(code));
                 }
 
-                let (ret, current_cycle) = call_resp.succeed_data;
+                let (ret, current_cycle) = resp.succeed_data;
                 machine.set_cycles(current_cycle);
                 if ret_ptr != 0 {
                     machine.memory_mut().store_bytes(ret_ptr, ret.as_ref())?;

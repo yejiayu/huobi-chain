@@ -206,10 +206,9 @@ describe('riscv service', () => {
     execResp = await exec(addr, 'test_service_call_read_fail');
     expect(
       execResp.response.response.errorMessage.includes(
-        'VM: EcallError(',
+        'VM: InvalidEcall(',
       ),
     ).toBe(true);
-    expect(execResp.response.response.errorMessage.includes('not found method')).toBe(true);
 
     // invoke pvm_service_read success
     execResp = await exec(addr, 'test_service_read');

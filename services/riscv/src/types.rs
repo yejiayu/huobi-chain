@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
+use crate::ServiceError;
 
 use derive_more::Constructor;
 use rlp;
+use serde::{Deserialize, Serialize};
 
 use protocol::fixed_codec::{FixedCodec, FixedCodecError};
 use protocol::types::{Address, Hash};
@@ -50,10 +51,40 @@ pub struct DeployResp {
     pub init_ret: String,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Constructor)]
+#[derive(Debug, Clone)]
+pub struct ExecArgs(String);
+
+impl From<String> for ExecArgs {
+    fn from(args: String) -> ExecArgs {
+        ExecArgs(args)
+    }
+}
+
+impl From<Bytes> for ExecArgs {
+    fn from(args: Bytes) -> ExecArgs {
+        ExecArgs(String::from_utf8_lossy(args.as_ref()).to_string())
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ExecPayload {
     pub address: Address,
     pub args:    String,
+}
+
+impl ExecPayload {
+    pub fn new<A: Into<ExecArgs>>(address: Address, args: A) -> ExecPayload {
+        let args: ExecArgs = args.into();
+
+        Self {
+            address,
+            args: args.0,
+        }
+    }
+
+    pub fn json(&self) -> Result<String, ServiceError> {
+        serde_json::to_string(self).map_err(ServiceError::Serde)
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
@@ -85,8 +116,13 @@ pub struct GetContractPayload {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
-pub struct Addresses {
+pub struct AuthPayload {
     #[serde(default)]
+    pub addresses: Vec<Address>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct AuthorizedList {
     pub addresses: Vec<Address>,
 }
 

@@ -106,6 +106,12 @@ simple_storage:
 simple_storage_docker:
 	$(DOCKER_BUILD) "cd /src && make simple_storage"
 
+write_read:
+	$(CC) -I$(RISCV_SRC) $(TEST_SRC)/write_read.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(TEST_SRC)/write_read
+
+write_read_docker:
+	$(DOCKER_BUILD) "cd /src && make write_read"
+
 contract_test: libpvm.a
 	$(CC) -I$(RISCV_SRC) $(E2E_TEST_SRC)/contract_test.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(E2E_TEST_SRC)/contract_test
 

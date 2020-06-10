@@ -13,4 +13,4 @@ pub use syscall::{
 };
 
 mod chain_interface;
-pub use chain_interface::ChainInterface;
+pub use chain_interface::{ChainInterface, ReadonlyChain, WriteableChain};
