@@ -38,7 +38,7 @@ fn should_properly_init_genesis() {
         block_list: vec![caller.clone()],
     });
 
-    let resp = service.is_blocked(mock_context(caller.clone()), caller.clone());
+    let resp = service.is_blocked(mock_context(caller.clone()), caller);
 
     assert!(!resp.is_error());
     assert_eq!(resp.succeed_data, true);
