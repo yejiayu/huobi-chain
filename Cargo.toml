@@ -22,5 +22,6 @@ members = [
   "services/metadata",
   "services/riscv",
   "services/asset",
-  "services/node_manager"
+  "services/node_manager",
+  "services/kyc"
 ]
