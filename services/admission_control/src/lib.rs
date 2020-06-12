@@ -1,0 +1,189 @@
+#[cfg(test)]
+mod tests;
+mod types;
+use types::{AddressList, Event, Genesis, NewAdmin, UnverifiedTransaction};
+
+use binding_macro::{cycles, genesis, read, service, write};
+use derive_more::Display;
+use protocol::{
+    traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap},
+    types::{Address, ServiceContext},
+};
+use serde::Serialize;
+
+macro_rules! require_admin {
+    ($service:expr, $ctx:expr) => {{
+        let admin = $service
+            .sdk
+            .get_value(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
+            .expect("admin not found");
+
+        if $ctx.get_caller() != admin {
+            return ServiceError::NonAuthorized.into();
+        }
+    }};
+}
+
+macro_rules! sub_cycles {
+    ($ctx:expr, $cycles:expr) => {
+        if !$ctx.sub_cycles($cycles) {
+            return ServiceError::OutOfCycles.into();
+        }
+    };
+}
+
+#[derive(Debug, Display)]
+pub enum ServiceError {
+    #[display(fmt = "No authorized")]
+    NonAuthorized,
+
+    #[display(fmt = "Codec {}", _0)]
+    Codec(serde_json::Error),
+
+    #[display(fmt = "Out of cycles")]
+    OutOfCycles,
+
+    #[display(fmt = "Blocked transaction")]
+    BlockedTx,
+}
+
+impl ServiceError {
+    pub fn code(&self) -> u64 {
+        match self {
+            ServiceError::NonAuthorized => 1000,
+            ServiceError::Codec(_) => 1001,
+            ServiceError::OutOfCycles => 1002,
+            ServiceError::BlockedTx => 1003,
+        }
+    }
+}
+
+impl<T: Default> From<ServiceError> for ServiceResponse<T> {
+    fn from(err: ServiceError) -> ServiceResponse<T> {
+        ServiceResponse::from_error(err.code(), err.to_string())
+    }
+}
+
+const ADMISSION_CONTROL_ADMIN_KEY: &str = "admission_control_admin";
+
+pub struct AdmissionControlService<SDK> {
+    sdk:        SDK,
+    block_list: Box<dyn StoreMap<Address, bool>>,
+}
+
+#[service]
+impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
+    pub fn new(mut sdk: SDK) -> Self {
+        let block_list = sdk.alloc_or_recover_map("admission_control_block_list");
+
+        AdmissionControlService { sdk, block_list }
+    }
+
+    // # Panic invalid admin address
+    #[genesis]
+    fn init_genesis(&mut self, payload: Genesis) {
+        panic_on_invalid_address(&payload.admin);
+
+        self.sdk
+            .set_value(ADMISSION_CONTROL_ADMIN_KEY.to_owned(), payload.admin);
+
+        for addr in payload.block_list {
+            self.block_list.insert(addr, true);
+        }
+    }
+
+    #[cycles(10_000)]
+    #[read]
+    fn is_blocked(&self, ctx: ServiceContext, payload: Address) -> ServiceResponse<bool> {
+        let result = self.block_list.contains(&payload);
+        ServiceResponse::from_succeed(result)
+    }
+
+    #[read]
+    fn is_valid(
+        &self,
+        ctx: ServiceContext,
+        _payload: UnverifiedTransaction,
+    ) -> ServiceResponse<()> {
+        if self.block_list.contains(&ctx.get_caller()) {
+            return ServiceError::BlockedTx.into();
+        }
+
+        // TODO: verify signature
+        // TODO: verify balance
+
+        ServiceResponse::from_succeed(())
+    }
+
+    // # Panic invalid new admin address
+    #[cycles(210_00)]
+    #[write]
+    fn change_admin(&mut self, ctx: ServiceContext, payload: NewAdmin) -> ServiceResponse<()> {
+        require_admin!(self, ctx);
+        panic_on_invalid_address(&payload.new_admin);
+
+        self.sdk.set_value(
+            ADMISSION_CONTROL_ADMIN_KEY.to_owned(),
+            payload.new_admin.clone(),
+        );
+
+        Self::emit_event(&ctx, Event {
+            topic: "change_admin".to_owned(),
+            data:  payload,
+        })
+    }
+
+    #[write]
+    fn forbid(&mut self, ctx: ServiceContext, payload: AddressList) -> ServiceResponse<()> {
+        require_admin!(self, ctx);
+        sub_cycles!(ctx, payload.addrs.len() as u64 * 10_000);
+
+        for addr in payload.addrs.iter() {
+            self.block_list.insert(addr.to_owned(), true);
+        }
+
+        Self::emit_event(&ctx, Event {
+            topic: "forbid".to_owned(),
+            data:  payload,
+        })
+    }
+
+    #[write]
+    fn permit(&mut self, ctx: ServiceContext, payload: AddressList) -> ServiceResponse<()> {
+        require_admin!(self, ctx);
+        sub_cycles!(ctx, payload.addrs.len() as u64 * 10_000);
+
+        for addr in payload.addrs.iter() {
+            self.block_list.remove(addr);
+        }
+
+        Self::emit_event(&ctx, Event {
+            topic: "permit".to_owned(),
+            data:  payload,
+        })
+    }
+
+    fn emit_event<T: Serialize>(ctx: &ServiceContext, event: T) -> ServiceResponse<()> {
+        match serde_json::to_string(&event) {
+            Err(err) => ServiceError::Codec(err).into(),
+            Ok(json) => {
+                ctx.emit_event(json);
+                ServiceResponse::from_succeed(())
+            }
+        }
+    }
+
+    #[cfg(test)]
+    fn admin(&self) -> Address {
+        self.sdk
+            .get_value(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
+            .expect("admin not found")
+    }
+}
+
+// # Panic if address is invalid
+fn panic_on_invalid_address(addr: &Address) {
+    if addr == &Address::default() {
+        panic!("invalid address");
+    }
+}
