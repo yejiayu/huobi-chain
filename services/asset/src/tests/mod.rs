@@ -1,27 +1,28 @@
 use std::cell::RefCell;
+use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use cita_trie::MemoryDB;
-
+use core_storage::{adapter::memory::MemoryAdapter, ImplStorage};
 use framework::binding::sdk::{DefalutServiceSDK, DefaultChainQuerier};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
-use protocol::traits::{Context, NoopDispatcher, Storage};
-use protocol::types::{
-    Address, Block, Hash, Proof, Receipt, ServiceContext, ServiceContextParams, SignedTransaction,
-};
-use protocol::{types::Bytes, ProtocolResult};
+use protocol::traits::NoopDispatcher;
+use protocol::types::{Address, Bytes, Hash, Hex, ServiceContext, ServiceContextParams};
 
 use crate::types::{
-    ApprovePayload, CreateAssetPayload, GetAllowancePayload, GetAssetPayload, GetBalancePayload,
-    TransferFromPayload, TransferPayload,
+    ApprovePayload, BurnAsset, BurnEvent, CreateAssetPayload, GetAllowancePayload, GetAssetPayload,
+    GetBalancePayload, InitGenesisPayload, MintAsset, MintEvent, NewAdmin, TransferFromPayload,
+    TransferPayload,
 };
 use crate::AssetService;
 
 macro_rules! service_call {
     ($service:expr, $method:ident, $ctx:expr, $payload:expr) => {{
         let resp = $service.$method($ctx, $payload);
+        if resp.is_error() {
+            println!("{}", resp.error_message);
+        }
         assert!(!resp.is_error());
 
         resp.succeed_data
@@ -31,23 +32,32 @@ macro_rules! service_call {
 macro_rules! create_asset {
     ($service:expr, $ctx:expr, $supply:expr, $precision:expr) => {{
         service_call!($service, create_asset, $ctx, CreateAssetPayload {
-            name:      "test".to_owned(),
-            symbol:    "test".to_owned(),
+            name:      "miao".to_owned(),
+            symbol:    "😺".to_owned(),
             supply:    $supply,
             precision: $precision,
         })
     }};
 }
 
+type SDK = DefalutServiceSDK<
+    GeneralServiceState<MemoryDB>,
+    DefaultChainQuerier<ImplStorage<MemoryAdapter>>,
+    NoopDispatcher,
+>;
+
+const CYCLE_LIMIT: u64 = 1024 * 1024 * 1024;
+const ADMIN: &str = "0x755cdba6ae4f479f7164792b318b2a06c759833b";
+const CALLER: &str = "0x0000000000000000000000000000000000000001";
+
 #[test]
 fn test_create_asset() {
-    let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let supply = 1024 * 1024;
     let precision = 2;
+    let supply = 1024 * 1024;
     let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let ctx = mock_context(cycles_limit, caller.clone());
 
-    let mut service = new_asset_service();
+    let mut service = TestService::new();
+    let ctx = mock_context(caller.clone());
 
     // test create_asset
     let asset = create_asset!(service, ctx.clone(), supply, precision);
@@ -56,102 +66,92 @@ fn test_create_asset() {
     });
     assert_eq!(asset_got, asset);
 
-    let asset_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+    let resp = service_call!(service, get_balance, ctx, GetBalancePayload {
         asset_id: asset.id.clone(),
         user:     caller,
     });
-
-    assert_eq!(asset_balance.balance, supply);
-    assert_eq!(asset_balance.asset_id, asset.id);
+    assert_eq!(resp.balance, supply);
+    assert_eq!(resp.asset_id, asset.id);
 }
 
 #[test]
 fn test_transfer() {
-    let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let supply = 1024 * 1024;
-    let precision = 2;
-    let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let to_address = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let ctx = mock_context(cycles_limit, caller.clone());
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
+    let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
-    let mut service = new_asset_service();
-    let asset = create_asset!(service, ctx.clone(), supply, precision);
+    let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
 
     service_call!(service, transfer, ctx.clone(), TransferPayload {
         asset_id: asset.id.clone(),
-        to:       to_address.clone(),
+        to:       recipient.clone(),
         value:    1024,
     });
 
-    let asset_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+    let caller_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
         asset_id: asset.id.clone(),
         user:     caller,
     });
-    assert_eq!(asset_balance.balance, supply - 1024);
+    assert_eq!(caller_balance.balance, asset.supply - 1024);
 
-    let ctx = mock_context(cycles_limit, to_address.clone());
-    let asset_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+    let ctx = mock_context(recipient.clone());
+    let recipient_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
         asset_id: asset.id,
-        user:     to_address,
+        user:     recipient,
     });
-    assert_eq!(asset_balance.balance, 1024);
+    assert_eq!(recipient_balance.balance, 1024);
 }
 
 #[test]
 fn test_approve() {
-    let supply = 1024 * 1024;
-    let precision = 2;
-    let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let ctx = mock_context(cycles_limit, caller.clone());
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
+    let asset = create_asset!(service, ctx.clone(), 1000, 10);
 
-    let mut service = new_asset_service();
-    let asset = create_asset!(service, ctx.clone(), supply, precision);
+    let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
 
-    let to_address = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
     service_call!(service, approve, ctx.clone(), ApprovePayload {
         asset_id: asset.id.clone(),
-        to:       to_address.clone(),
+        to:       recipient.clone(),
         value:    1024,
     });
 
     let allowance = service_call!(service, get_allowance, ctx, GetAllowancePayload {
         asset_id: asset.id.clone(),
         grantor:  caller,
-        grantee:  to_address.clone(),
+        grantee:  recipient.clone(),
     });
     assert_eq!(allowance.asset_id, asset.id);
-    assert_eq!(allowance.grantee, to_address);
+    assert_eq!(allowance.grantee, recipient);
     assert_eq!(allowance.value, 1024);
 }
 
 #[test]
 fn test_transfer_from() {
-    let supply = 1024 * 1024;
-    let precision = 2;
-    let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let ctx = mock_context(cycles_limit, caller.clone());
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
+    let asset = create_asset!(service, ctx.clone(), 1000, 10);
 
-    let mut service = new_asset_service();
-    let asset = create_asset!(service, ctx.clone(), supply, precision);
+    let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
 
-    let to_address = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
     service_call!(service, approve, ctx.clone(), ApprovePayload {
         asset_id: asset.id.clone(),
-        to:       to_address.clone(),
+        to:       recipient.clone(),
         value:    1024,
     });
 
-    let to_ctx = mock_context(cycles_limit, to_address.clone());
+    let recipient_ctx = mock_context(recipient.clone());
     service_call!(
         service,
         transfer_from,
-        to_ctx.clone(),
+        recipient_ctx.clone(),
         TransferFromPayload {
             asset_id:  asset.id.clone(),
             sender:    caller.clone(),
-            recipient: to_address.clone(),
+            recipient: recipient.clone(),
             value:     24,
         }
     );
@@ -159,50 +159,178 @@ fn test_transfer_from() {
     let allowance = service_call!(service, get_allowance, ctx.clone(), GetAllowancePayload {
         asset_id: asset.id.clone(),
         grantor:  caller.clone(),
-        grantee:  to_address.clone(),
+        grantee:  recipient.clone(),
     });
     assert_eq!(allowance.asset_id, asset.id.clone());
-    assert_eq!(allowance.grantee, to_address.clone());
+    assert_eq!(allowance.grantee, recipient.clone());
     assert_eq!(allowance.value, 1000);
 
-    let asset_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+    let sender_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
         asset_id: asset.id.clone(),
         user:     caller,
     });
-    assert_eq!(asset_balance.balance, supply - 24);
+    assert_eq!(sender_balance.balance, asset.supply - 24);
 
-    let asset_balance = service_call!(service, get_balance, to_ctx, GetBalancePayload {
+    let recipient_balance = service_call!(service, get_balance, recipient_ctx, GetBalancePayload {
         asset_id: asset.id,
-        user:     to_address,
+        user:     recipient,
     });
-    assert_eq!(asset_balance.balance, 24);
+    assert_eq!(recipient_balance.balance, 24);
 }
 
-fn new_asset_service() -> AssetService<
-    DefalutServiceSDK<
-        GeneralServiceState<MemoryDB>,
-        DefaultChainQuerier<MockStorage>,
-        NoopDispatcher,
-    >,
-> {
-    let chain_db = DefaultChainQuerier::new(Arc::new(MockStorage {}));
-    let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
-    let state = GeneralServiceState::new(trie);
+#[test]
+fn test_change_admin() {
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
 
-    let sdk = DefalutServiceSDK::new(
-        Rc::new(RefCell::new(state)),
-        Rc::new(chain_db),
-        NoopDispatcher {},
-    );
+    let changed = service.change_admin(ctx, NewAdmin {
+        addr: caller.clone(),
+    });
+    assert!(changed.is_error());
 
-    AssetService::new(sdk)
+    let ctx = mock_context(TestService::admin());
+    service_call!(service, change_admin, ctx, NewAdmin {
+        addr: caller.clone(),
+    });
+
+    assert_eq!(service.admin(), caller);
 }
 
-fn mock_context(cycles_limit: u64, caller: Address) -> ServiceContext {
+#[test]
+fn test_mint() {
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
+    let asset = create_asset!(service, ctx.clone(), 10000, 10);
+
+    let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+
+    let asset_to_mint = MintAsset {
+        asset_id: asset.id.clone(),
+        to:       recipient.clone(),
+        amount:   100,
+        proof:    Hex::default(),
+        memo:     "".to_owned(),
+    };
+    let minted = service.mint(ctx, asset_to_mint.clone());
+    assert!(minted.is_error(), "mint require admin permission");
+
+    let ctx = mock_context(TestService::admin());
+    service_call!(service, mint, ctx.clone(), asset_to_mint);
+    assert_eq!(ctx.get_events().len(), 1);
+
+    let event: MintEvent = serde_json::from_str(&ctx.get_events()[0].data).expect("event");
+    assert_eq!(event.asset_id, asset.id);
+    assert_eq!(event.to, recipient);
+    assert_eq!(event.amount, 100);
+
+    let recipient_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+        asset_id: asset.id.clone(),
+        user:     recipient,
+    });
+    assert_eq!(recipient_balance.balance, 100);
+}
+
+#[test]
+fn test_burn() {
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
+    let asset = create_asset!(service, ctx.clone(), 10000, 10);
+
+    let asset_to_burn = BurnAsset {
+        asset_id: asset.id.clone(),
+        from:     caller.clone(),
+        amount:   100,
+        proof:    Hex::default(),
+        memo:     "".to_owned(),
+    };
+    let burned = service.burn(ctx, asset_to_burn.clone());
+    assert!(burned.is_error(), "burn require admin permission");
+
+    let ctx = mock_context(TestService::admin());
+    service_call!(service, burn, ctx.clone(), asset_to_burn);
+    assert_eq!(ctx.get_events().len(), 1);
+
+    let event: BurnEvent = serde_json::from_str(&ctx.get_events()[0].data).expect("event");
+    assert_eq!(event.asset_id, asset.id);
+    assert_eq!(event.from, caller);
+    assert_eq!(event.amount, 100);
+
+    let caller_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+        asset_id: asset.id.clone(),
+        user:     caller,
+    });
+    assert_eq!(caller_balance.balance, asset.supply - 100);
+}
+
+struct TestService(AssetService<SDK>);
+
+impl Deref for TestService {
+    type Target = AssetService<SDK>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for TestService {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl TestService {
+    fn new() -> TestService {
+        let storage = ImplStorage::new(Arc::new(MemoryAdapter::new()));
+        let chain_db = DefaultChainQuerier::new(Arc::new(storage));
+
+        let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
+        let state = GeneralServiceState::new(trie);
+
+        let sdk = DefalutServiceSDK::new(
+            Rc::new(RefCell::new(state)),
+            Rc::new(chain_db),
+            NoopDispatcher {},
+        );
+
+        let mut service = AssetService::new(sdk);
+        service.init_genesis(Self::genesis());
+
+        TestService(service)
+    }
+
+    fn admin() -> Address {
+        Address::from_hex(ADMIN).expect("admin")
+    }
+
+    fn caller() -> Address {
+        Address::from_hex(CALLER).expect("caller")
+    }
+
+    fn genesis() -> InitGenesisPayload {
+        let admin = Self::admin();
+
+        InitGenesisPayload {
+            id: Hash::digest(Bytes::from_static(b"test")),
+            name: "test".to_owned(),
+            symbol: "test".to_owned(),
+            supply: 1000,
+            precision: 10,
+            issuer: admin.clone(),
+            fee_account: admin.clone(),
+            fee: 1,
+            admin,
+        }
+    }
+}
+
+fn mock_context(caller: Address) -> ServiceContext {
     let params = ServiceContextParams {
         tx_hash: None,
         nonce: None,
-        cycles_limit,
+        cycles_limit: CYCLE_LIMIT,
         cycles_price: 1,
         cycles_used: Rc::new(RefCell::new(0)),
         caller,
@@ -216,80 +344,4 @@ fn mock_context(cycles_limit: u64, caller: Address) -> ServiceContext {
     };
 
     ServiceContext::new(params)
-}
-
-struct MockStorage;
-
-#[async_trait]
-impl Storage for MockStorage {
-    async fn insert_transactions(
-        &self,
-        _: Context,
-        _: u64,
-        _: Vec<SignedTransaction>,
-    ) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_transactions(
-        &self,
-        _: Context,
-        _: u64,
-        _: Vec<Hash>,
-    ) -> ProtocolResult<Vec<Option<SignedTransaction>>> {
-        unimplemented!()
-    }
-
-    async fn get_transaction_by_hash(
-        &self,
-        _: Context,
-        _: Hash,
-    ) -> ProtocolResult<Option<SignedTransaction>> {
-        unimplemented!()
-    }
-
-    async fn insert_block(&self, _: Context, _: Block) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_block(&self, _: Context, _: u64) -> ProtocolResult<Option<Block>> {
-        unimplemented!()
-    }
-
-    async fn insert_receipts(&self, _: Context, _: u64, _: Vec<Receipt>) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_receipt_by_hash(&self, _: Context, _: Hash) -> ProtocolResult<Option<Receipt>> {
-        unimplemented!()
-    }
-
-    async fn get_receipts(
-        &self,
-        _: Context,
-        _: u64,
-        _: Vec<Hash>,
-    ) -> ProtocolResult<Vec<Option<Receipt>>> {
-        unimplemented!()
-    }
-
-    async fn update_latest_proof(&self, _: Context, _: Proof) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_latest_proof(&self, _: Context) -> ProtocolResult<Proof> {
-        unimplemented!()
-    }
-
-    async fn get_latest_block(&self, _: Context) -> ProtocolResult<Block> {
-        unimplemented!()
-    }
-
-    async fn update_overlord_wal(&self, _: Context, _: Bytes) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn load_overlord_wal(&self, _: Context) -> ProtocolResult<Bytes> {
-        unimplemented!()
-    }
 }

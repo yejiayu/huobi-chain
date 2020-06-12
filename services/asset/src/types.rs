@@ -1,13 +1,18 @@
-use std::collections::BTreeMap;
-
-use serde::{Deserialize, Serialize};
+use std::{
+    cmp::Ordering,
+    collections::BTreeMap,
+    ops::{Deref, DerefMut},
+};
 
 use bytes::Bytes;
+use serde::{Deserialize, Serialize};
 
 use muta_codec_derive::RlpFixedCodec;
 use protocol::fixed_codec::{FixedCodec, FixedCodecError};
-use protocol::types::{Address, Hash};
+use protocol::types::{Address, Hash, Hex};
 use protocol::ProtocolResult;
+
+use crate::ServiceError;
 
 /// Payload
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -20,6 +25,26 @@ pub struct InitGenesisPayload {
     pub issuer:      Address,
     pub fee_account: Address,
     pub fee:         u64,
+    pub admin:       Address,
+}
+
+impl InitGenesisPayload {
+    pub fn verify(&self) -> Result<(), &'static str> {
+        if self.id == Hash::default() {
+            return Err("invalid asset id");
+        }
+        if self.issuer == Address::default() {
+            return Err("invalid issuer");
+        }
+        if self.fee_account == Address::default() {
+            return Err("invalid fee account");
+        }
+        if self.admin == Address::default() {
+            return Err("invalid admin");
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -127,6 +152,63 @@ impl AssetBalance {
             allowance: BTreeMap::new(),
         }
     }
+
+    pub fn checked_add(&mut self, amount: u64) -> Result<(), ServiceError> {
+        let (checked_value, overflow) = self.value.overflowing_add(amount);
+        if overflow {
+            return Err(ServiceError::BalanceOverflow);
+        }
+
+        self.value = checked_value;
+        Ok(())
+    }
+
+    pub fn checked_sub(&mut self, amount: u64) -> Result<(), ServiceError> {
+        let (checked_value, overflow) = self.value.overflowing_sub(amount);
+        if overflow {
+            return Err(ServiceError::BalanceOverflow);
+        }
+
+        self.value = checked_value;
+        Ok(())
+    }
+
+    pub fn allowance(&self, spender: &Address) -> u64 {
+        *self.allowance.get(spender).unwrap_or_else(|| &0)
+    }
+
+    pub fn update_allowance(&mut self, spender: Address, value: u64) {
+        self.allowance
+            .entry(spender)
+            .and_modify(|b| *b = value)
+            .or_insert(value);
+    }
+}
+
+impl Deref for AssetBalance {
+    type Target = u64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl DerefMut for AssetBalance {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
+    }
+}
+
+impl PartialOrd<u64> for AssetBalance {
+    fn partial_cmp(&self, other: &u64) -> Option<Ordering> {
+        Some(self.value.cmp(other))
+    }
+}
+
+impl PartialEq<u64> for AssetBalance {
+    fn eq(&self, other: &u64) -> bool {
+        self.value == *other
+    }
 }
 
 #[derive(RlpFixedCodec)]
@@ -185,4 +267,41 @@ impl Default for AssetBalance {
             allowance: BTreeMap::new(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MintAsset {
+    pub asset_id: Hash,
+    pub to:       Address,
+    pub amount:   u64,
+    pub proof:    Hex,
+    pub memo:     String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BurnAsset {
+    pub asset_id: Hash,
+    pub from:     Address,
+    pub amount:   u64,
+    pub proof:    Hex,
+    pub memo:     String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MintEvent {
+    pub asset_id: Hash,
+    pub to:       Address,
+    pub amount:   u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BurnEvent {
+    pub asset_id: Hash,
+    pub from:     Address,
+    pub amount:   u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NewAdmin {
+    pub addr: Address,
 }
