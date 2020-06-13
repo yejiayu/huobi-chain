@@ -1900,7 +1900,11 @@ dependencies = [
 name = "kyc"
 version = "0.1.0"
 dependencies = [
+ "binding-macro",
  "derive_more 0.99.7",
+ "framework",
+ "muta",
+ "muta-protocol",
 ]
 
 [[package]]
