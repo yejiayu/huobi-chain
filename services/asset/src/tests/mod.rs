@@ -201,7 +201,7 @@ fn test_change_admin() {
 fn test_mint() {
     let mut service = TestService::new();
     let caller = TestService::caller();
-    let ctx = mock_context(caller.clone());
+    let ctx = mock_context(caller);
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
     let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
@@ -226,7 +226,7 @@ fn test_mint() {
     assert_eq!(event.amount, 100);
 
     let recipient_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
-        asset_id: asset.id.clone(),
+        asset_id: asset.id,
         user:     recipient,
     });
     assert_eq!(recipient_balance.balance, 100);
