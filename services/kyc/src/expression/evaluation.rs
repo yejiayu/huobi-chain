@@ -5,6 +5,7 @@ use super::types::{CalcResult, Node, Token, CalcValue, CalcContext,CalcErr::Calc
 use crate::expression::types::{ExpressionResult, KYCError};
 use crate::expression::traits::ExpressionDataFeed;
 use crate::{KycService};
+use crate::expression::{validate_values_query, validate_ident_value};
 
 impl<'a,DF:ExpressionDataFeed> CalcContext<'a,DF>{
 
@@ -96,7 +97,14 @@ impl<'a,DF:ExpressionDataFeed> CalcContext<'a,DF>{
 
         if let Some(kyc_tag_node) = has_node.left.as_ref(){
             match self.calc(kyc_tag_node)?{
-                CalcValue::KycTag(values) => {kyc_tags = values},
+                CalcValue::KycTag(values) => {
+
+                    if !validate_values_query(values.clone()){
+                        return Err(CalcError("KYC.TAG's values is incorrect".to_string()))
+                    }
+
+                    kyc_tags = values
+                },
                 _ => return Err(CalcError("has operation's left performs wrong".to_string()))
             }
         }else{
@@ -106,7 +114,14 @@ impl<'a,DF:ExpressionDataFeed> CalcContext<'a,DF>{
         let mut value = "".to_string();
         if let Some(value_node) = has_node.right.as_ref(){
             match self.calc(value_node)?{
-                CalcValue::Value(val) => {value = val},
+                CalcValue::Value(val) => {
+
+                    if !validate_ident_value(val.clone()){
+                        return Err(CalcError("KYC.TAG's query value is incorrect".to_string()))
+                    }
+
+                    value = val
+                },
                 _ => return Err(CalcError("has operation's right performs wrong".to_string()))
             }
         }else{

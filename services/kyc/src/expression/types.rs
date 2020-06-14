@@ -66,10 +66,6 @@ impl Into<KYCError> for CalcErr{
 
 pub type CalcResult = Result<CalcValue,CalcErr>;
 
-
-use crate::KycService;
-
-
 #[derive(Display,Debug,PartialEq)]
 pub enum KYCError {
     #[display(fmt = "{}", _0)]

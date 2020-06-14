@@ -78,24 +78,6 @@ impl Token{
         1
     }
 
-
-    pub fn is_ident_or_value(&self) -> bool{
-        match self{
-            Token::Value(_) | Token::Identifier(_) | Token::RightParenthesis => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_operator(&self) -> bool{
-        match self{
-            Token::Dot |
-            Token::Has |
-            Token::Not |
-            Token::And |
-            Token::Or  => true,
-            _ => false,
-        }
-    }
 }
 
 
