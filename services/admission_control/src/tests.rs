@@ -46,7 +46,7 @@ fn should_properly_init_genesis() {
 }
 
 #[test]
-#[should_panic(expected = "invalid address")]
+#[should_panic(expected = "Bad payload invalid admin address")]
 fn should_panic_on_invalid_admin_address_in_genesis() {
     let mut service = new_raw_service();
 

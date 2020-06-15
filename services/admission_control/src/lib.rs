@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests;
 mod types;
-use types::{AddressList, Event, Genesis, NewAdmin, UnverifiedTransaction};
+use types::{AddressList, Event, Genesis, NewAdmin, UnverifiedTransaction, Validate};
 
 use binding_macro::{cycles, genesis, read, service, write};
 use derive_more::Display;
@@ -22,6 +22,14 @@ macro_rules! require_admin {
             return ServiceError::NonAuthorized.into();
         }
     }};
+}
+
+macro_rules! require_valid_payload {
+    ($payload:expr) => {
+        if let Err(e) = $payload.validate() {
+            return e.into();
+        }
+    };
 }
 
 macro_rules! sub_cycles {
@@ -45,6 +53,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Blocked transaction")]
     BlockedTx,
+
+    #[display(fmt = "Bad payload {}", _0)]
+    BadPayload(&'static str),
 }
 
 impl ServiceError {
@@ -54,6 +65,7 @@ impl ServiceError {
             ServiceError::Codec(_) => 1001,
             ServiceError::OutOfCycles => 1002,
             ServiceError::BlockedTx => 1003,
+            ServiceError::BadPayload(_) => 1004,
         }
     }
 }
@@ -79,10 +91,12 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         AdmissionControlService { sdk, block_list }
     }
 
-    // # Panic invalid admin address
+    // # Panic invalid genesis
     #[genesis]
     fn init_genesis(&mut self, payload: Genesis) {
-        panic_on_invalid_address(&payload.admin);
+        if let Err(e) = payload.validate() {
+            panic!(e.to_string());
+        }
 
         self.sdk
             .set_value(ADMISSION_CONTROL_ADMIN_KEY.to_owned(), payload.admin);
@@ -115,12 +129,11 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         ServiceResponse::from_succeed(())
     }
 
-    // # Panic invalid new admin address
     #[cycles(210_00)]
     #[write]
     fn change_admin(&mut self, ctx: ServiceContext, payload: NewAdmin) -> ServiceResponse<()> {
         require_admin!(self, ctx);
-        panic_on_invalid_address(&payload.new_admin);
+        require_valid_payload!(&payload);
 
         self.sdk.set_value(
             ADMISSION_CONTROL_ADMIN_KEY.to_owned(),
@@ -178,12 +191,5 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         self.sdk
             .get_value(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
             .expect("admin not found")
-    }
-}
-
-// # Panic if address is invalid
-fn panic_on_invalid_address(addr: &Address) {
-    if addr == &Address::default() {
-        panic!("invalid address");
     }
 }
