@@ -79,16 +79,16 @@ impl<T: Default> From<ServiceError> for ServiceResponse<T> {
 const ADMISSION_CONTROL_ADMIN_KEY: &str = "admission_control_admin";
 
 pub struct AdmissionControlService<SDK> {
-    sdk:        SDK,
-    block_list: Box<dyn StoreMap<Address, bool>>,
+    sdk:       SDK,
+    deny_list: Box<dyn StoreMap<Address, bool>>,
 }
 
 #[service]
 impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
     pub fn new(mut sdk: SDK) -> Self {
-        let block_list = sdk.alloc_or_recover_map("admission_control_block_list");
+        let deny_list = sdk.alloc_or_recover_map("admission_control_deny_list");
 
-        AdmissionControlService { sdk, block_list }
+        AdmissionControlService { sdk, deny_list }
     }
 
     // # Panic invalid genesis
@@ -101,15 +101,15 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         self.sdk
             .set_value(ADMISSION_CONTROL_ADMIN_KEY.to_owned(), payload.admin);
 
-        for addr in payload.block_list {
-            self.block_list.insert(addr, true);
+        for addr in payload.deny_list {
+            self.deny_list.insert(addr, true);
         }
     }
 
     #[cycles(10_000)]
     #[read]
     fn is_blocked(&self, ctx: ServiceContext, payload: Address) -> ServiceResponse<bool> {
-        let result = self.block_list.contains(&payload);
+        let result = self.deny_list.contains(&payload);
         ServiceResponse::from_succeed(result)
     }
 
@@ -119,7 +119,7 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         ctx: ServiceContext,
         _payload: UnverifiedTransaction,
     ) -> ServiceResponse<()> {
-        if self.block_list.contains(&ctx.get_caller()) {
+        if self.deny_list.contains(&ctx.get_caller()) {
             return ServiceError::BlockedTx.into();
         }
 
@@ -152,7 +152,7 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         sub_cycles!(ctx, payload.addrs.len() as u64 * 10_000);
 
         for addr in payload.addrs.iter() {
-            self.block_list.insert(addr.to_owned(), true);
+            self.deny_list.insert(addr.to_owned(), true);
         }
 
         Self::emit_event(&ctx, Event {
@@ -167,7 +167,7 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         sub_cycles!(ctx, payload.addrs.len() as u64 * 10_000);
 
         for addr in payload.addrs.iter() {
-            self.block_list.remove(addr);
+            self.deny_list.remove(addr);
         }
 
         Self::emit_event(&ctx, Event {

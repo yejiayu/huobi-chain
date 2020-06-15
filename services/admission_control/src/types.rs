@@ -11,8 +11,8 @@ pub trait Validate {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Genesis {
-    pub admin:      Address,
-    pub block_list: Vec<Address>,
+    pub admin:     Address,
+    pub deny_list: Vec<Address>,
 }
 
 impl Validate for Genesis {

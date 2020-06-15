@@ -34,8 +34,8 @@ fn should_properly_init_genesis() {
     let caller = Address::from_hex(WESKER).expect("caller");
 
     service.init_genesis(Genesis {
-        admin:      admin.clone(),
-        block_list: vec![caller.clone()],
+        admin:     admin.clone(),
+        deny_list: vec![caller.clone()],
     });
 
     let resp = service.is_blocked(mock_context(caller.clone()), caller);
@@ -51,8 +51,8 @@ fn should_panic_on_invalid_admin_address_in_genesis() {
     let mut service = new_raw_service();
 
     service.init_genesis(Genesis {
-        admin:      Address::default(),
-        block_list: vec![],
+        admin:     Address::default(),
+        deny_list: vec![],
     });
 }
 
@@ -85,13 +85,13 @@ fn should_only_forbid_address_by_admin() {
     let mut service = new_service();
     let admin = Address::from_hex(ADMIN).expect("admin");
 
-    let block_list = vec![
+    let deny_list = vec![
         Address::from_hex(WESKER).expect("wesker"),
         Address::from_hex(G).expect("g"),
     ];
 
-    let resp = service.forbid(mock_context(block_list[0].clone()), AddressList {
-        addrs: block_list.clone(),
+    let resp = service.forbid(mock_context(deny_list[0].clone()), AddressList {
+        addrs: deny_list.clone(),
     });
     assert!(resp.is_error());
     assert!(resp
@@ -100,7 +100,7 @@ fn should_only_forbid_address_by_admin() {
 
     let ctx = mock_context(admin.clone());
     let resp = service.forbid(ctx.clone(), AddressList {
-        addrs: block_list.clone(),
+        addrs: deny_list.clone(),
     });
     assert!(!resp.is_error());
     assert_eq!(ctx.get_events().len(), 1);
@@ -108,10 +108,10 @@ fn should_only_forbid_address_by_admin() {
     let event: Event<AddressList> = ctx.get_events()[0].data.parse().expect("parse event");
     assert_eq!(event.topic, "forbid");
     assert_eq!(event.data, AddressList {
-        addrs: block_list.clone(),
+        addrs: deny_list.clone(),
     });
 
-    for addr in block_list {
+    for addr in deny_list {
         let resp = service.is_blocked(mock_context(admin.clone()), addr);
         assert_eq!(resp.succeed_data, true);
     }
@@ -121,18 +121,18 @@ fn should_only_forbid_address_by_admin() {
 fn should_only_permit_address_by_admin() {
     let mut service = new_raw_service();
     let admin = Address::from_hex(ADMIN).expect("admin");
-    let block_list = vec![
+    let deny_list = vec![
         Address::from_hex(WESKER).expect("wesker"),
         Address::from_hex(G).expect("g"),
     ];
 
     service.init_genesis(Genesis {
-        admin:      admin.clone(),
-        block_list: block_list.clone(),
+        admin:     admin.clone(),
+        deny_list: deny_list.clone(),
     });
 
-    let resp = service.permit(mock_context(block_list[0].clone()), AddressList {
-        addrs: block_list.clone(),
+    let resp = service.permit(mock_context(deny_list[0].clone()), AddressList {
+        addrs: deny_list.clone(),
     });
     assert!(resp.is_error());
     assert!(resp
@@ -141,7 +141,7 @@ fn should_only_permit_address_by_admin() {
 
     let ctx = mock_context(admin.clone());
     let resp = service.permit(ctx.clone(), AddressList {
-        addrs: block_list.clone(),
+        addrs: deny_list.clone(),
     });
     assert!(!resp.is_error());
     assert_eq!(ctx.get_events().len(), 1);
@@ -149,10 +149,10 @@ fn should_only_permit_address_by_admin() {
     let event: Event<AddressList> = ctx.get_events()[0].data.parse().expect("parse event");
     assert_eq!(event.topic, "permit");
     assert_eq!(event.data, AddressList {
-        addrs: block_list.clone(),
+        addrs: deny_list.clone(),
     });
 
-    for addr in block_list {
+    for addr in deny_list {
         let resp = service.is_blocked(mock_context(admin.clone()), addr);
         assert_eq!(resp.succeed_data, false);
     }
@@ -177,8 +177,8 @@ fn new_raw_service() -> AdmissionControlService<SDK> {
 fn new_service() -> AdmissionControlService<SDK> {
     let mut service = new_raw_service();
     service.init_genesis(Genesis {
-        admin:      Address::from_hex(ADMIN).expect("admin"),
-        block_list: vec![Address::from_hex(WESKER).expect("block list")],
+        admin:     Address::from_hex(ADMIN).expect("admin"),
+        deny_list: vec![Address::from_hex(WESKER).expect("block list")],
     });
 
     service
