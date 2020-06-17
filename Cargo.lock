@@ -275,6 +275,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d2e7343e7fc9de883d1b0341e0b13970f764c14101234857d2ddafa1cb1cac2"
 
 [[package]]
+name = "admission_control"
+version = "0.1.0"
+dependencies = [
+ "binding-macro",
+ "cita_trie",
+ "core-storage",
+ "derive_more 0.99.7",
+ "framework",
+ "muta",
+ "muta-protocol",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1676,6 +1691,7 @@ dependencies = [
 name = "huobi-chain"
 version = "0.4.0-beta2"
 dependencies = [
+ "admission_control",
  "asset 0.4.0-beta2",
  "clap",
  "derive_more 0.15.0",
