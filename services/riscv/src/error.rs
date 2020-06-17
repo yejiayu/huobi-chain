@@ -41,7 +41,7 @@ pub enum ServiceError {
 }
 
 impl ServiceError {
-    fn code(&self) -> u64 {
+    pub fn code(&self) -> u64 {
         use ServiceError::*;
 
         match self {

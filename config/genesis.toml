@@ -55,8 +55,8 @@ payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
 # name = 'riscv'
 # payload = '''
 # {
+#     "enable_authorization": true,
 #     "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
-#     "enable_whitelist": true,
-#     "whitelist": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
+#     "deploy_auth": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
 # }
 # '''
