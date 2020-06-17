@@ -265,6 +265,26 @@ fn test_burn() {
     assert_eq!(caller_balance.balance, asset.supply - 100);
 }
 
+#[test]
+fn test_transfer_to_self() {
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
+    let asset = create_asset!(service, ctx.clone(), 10000, 10);
+
+    service_call!(service, transfer, ctx.clone(), TransferPayload {
+        asset_id: asset.id.clone(),
+        to:       caller.clone(),
+        value:    100,
+    });
+
+    let caller_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+        asset_id: asset.id,
+        user:     caller,
+    });
+    assert_eq!(caller_balance.balance, asset.supply);
+}
+
 struct TestService(AssetService<SDK>);
 
 impl Deref for TestService {

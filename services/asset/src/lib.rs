@@ -378,7 +378,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         value: u64,
     ) -> Result<(), ServiceError> {
         if sender == recipient {
-            return Err(ServiceError::TransferToSelf);
+            return Ok(());
         }
 
         let mut sender_balance = self.asset_balance(sender, &asset_id);
@@ -457,9 +457,6 @@ pub enum ServiceError {
     #[display(fmt = "Balance overflow")]
     BalanceOverflow,
 
-    #[display(fmt = "Transfer to self")]
-    TransferToSelf,
-
     #[display(fmt = "Approve to self")]
     ApproveToSelf,
 
@@ -479,10 +476,9 @@ impl ServiceError {
             ServiceError::Exists(_) => 104,
             ServiceError::FeeNotEnough => 105,
             ServiceError::BalanceOverflow => 106,
-            ServiceError::TransferToSelf => 107,
-            ServiceError::ApproveToSelf => 108,
-            ServiceError::NotHexCaller => 109,
-            ServiceError::Unauthorized => 110,
+            ServiceError::ApproveToSelf => 107,
+            ServiceError::NotHexCaller => 108,
+            ServiceError::Unauthorized => 109,
         }
     }
 }
