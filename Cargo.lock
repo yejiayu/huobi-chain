@@ -358,6 +358,7 @@ dependencies = [
  "byteorder",
  "bytes 0.5.4",
  "cita_trie",
+ "core-storage",
  "derive_more 0.15.0",
  "framework",
  "muta",
