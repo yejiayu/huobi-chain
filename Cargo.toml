@@ -16,6 +16,7 @@ metadata = { path = "services/metadata" }
 asset = { path = "services/asset" }
 riscv = { path = "services/riscv" }
 node_manager = { path = "services/node_manager" }
+admission_control = { path = "services/admission_control" }
 
 [workspace]
 members = [
@@ -24,4 +25,5 @@ members = [
   "services/asset",
   "services/node_manager",
   "services/kyc"
+  "services/admission_control"
 ]

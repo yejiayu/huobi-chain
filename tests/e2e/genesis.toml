@@ -12,7 +12,8 @@ payload = '''
     "precision": 8,
     "issuer": "0xcff1002107105460941f797828f468667aa1a2db",
     "fee": 1,
-    "fee_account": "0x0000000000000000000000000000000000000000"
+    "fee_account": "0x0000000000000000000000000000000000000000",
+    "admin": "0xcff1002107105460941f797828f468667aa1a2db"
 }
 '''
 
@@ -55,8 +56,8 @@ name = 'riscv'
 # d6ef93ed5d27327fd10349a75d3b7a91aa5c1d0f42994be10c1cb0e357e722f5
 payload = '''
 {
+    "enable_authorization": true,
     "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
-    "enable_whitelist": true,
-    "whitelist": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
+    "deploy_auth": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
 }
 '''
