@@ -13,9 +13,7 @@ use types::{
     AddressList, Authorizer, Contract, DeployPayload, DeployResp, Event, ExecPayload,
     GetContractPayload, GetContractResp, InitGenesisPayload,
 };
-use vm::{
-    ChainInterface, Interpreter, InterpreterConf, InterpreterParams, ReadonlyChain, WriteableChain,
-};
+use vm::{ChainInterface, Interpreter, InterpreterParams, ReadonlyChain, WriteableChain};
 
 use binding_macro::{genesis, read, service, write};
 use protocol::{
@@ -396,13 +394,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         chain: Rc<RefCell<dyn ChainInterface>>,
         params: InterpreterParams,
     ) -> ServiceResponse<String> {
-        let interpreter = Interpreter::new(
-            ctx.clone(),
-            InterpreterConf::default(),
-            contract.intp_type,
-            params,
-            chain,
-        );
+        let interpreter = Interpreter::new(ctx.clone(), contract.intp_type, params, chain);
 
         match interpreter.run() {
             Ok(int_ret) if int_ret.ret_code == 0 => {
