@@ -7,12 +7,27 @@ pub mod types;
 #[cfg(test)]
 pub mod tests;
 
+use derive_more::Display;
 use protocol::types::Address;
 
 use crate::expression::traits::ExpressionDataFeed;
 use node::parse;
 use token::scan;
-use types::{CalcContext, ExpressionResult};
+use types::CalcContext;
+
+#[derive(Debug, Display, PartialEq)]
+pub enum ExpressionError {
+    #[display(fmt = "scan token: {}", _0)]
+    ScanError(String),
+
+    #[display(fmt = "parse node: {}", _0)]
+    ParseError(String),
+
+    #[display(fmt = "calc node: {}", _0)]
+    CalcError(String),
+}
+
+pub type ExpressionResult = Result<bool, ExpressionError>;
 
 pub fn evaluate<DF: ExpressionDataFeed>(
     data_feeder: &DF,
@@ -66,6 +81,7 @@ pub fn validate_values_query(kyc_tag_values: Vec<String>) -> bool {
 // empty is not acceptable
 // len > 6 is not acceptable
 // can not contain NULL
+#[allow(dead_code)]
 pub fn validate_values_update(kyc_tag_values: Vec<String>) -> bool {
     let len = kyc_tag_values.len();
 

@@ -55,14 +55,21 @@ pub fn test_valuation() {
 pub struct DefaultDataFeed {}
 
 impl ExpressionDataFeed for DefaultDataFeed {
-    fn get_tags(&self, _target_address: Address, kyc: String, tag: String) -> Vec<String> {
+    fn get_tags(
+        &self,
+        _target_address: Address,
+        kyc: String,
+        tag: String,
+    ) -> Result<Vec<String>, &'static str> {
         if kyc == "Huobi" && tag == "Nation" {
-            return vec!["US".to_string(), "UK".to_string()];
+            return Ok(vec!["US".to_string(), "UK".to_string()]);
         }
+
         if kyc == "Lycrus" && tag == "species" {
-            return vec!["Hamster".to_string(), "Rodent".to_string()];
+            return Ok(vec!["Hamster".to_string(), "Rodent".to_string()]);
         }
-        vec!["NULL".to_string()]
+
+        Ok(vec!["NULL".to_string()])
     }
 }
 

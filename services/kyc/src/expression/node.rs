@@ -1,11 +1,23 @@
-// we don't have triple-operate
+use crate::expression::{
+    types::{Node, Token},
+    ExpressionError,
+};
 
-use super::types::KYCError;
-use super::types::{Node, Token};
 use std::collections::VecDeque;
 
+// FIXME: return ParseError instead of panic without msg
+// FIXME: also replace expect with ParseError
+pub struct ParseError(&'static str);
+
+impl From<ParseError> for ExpressionError {
+    fn from(err: ParseError) -> ExpressionError {
+        ExpressionError::ParseError(err.0.to_owned())
+    }
+}
+
+// Note: we don't have triple-operate
 // () > . > @ > ! > & > | > ()
-pub fn parse(tokens: Vec<Token>) -> Result<Node, KYCError> {
+pub fn parse(tokens: Vec<Token>) -> Result<Node, ParseError> {
     let mut nodes = tokens
         .into_iter()
         .map(|token| token.into_node(None, None))
@@ -18,11 +30,11 @@ pub fn parse(tokens: Vec<Token>) -> Result<Node, KYCError> {
     let mut index = 0;
     loop {
         if nodes.is_empty() {
-            panic!();
+            return Err(ParseError(""));
         }
 
         let node = nodes.get_mut(index).expect("");
-        println!("parsing:{:?}", node.token);
+
         match node.token {
             Token::LeftParenthesis => parenthesis_stack.push(index),
             Token::RightParenthesis => {
@@ -33,14 +45,14 @@ pub fn parse(tokens: Vec<Token>) -> Result<Node, KYCError> {
                 let mut piece = nodes.split_off(left_parenthesis_index);
                 if let Token::LeftParenthesis = piece.pop_front().expect("").token {
                 } else {
-                    panic!()
+                    return Err(ParseError(""));
                 };
                 if let Token::RightParenthesis = piece.pop_back().expect("").token {
                 } else {
-                    panic!()
+                    return Err(ParseError(""));
                 };
                 // parse (left, right)
-                let parsed_parenthesis = parse_internal(piece);
+                let parsed_parenthesis = parse_internal(piece)?;
                 nodes.push_back(parsed_parenthesis);
                 nodes.append(&mut end);
 
@@ -57,17 +69,17 @@ pub fn parse(tokens: Vec<Token>) -> Result<Node, KYCError> {
     }
 
     if nodes.len() > 1 {
-        panic!()
+        return Err(ParseError(""));
     };
 
     let node = nodes.pop_back().expect("");
-    println!("res:\n{:?}", node);
+
     Ok(node)
 }
 
 // we scan all operator from highest and combine them. I new this method is
 // quite slow, but is less of faults
-fn parse_internal(mut nodes: VecDeque<Node>) -> Node {
+fn parse_internal(mut nodes: VecDeque<Node>) -> Result<Node, ParseError> {
     let mut priority = Token::get_highest_priority() - 1;
     while priority > 0 {
         let mut index = 0;
@@ -86,7 +98,6 @@ fn parse_internal(mut nodes: VecDeque<Node>) -> Node {
                 index += 1;
                 continue;
             }
-            println!("  parsing:{:?}", node);
 
             let mut left = false;
             let mut right = false;
@@ -117,7 +128,7 @@ fn parse_internal(mut nodes: VecDeque<Node>) -> Node {
                     // set index to node
                     index -= 1;
                 } else {
-                    panic!()
+                    return Err(ParseError(""));
                 }
             }
 
@@ -131,7 +142,7 @@ fn parse_internal(mut nodes: VecDeque<Node>) -> Node {
                     }
                     nodes.insert(index, node);
                 } else {
-                    panic!()
+                    return Err(ParseError(""));
                 }
             }
 
@@ -146,10 +157,10 @@ fn parse_internal(mut nodes: VecDeque<Node>) -> Node {
     }
 
     if nodes.len() > 1 {
-        panic!()
+        return Err(ParseError(""));
     };
 
-    nodes.pop_back().expect("")
+    Ok(nodes.pop_back().expect(""))
 }
 
 fn reverse(mut nodes: VecDeque<Node>) -> VecDeque<Node> {
