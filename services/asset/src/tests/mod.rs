@@ -245,7 +245,7 @@ fn test_burn() {
         proof:    Hex::default(),
         memo:     "".to_owned(),
     };
-    service_call!(service, burn, ctx.clone(), asset_to_burn.clone());
+    service_call!(service, burn, ctx.clone(), asset_to_burn);
 
     assert_eq!(ctx.get_events().len(), 2);
     let event: BurnEvent = serde_json::from_str(&ctx.get_events()[1].data).expect("event");
