@@ -281,7 +281,6 @@ pub struct MintAsset {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BurnAsset {
     pub asset_id: Hash,
-    pub from:     Address,
     pub amount:   u64,
     pub proof:    Hex,
     pub memo:     String,

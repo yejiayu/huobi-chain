@@ -352,20 +352,18 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     #[cycles(210_00)]
     #[write]
     fn burn(&mut self, ctx: ServiceContext, payload: BurnAsset) -> ServiceResponse<()> {
-        require_admin!(self.sdk, &ctx);
         require_asset_exists!(self, payload.asset_id);
 
-        let mut burner_balance = self.asset_balance(&payload.from, &payload.asset_id);
-
+        let mut burner_balance = self.asset_balance(&ctx.get_caller(), &payload.asset_id);
         if let Err(e) = burner_balance.checked_sub(payload.amount) {
             return e.into();
         }
 
-        self.set_account_value(&payload.from, payload.asset_id.clone(), burner_balance);
+        self.set_account_value(&ctx.get_caller(), payload.asset_id.clone(), burner_balance);
 
         Self::emit_event(&ctx, BurnEvent {
             asset_id: payload.asset_id,
-            from:     payload.from,
+            from:     ctx.get_caller(),
             amount:   payload.amount,
         })
     }

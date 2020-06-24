@@ -241,19 +241,14 @@ fn test_burn() {
 
     let asset_to_burn = BurnAsset {
         asset_id: asset.id.clone(),
-        from:     caller.clone(),
         amount:   100,
         proof:    Hex::default(),
         memo:     "".to_owned(),
     };
-    let burned = service.burn(ctx, asset_to_burn.clone());
-    assert!(burned.is_error(), "burn require admin permission");
+    service_call!(service, burn, ctx.clone(), asset_to_burn.clone());
 
-    let ctx = mock_context(TestService::admin());
-    service_call!(service, burn, ctx.clone(), asset_to_burn);
-    assert_eq!(ctx.get_events().len(), 1);
-
-    let event: BurnEvent = serde_json::from_str(&ctx.get_events()[0].data).expect("event");
+    assert_eq!(ctx.get_events().len(), 2);
+    let event: BurnEvent = serde_json::from_str(&ctx.get_events()[1].data).expect("event");
     assert_eq!(event.asset_id, asset.id);
     assert_eq!(event.from, caller);
     assert_eq!(event.amount, 100);
