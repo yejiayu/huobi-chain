@@ -10,20 +10,17 @@ use crate::{
     RiscvService, ServiceError,
 };
 
-use async_trait::async_trait;
 use cita_trie::MemoryDB;
 
+use core_storage::{adapter::memory::MemoryAdapter, ImplStorage};
 use framework::binding::{
     sdk::{DefalutServiceSDK as DefaultServiceSDK, DefaultChainQuerier},
     state::{GeneralServiceState, MPTTrie},
 };
 use protocol::{
-    traits::{Context, Dispatcher, ServiceResponse, ServiceState, Storage},
-    types::{
-        Address, Block, Hash, Proof, Receipt, ServiceContext, ServiceContextParams,
-        SignedTransaction,
-    },
-    Bytes, ProtocolResult,
+    traits::{Dispatcher, ServiceResponse, ServiceState},
+    types::{Address, Hash, ServiceContext, ServiceContextParams},
+    Bytes,
 };
 
 use std::{
@@ -434,11 +431,37 @@ fn should_require_admin_permission_to_approve_contracts() {
     });
 }
 
+#[test]
+fn should_count_cycles_on_failed_contract_execution() {
+    let mut service = TestRiscvService::new();
+    let mut ctx = TestContext::default();
+
+    // We use write_read contract, call c() should fail because
+    // read call cannot change state.
+    let deployed = service!(service, deploy, ctx.make_admin(), DeployPayload {
+        code:      read_code!("src/tests/write_read"),
+        intp_type: InterpreterType::Binary,
+        init_args: "".into(),
+    });
+    assert_eq!(deployed.init_ret, "");
+
+    let ctx = ctx.make_admin();
+    let before_cycles = ctx.get_cycles_used();
+
+    let called = service.call(ctx.clone(), ExecPayload {
+        address: deployed.address.clone(),
+        args:    format!("c{}", deployed.address.as_hex()),
+    });
+
+    assert!(called.is_error());
+    assert!(before_cycles < ctx.get_cycles_used());
+}
+
 struct TestRiscvService(
     RiscvService<
         DefaultServiceSDK<
             GeneralServiceState<MemoryDB>,
-            DefaultChainQuerier<MockStorage>,
+            DefaultChainQuerier<ImplStorage<MemoryAdapter>>,
             MockDispatcher,
         >,
     >,
@@ -446,7 +469,8 @@ struct TestRiscvService(
 
 impl TestRiscvService {
     pub fn new() -> TestRiscvService {
-        let chain_db = DefaultChainQuerier::new(Arc::new(MockStorage {}));
+        let storage = ImplStorage::new(Arc::new(MemoryAdapter::new()));
+        let chain_db = DefaultChainQuerier::new(Arc::new(storage));
         let state = STATE.with(|state| Rc::clone(state));
 
         let sdk = DefaultServiceSDK::new(state, Rc::new(chain_db), MockDispatcher {});
@@ -472,7 +496,7 @@ impl Deref for TestRiscvService {
     type Target = RiscvService<
         DefaultServiceSDK<
             GeneralServiceState<MemoryDB>,
-            DefaultChainQuerier<MockStorage>,
+            DefaultChainQuerier<ImplStorage<MemoryAdapter>>,
             MockDispatcher,
         >,
     >;
@@ -590,81 +614,5 @@ impl Dispatcher for MockDispatcher {
         });
 
         resp
-    }
-}
-
-struct MockStorage;
-
-#[async_trait]
-impl Storage for MockStorage {
-    async fn insert_transactions(
-        &self,
-        _: Context,
-        _: u64,
-        _: Vec<SignedTransaction>,
-    ) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_transactions(
-        &self,
-        _: Context,
-        _: u64,
-        _: Vec<Hash>,
-    ) -> ProtocolResult<Vec<Option<SignedTransaction>>> {
-        unimplemented!()
-    }
-
-    async fn get_transaction_by_hash(
-        &self,
-        _: Context,
-        _: Hash,
-    ) -> ProtocolResult<Option<SignedTransaction>> {
-        unimplemented!()
-    }
-
-    async fn insert_block(&self, _: Context, _: Block) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_block(&self, _: Context, _: u64) -> ProtocolResult<Option<Block>> {
-        unimplemented!()
-    }
-
-    async fn insert_receipts(&self, _: Context, _: u64, _: Vec<Receipt>) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_receipt_by_hash(&self, _: Context, _: Hash) -> ProtocolResult<Option<Receipt>> {
-        unimplemented!()
-    }
-
-    async fn get_receipts(
-        &self,
-        _: Context,
-        _: u64,
-        _: Vec<Hash>,
-    ) -> ProtocolResult<Vec<Option<Receipt>>> {
-        unimplemented!()
-    }
-
-    async fn update_latest_proof(&self, _: Context, _: Proof) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn get_latest_proof(&self, _: Context) -> ProtocolResult<Proof> {
-        unimplemented!()
-    }
-
-    async fn get_latest_block(&self, _: Context) -> ProtocolResult<Block> {
-        unimplemented!()
-    }
-
-    async fn update_overlord_wal(&self, _: Context, _: Bytes) -> ProtocolResult<()> {
-        unimplemented!()
-    }
-
-    async fn load_overlord_wal(&self, _: Context) -> ProtocolResult<Bytes> {
-        unimplemented!()
     }
 }

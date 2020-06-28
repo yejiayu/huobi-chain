@@ -92,13 +92,6 @@ pub struct ExecResp {
     pub is_error: bool,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
-pub struct InterpreterResult {
-    pub cycles_used: u64,
-    pub ret:         Bytes,
-    pub ret_code:    i8,
-}
-
 #[derive(Debug, Clone)]
 pub struct Authorizer(Option<Address>);
 

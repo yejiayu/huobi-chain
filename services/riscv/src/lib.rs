@@ -397,18 +397,26 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         let interpreter = Interpreter::new(ctx.clone(), contract.intp_type, params, chain);
 
         match interpreter.run() {
-            Ok(int_ret) if int_ret.ret_code == 0 => {
-                sub_cycles!(ctx, int_ret.cycles_used);
+            Ok(exit) => {
+                sub_cycles!(ctx, exit.cycles_used);
 
-                let ret = String::from_utf8_lossy(int_ret.ret.as_ref()).to_string();
-                ServiceResponse::from_succeed(ret)
+                let decoded_data = String::from_utf8_lossy(exit.data.as_ref()).to_string();
+
+                if exit.code == 0 {
+                    ServiceResponse::from_succeed(decoded_data)
+                } else {
+                    ServiceError::NonZeroExit {
+                        code: exit.code,
+                        msg:  decoded_data,
+                    }
+                    .into()
+                }
             }
-            Ok(int_ret) => ServiceError::NonZeroExitCode {
-                exitcode: int_ret.ret_code,
-                ret:      String::from_utf8_lossy(int_ret.ret.as_ref()).to_string(),
+            Err(err) => {
+                sub_cycles!(ctx, err.cycles_used);
+
+                ServiceError::CkbVm(err.cause).into()
             }
-            .into(),
-            Err(err) => ServiceError::CkbVm(err).into(),
         }
     }
 

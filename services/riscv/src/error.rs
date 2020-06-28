@@ -1,7 +1,7 @@
-use derive_more::{Display, From};
+use derive_more::Display;
 use protocol::traits::ServiceResponse;
 
-#[derive(Debug, Display, From)]
+#[derive(Debug, Display)]
 pub enum ServiceError {
     #[display(fmt = "Method {} can not be invoke with call", _0)]
     NotInExecContext(String),
@@ -12,8 +12,8 @@ pub enum ServiceError {
     #[display(fmt = "Code not found")]
     CodeNotFound,
 
-    #[display(fmt = "None zero exit {} msg {}", exitcode, ret)]
-    NonZeroExitCode { exitcode: i8, ret: String },
+    #[display(fmt = "None zero exit {} msg {}", code, msg)]
+    NonZeroExit { code: i8, msg: String },
 
     #[display(fmt = "VM: {:?}", _0)]
     CkbVm(ckb_vm::Error),
@@ -48,7 +48,7 @@ impl ServiceError {
             NotInExecContext(_) => 101,
             ContractNotFound(_) => 102,
             CodeNotFound => 103,
-            NonZeroExitCode { .. } => 104,
+            NonZeroExit { .. } => 104,
             CkbVm(_) => 105,
             Serde(_) => 106,
             HexDecode(_) => 107,
