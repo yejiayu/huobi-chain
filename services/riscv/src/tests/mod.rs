@@ -457,6 +457,43 @@ fn should_count_cycles_on_failed_contract_execution() {
     assert!(before_cycles < ctx.get_cycles_used());
 }
 
+#[test]
+fn should_also_return_assert_message_on_assert_failed() {
+    let mut service = TestRiscvService::new();
+    let mut ctx = TestContext::default();
+
+    let deployed = service!(service, deploy, ctx.make_admin(), DeployPayload {
+        code:      read_code!("src/tests/assert"),
+        intp_type: InterpreterType::Binary,
+        init_args: "".into(),
+    });
+    assert_eq!(deployed.init_ret, "");
+
+    // Directly call assert failed
+    let called = service.call(ctx.make_admin(), ExecPayload {
+        address: deployed.address.clone(),
+        args:    format!("a{}", deployed.address.as_hex()),
+    });
+
+    assert!(called.is_error());
+    assert_eq!(
+        called.error_message,
+        "Assert failed: 1 should never bigger than 2"
+    );
+
+    // Contract call assert failed
+    let called = service.call(ctx.make_admin(), ExecPayload {
+        address: deployed.address.clone(),
+        args:    format!("b{}", deployed.address.as_hex()),
+    });
+
+    assert!(called.is_error());
+    assert_eq!(
+        called.error_message,
+        "Assert failed: 1 should never bigger than 2"
+    );
+}
+
 struct TestRiscvService(
     RiscvService<
         DefaultServiceSDK<

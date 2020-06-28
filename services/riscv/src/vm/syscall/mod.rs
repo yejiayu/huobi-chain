@@ -1,6 +1,7 @@
 mod common;
 
 mod convention;
+pub use convention::SYSCODE_ASSERT;
 
 mod debug;
 pub use debug::SyscallDebug;

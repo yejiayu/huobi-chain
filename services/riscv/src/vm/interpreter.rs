@@ -25,9 +25,22 @@ pub struct Exit {
     pub cycles_used: u64,
 }
 
+#[derive(Debug, Constructor, Clone)]
+pub struct ErrorResponse {
+    pub ecall: u64,
+    pub code:  u64,
+    pub msg:   String,
+}
+
+#[derive(Debug)]
+pub enum Cause {
+    CkbVM(ckb_vm::Error),
+    ErrorResponse(ErrorResponse),
+}
+
 #[derive(Debug, Constructor)]
 pub struct Error {
-    pub cause:       ckb_vm::Error,
+    pub cause:       Cause,
     pub cycles_used: u64,
 }
 
@@ -91,29 +104,31 @@ impl Interpreter {
         }
 
         let ret_data = Rc::new(RefCell::new(Vec::new()));
+        let err_resp = Rc::new(RefCell::new(None));
         let cycles_limit = self.context.get_cycles_limit();
 
         let core_machine = AsmCoreMachine::new_with_max_cycles(cycles_limit);
         let default_machine = DefaultMachineBuilder::<Box<AsmCoreMachine>>::new(core_machine)
             .instruction_cycle_func(Box::new(vm::cost_model::instruction_cycles))
             .syscall(Box::new(vm::SyscallDebug))
-            .syscall(Box::new(vm::SyscallAssert))
+            .syscall(Box::new(vm::SyscallAssert::new(Rc::<_>::clone(&err_resp))))
             .syscall(Box::new(vm::SyscallEnvironment::new(
                 self.context.clone(),
                 self.params.clone(),
             )))
             .syscall(Box::new(vm::SyscallIO::new(
                 self.params.args.to_vec(),
-                Rc::<RefCell<_>>::clone(&ret_data),
+                Rc::<_>::clone(&ret_data),
             )))
             .syscall(Box::new(vm::SyscallChainInterface::new(
-                Rc::<RefCell<_>>::clone(&self.chain),
+                Rc::<_>::clone(&self.chain),
+                Rc::<_>::clone(&err_resp),
             )))
             .build();
 
         let mut machine = AsmMachine::new(default_machine, None);
         if let Err(e) = machine.load_program(&code, &args[..]) {
-            return Err(Error::new(e, 0));
+            return Err(Error::new(Cause::CkbVM(e), 0));
         }
 
         let maybe_exit_code = machine.run();
@@ -125,8 +140,15 @@ impl Interpreter {
                 data: Bytes::from(ret_data.borrow().to_vec()),
                 cycles_used,
             }),
+            Err(ckb_vm::Error::InvalidEcall(ecall)) => {
+                let cause = match (*err_resp.borrow()).clone() {
+                    Some(resp) => Cause::ErrorResponse(resp),
+                    None => Cause::CkbVM(ckb_vm::Error::InvalidEcall(ecall)),
+                };
+                Err(Error { cause, cycles_used })
+            }
             Err(e) => Err(Error {
-                cause: e,
+                cause: Cause::CkbVM(e),
                 cycles_used,
             }),
         }

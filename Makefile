@@ -100,17 +100,23 @@ E2E_TEST_SRC := $(CURRENT_DIR)/tests/e2e/riscv_contracts
 RISCV_SRC := $(CURRENT_DIR)/services/riscv/src/vm/c
 DUKTAPE_SRC := $(RISCV_SRC)/duktape
 
-simple_storage:
+simple_storage: libpvm.a
 	$(CC) -I$(RISCV_SRC) $(TEST_SRC)/simple_storage.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(TEST_SRC)/simple_storage
 
 simple_storage_docker:
 	$(DOCKER_BUILD) "cd /src && make simple_storage"
 
-write_read:
+write_read: libpvm.a
 	$(CC) -I$(RISCV_SRC) $(TEST_SRC)/write_read.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(TEST_SRC)/write_read
 
 write_read_docker:
 	$(DOCKER_BUILD) "cd /src && make write_read"
+
+assert: libpvm.a
+	$(CC) -I$(RISCV_SRC) $(TEST_SRC)/assert.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(TEST_SRC)/assert
+
+assert_docker:
+	$(DOCKER_BUILD) "cd /src && make assert"
 
 contract_test: libpvm.a
 	$(CC) -I$(RISCV_SRC) $(E2E_TEST_SRC)/contract_test.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(E2E_TEST_SRC)/contract_test

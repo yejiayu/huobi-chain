@@ -7,6 +7,7 @@ use ckb_vm::memory::Memory;
 use protocol::{types::Address, Bytes};
 
 use crate::vm::cost_model::CONTRACT_CALL_FIXED_CYCLE;
+use crate::vm::interpreter::ErrorResponse;
 use crate::vm::syscall::common::{get_arr, get_str};
 use crate::vm::syscall::convention::{
     SYSCODE_CONTRACT_CALL, SYSCODE_GET_STORAGE, SYSCODE_SERVICE_CALL, SYSCODE_SERVICE_READ,
@@ -15,12 +16,16 @@ use crate::vm::syscall::convention::{
 use crate::ChainInterface;
 
 pub struct SyscallChainInterface {
-    chain: Rc<RefCell<dyn ChainInterface>>,
+    chain:    Rc<RefCell<dyn ChainInterface>>,
+    err_resp: Rc<RefCell<Option<ErrorResponse>>>,
 }
 
 impl SyscallChainInterface {
-    pub fn new(chain: Rc<RefCell<dyn ChainInterface>>) -> Self {
-        Self { chain }
+    pub fn new(
+        chain: Rc<RefCell<dyn ChainInterface>>,
+        err_resp: Rc<RefCell<Option<ErrorResponse>>>,
+    ) -> Self {
+        Self { chain, err_resp }
     }
 }
 
@@ -53,7 +58,8 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                     .borrow_mut()
                     .set_storage(Bytes::from(key), Bytes::from(val));
                 if resp.is_error() {
-                    log::error!("set storage {}", resp.error_message);
+                    *self.err_resp.borrow_mut() =
+                        Some(ErrorResponse::new(code, resp.code, resp.error_message));
                     return Err(ckb_vm::Error::InvalidEcall(code));
                 }
 
@@ -101,16 +107,17 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                     Address::from_hex(&hex).map_err(|_| IO(InvalidData))?
                 };
 
-                let call_resp =
+                let resp =
                     self.chain
                         .borrow_mut()
                         .contract_call(address, call_args, machine.cycles());
-                if call_resp.is_error() {
-                    log::error!("contract call {}", call_resp.error_message);
+                if resp.is_error() {
+                    *self.err_resp.borrow_mut() =
+                        Some(ErrorResponse::new(code, resp.code, resp.error_message));
                     return Err(ckb_vm::Error::InvalidEcall(code));
                 }
 
-                let (ret, current_cycle) = call_resp.succeed_data;
+                let (ret, current_cycle) = resp.succeed_data;
                 machine.set_cycles(current_cycle);
                 if ret_ptr != 0 {
                     machine.memory_mut().store_bytes(ret_ptr, ret.as_ref())?;
@@ -160,7 +167,8 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
                     )
                 };
                 if resp.is_error() {
-                    log::error!("service call {}", resp.error_message);
+                    *self.err_resp.borrow_mut() =
+                        Some(ErrorResponse::new(code, resp.code, resp.error_message));
                     return Err(ckb_vm::Error::InvalidEcall(code));
                 }
 

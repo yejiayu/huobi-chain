@@ -12,7 +12,7 @@ pub enum ServiceError {
     #[display(fmt = "Code not found")]
     CodeNotFound,
 
-    #[display(fmt = "None zero exit {} msg {}", code, msg)]
+    #[display(fmt = "Abnormal exit, code: {} msg: {}", code, msg)]
     NonZeroExit { code: i8, msg: String },
 
     #[display(fmt = "VM: {:?}", _0)]
@@ -38,6 +38,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Write in readonly context")]
     WriteInReadonlyContext,
+
+    #[display(fmt = "Assert failed: {}", _0)]
+    AssertFailed(String),
 }
 
 impl ServiceError {
@@ -57,6 +60,7 @@ impl ServiceError {
             OutOfCycles => 110,
             InvalidContractAddress => 111,
             WriteInReadonlyContext => 112,
+            AssertFailed(_) => 113,
         }
     }
 }

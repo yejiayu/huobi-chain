@@ -13,7 +13,10 @@ use types::{
     AddressList, Authorizer, Contract, DeployPayload, DeployResp, Event, ExecPayload,
     GetContractPayload, GetContractResp, InitGenesisPayload,
 };
-use vm::{ChainInterface, Interpreter, InterpreterParams, ReadonlyChain, WriteableChain};
+use vm::{
+    Cause, ChainInterface, Interpreter, InterpreterParams, ReadonlyChain, WriteableChain,
+    SYSCODE_ASSERT,
+};
 
 use binding_macro::{genesis, read, service, write};
 use protocol::{
@@ -415,7 +418,13 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
             Err(err) => {
                 sub_cycles!(ctx, err.cycles_used);
 
-                ServiceError::CkbVm(err.cause).into()
+                match err.cause {
+                    Cause::CkbVM(e) => ServiceError::CkbVm(e).into(),
+                    Cause::ErrorResponse(resp) if resp.ecall == SYSCODE_ASSERT => {
+                        ServiceError::AssertFailed(resp.msg).into()
+                    }
+                    Cause::ErrorResponse(resp) => ServiceResponse::from_error(resp.code, resp.msg),
+                }
             }
         }
     }
