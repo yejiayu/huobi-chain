@@ -43,7 +43,7 @@ matrix:
       if: 'tag IS present'
       os: linux
       script: 
-        - cargo build --release
+        - make OPENSSL_STATIC=1 OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu OPENSSL_INCLUDE_DIR=/usr/include/openssl build
         - ./devtools/ci/package.sh
     - name: osx package
       if: 'tag IS present'
