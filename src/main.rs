@@ -1,8 +1,8 @@
 use asset::AssetService;
 use derive_more::{Display, From};
+use governance::GovernanceService;
 use metadata::MetadataService;
 use muta::MutaBuilder;
-use node_manager::NodeManagerService;
 use protocol::traits::{Service, ServiceMapping, ServiceSDK};
 use protocol::{ProtocolError, ProtocolErrorKind, ProtocolResult};
 use riscv::RiscvService;
@@ -19,7 +19,7 @@ impl ServiceMapping for DefaultServiceMapping {
             "asset" => Box::new(AssetService::new(sdk)) as Box<dyn Service>,
             "metadata" => Box::new(MetadataService::new(sdk)) as Box<dyn Service>,
             "riscv" => Box::new(RiscvService::init(sdk)) as Box<dyn Service>,
-            "node_manager" => Box::new(NodeManagerService::new(sdk)) as Box<dyn Service>,
+            "governance" => Box::new(GovernanceService::new(sdk)) as Box<dyn Service>,
             _ => {
                 return Err(MappingError::NotFoundService {
                     service: name.to_owned(),
@@ -36,7 +36,7 @@ impl ServiceMapping for DefaultServiceMapping {
             "asset".to_owned(),
             "metadata".to_owned(),
             "riscv".to_owned(),
-            "node_manager".to_owned(),
+            "governance".to_owned(),
         ]
     }
 }

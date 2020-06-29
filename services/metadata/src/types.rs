@@ -10,4 +10,9 @@ pub struct UpdateMetadataPayload {
     pub prevote_ratio:   u64,
     pub precommit_ratio: u64,
     pub brake_ratio:     u64,
+    pub timeout_gap:     u64,
+    pub cycles_limit:    u64,
+    pub cycles_price:    u64,
+    pub tx_num_limit:    u64,
+    pub max_tx_size:     u64,
 }

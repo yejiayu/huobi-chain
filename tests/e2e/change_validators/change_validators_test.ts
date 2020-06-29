@@ -71,7 +71,7 @@ async function change_validators(validators_index) {
     payload: {
       verifier_list
     },
-    serviceName: "node_manager"
+    serviceName: "governance"
   });
   const signed_tx = admin.signTransaction(tx);
   const hash = await client.sendTransaction(signed_tx);

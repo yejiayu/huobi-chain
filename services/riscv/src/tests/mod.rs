@@ -14,7 +14,7 @@ use cita_trie::MemoryDB;
 
 use core_storage::{adapter::memory::MemoryAdapter, ImplStorage};
 use framework::binding::{
-    sdk::{DefalutServiceSDK as DefaultServiceSDK, DefaultChainQuerier},
+    sdk::{DefaultChainQuerier, DefaultServiceSDK},
     state::{GeneralServiceState, MPTTrie},
 };
 use protocol::{

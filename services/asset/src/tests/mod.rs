@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use cita_trie::MemoryDB;
 use core_storage::{adapter::memory::MemoryAdapter, ImplStorage};
-use framework::binding::sdk::{DefalutServiceSDK, DefaultChainQuerier};
+use framework::binding::sdk::{DefaultChainQuerier, DefaultServiceSDK};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
 use protocol::traits::NoopDispatcher;
 use protocol::types::{Address, Bytes, Hash, Hex, ServiceContext, ServiceContextParams};
@@ -40,7 +40,7 @@ macro_rules! create_asset {
     }};
 }
 
-type SDK = DefalutServiceSDK<
+type SDK = DefaultServiceSDK<
     GeneralServiceState<MemoryDB>,
     DefaultChainQuerier<ImplStorage<MemoryAdapter>>,
     NoopDispatcher,
@@ -304,7 +304,7 @@ impl TestService {
         let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
         let state = GeneralServiceState::new(trie);
 
-        let sdk = DefalutServiceSDK::new(
+        let sdk = DefaultServiceSDK::new(
             Rc::new(RefCell::new(state)),
             Rc::new(chain_db),
             NoopDispatcher {},

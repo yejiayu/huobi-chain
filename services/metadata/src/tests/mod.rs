@@ -5,7 +5,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use cita_trie::MemoryDB;
 
-use framework::binding::sdk::{DefalutServiceSDK, DefaultChainQuerier};
+use framework::binding::sdk::{DefaultChainQuerier, DefaultServiceSDK};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
 use protocol::traits::{Context, NoopDispatcher, ServiceResponse, ServiceSDK, Storage};
 use protocol::types::{
@@ -17,7 +17,7 @@ use protocol::{types::Bytes, ProtocolResult};
 use crate::types::UpdateMetadataPayload;
 use crate::MetadataService;
 
-static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
+static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"governance");
 
 #[test]
 fn test_get_metadata() {
@@ -55,6 +55,11 @@ fn test_update_metadata() {
         prevote_ratio:   update_metadata.prevote_ratio,
         precommit_ratio: update_metadata.precommit_ratio,
         brake_ratio:     update_metadata.brake_ratio,
+        timeout_gap:     update_metadata.timeout_gap,
+        cycles_limit:    update_metadata.cycles_limit,
+        cycles_price:    update_metadata.cycles_price,
+        tx_num_limit:    update_metadata.tx_num_limit,
+        max_tx_size:     update_metadata.max_tx_size,
     });
 
     let metadata = service.get_metadata(context);
@@ -65,7 +70,7 @@ fn test_update_metadata() {
 fn new_metadata_service(
     metadata: Metadata,
 ) -> MetadataService<
-    DefalutServiceSDK<
+    DefaultServiceSDK<
         GeneralServiceState<MemoryDB>,
         DefaultChainQuerier<MockStorage>,
         NoopDispatcher,
@@ -75,7 +80,7 @@ fn new_metadata_service(
     let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
     let state = GeneralServiceState::new(trie);
 
-    let mut sdk = DefalutServiceSDK::new(
+    let mut sdk = DefaultServiceSDK::new(
         Rc::new(RefCell::new(state)),
         Rc::new(chain_db),
         NoopDispatcher {},

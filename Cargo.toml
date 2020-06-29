@@ -5,25 +5,25 @@ authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
 
 [dependencies]
-muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.1.2-beta2"}
-protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.1.2-beta2", package = "muta-protocol" }
+muta = { git = "https://github.com/nervosnetwork/muta", rev = "f8f16cd" }
+protocol = { git = "https://github.com/nervosnetwork/muta", rev = "f8f16cd", package = "muta-protocol" }
 
-derive_more = "0.15"
+derive_more = "0.99"
 tokio = { version = "0.2", features = ["macros", "rt-core", "rt-util"]}
 clap = "2.33"
 
 metadata = { path = "services/metadata" }
 asset = { path = "services/asset" }
 riscv = { path = "services/riscv" }
-node_manager = { path = "services/node_manager" }
 admission_control = { path = "services/admission_control" }
+governance = { path = "services/governance" }
 
 [workspace]
 members = [
   "services/metadata",
   "services/riscv",
   "services/asset",
-  "services/node_manager",
   "services/kyc",
-  "services/admission_control"
+  "services/admission_control",
+  "services/governance"
 ]

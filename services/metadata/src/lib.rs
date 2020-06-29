@@ -11,7 +11,7 @@ use protocol::types::{Metadata, ServiceContext, METADATA_KEY};
 
 use crate::types::UpdateMetadataPayload;
 
-static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"node_manager");
+static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"governance");
 
 pub struct MetadataService<SDK> {
     sdk: SDK,

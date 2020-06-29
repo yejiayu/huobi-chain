@@ -12,7 +12,7 @@ async function setAdmin(admin) {
     payload: {
       admin,
     },
-    serviceName: 'node_manager',
+    serviceName: 'governance',
   });
 
   const signedTx = presetAdmin.signTransaction(tx);
@@ -24,7 +24,7 @@ async function setAdmin(admin) {
 
 async function getAdmin() {
   const res = await client.queryService({
-    serviceName: 'node_manager',
+    serviceName: 'governance',
     method: 'get_admin',
     payload: '',
   });
@@ -37,7 +37,7 @@ async function updateInterval(admin, interval) {
     payload: {
       interval,
     },
-    serviceName: 'node_manager',
+    serviceName: 'governance',
   });
 
   const signedTx = admin.signTransaction(tx);
@@ -62,7 +62,7 @@ async function updateRatio(
       precommit_ratio: precommitRatio,
       brake_ratio: brakeRatio,
     },
-    serviceName: 'node_manager',
+    serviceName: 'governance',
   });
 
   const signedTx = admin.signTransaction(tx);
