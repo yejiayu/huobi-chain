@@ -63,7 +63,12 @@ impl<'a, DF: ExpressionDataFeed> CalcContext<'a, DF> {
     fn calc_dot(&self, dot_node: &Node) -> CalcResult {
         let left = if let Some(kyc_node) = dot_node.left.as_ref() {
             match self.calc(kyc_node)? {
-                CalcValue::Ident(str) => str,
+                CalcValue::Ident(str) => {
+                    if !validate_ident_value(str.clone()) {
+                        return Err(CalcError("dot left param KYC is incorrect"));
+                    }
+                    str
+                }
                 _ => return Err(CalcError("dot operation's left performs wrong")),
             }
         } else {
@@ -72,14 +77,18 @@ impl<'a, DF: ExpressionDataFeed> CalcContext<'a, DF> {
 
         let right = if let Some(tag_node) = dot_node.right.as_ref() {
             match self.calc(tag_node)? {
-                CalcValue::Ident(str) => str,
+                CalcValue::Ident(str) => {
+                    if !validate_ident_value(str.clone()) {
+                        return Err(CalcError("dot right param TAG is incorrect"));
+                    }
+                    str
+                }
                 _ => return Err(CalcError("dot operation's right performs wrong")),
             }
         } else {
             return Err(CalcError("dot operation's right param is missing"));
         };
 
-        // todo, calc KYC.TAG
         let tags = self
             .data_feeder
             .get_tags(self.target_address.clone(), left, right)
@@ -93,7 +102,9 @@ impl<'a, DF: ExpressionDataFeed> CalcContext<'a, DF> {
             match self.calc(kyc_tag_node)? {
                 CalcValue::KycTag(values) => {
                     if !validate_values_query(values.clone()) {
-                        return Err(CalcError("KYC.TAG's values is incorrect"));
+                        return Err(CalcError(
+                            "has operation left param KYC.TAG's values is incorrect",
+                        ));
                     }
 
                     values
@@ -108,7 +119,7 @@ impl<'a, DF: ExpressionDataFeed> CalcContext<'a, DF> {
             match self.calc(value_node)? {
                 CalcValue::Value(val) => {
                     if !validate_ident_value(val.clone()) {
-                        return Err(CalcError("KYC.TAG's query value is incorrect"));
+                        return Err(CalcError("has operation right param `Value` is incorrect"));
                     }
 
                     val

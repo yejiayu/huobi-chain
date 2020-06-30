@@ -40,12 +40,12 @@ pub fn evaluate<DF: ExpressionDataFeed>(
     calc_context.calculation(&node)
 }
 
-// s.t. regexp /^[a-zA-Z][a-zA-Z\d_]{0,11}}/
-pub fn validate_ident_value(kyc_name: String) -> bool {
-    if kyc_name.chars().count() > 12 {
+// s.t. regexp /^[a-zA-Z][a-zA-Z\d_]{0,31}}/
+pub fn validate_ident_value(ident: String) -> bool {
+    if ident.chars().count() > 32 || ident.chars().count() == 0 {
         return false;
     }
-    for (index, char) in kyc_name.chars().enumerate() {
+    for (index, char) in ident.chars().enumerate() {
         if !(char.is_ascii_alphanumeric() || char == '_') {
             return false;
         }
@@ -56,12 +56,12 @@ pub fn validate_ident_value(kyc_name: String) -> bool {
     true
 }
 
-// len between 1 to 6
+// len between 1 to 16
 // if there is NULL, the values can't contain any other values
 pub fn validate_values_query(kyc_tag_values: Vec<String>) -> bool {
     let len = kyc_tag_values.len();
 
-    if len == 0 || len > 6 {
+    if len == 0 || len > 16 {
         return false;
     }
 
@@ -71,26 +71,6 @@ pub fn validate_values_query(kyc_tag_values: Vec<String>) -> bool {
         }
 
         if value.eq("NULL") && len != 1 {
-            return false;
-        }
-    }
-
-    true
-}
-
-// empty is not acceptable
-// len > 6 is not acceptable
-// can not contain NULL
-#[allow(dead_code)]
-pub fn validate_values_update(kyc_tag_values: Vec<String>) -> bool {
-    let len = kyc_tag_values.len();
-
-    if len == 0 || len > 6 {
-        return false;
-    }
-
-    for value in kyc_tag_values {
-        if !validate_ident_value(value.clone()) || value.eq("NULL") {
             return false;
         }
     }

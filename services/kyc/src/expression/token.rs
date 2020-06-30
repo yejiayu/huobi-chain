@@ -10,9 +10,10 @@ const HIGHEST_PRIORITY: u8 = 6u8;
 impl Token {
     pub fn into_node(self, left: Option<Node>, right: Option<Node>) -> Node {
         let mut node = Node {
-            token: self,
-            left:  None,
-            right: None,
+            token:  self,
+            left:   None,
+            right:  None,
+            parsed: false,
         };
         if let Some(left_node) = left {
             node.left = Some(Box::new(left_node))
@@ -110,7 +111,9 @@ pub fn scan(input: String) -> Result<Vec<Token>, ExpressionError> {
 
     let mut start: usize;
     let mut end: usize = 0;
-    let mut prev_token = "".to_string();
+    let mut logic_and = false;
+    let mut logic_or = false;
+    let mut parenthesis = 0i32;
     let temp = input.chars().collect::<Vec<char>>();
     let char_sequence = temp.as_slice();
     let mut tokens = Vec::<Token>::new();
@@ -136,7 +139,29 @@ pub fn scan(input: String) -> Result<Vec<Token>, ExpressionError> {
 
         if token_str == "" {
             continue;
-        } else if token_str == "`" {
+        }
+
+        if logic_and {
+            if token_str != "&" {
+                return Err(ExpressionError::ScanError(
+                    "single logic_and operator".to_string(),
+                ));
+            }
+            logic_and = false;
+            continue;
+        }
+
+        if logic_or {
+            if token_str != "|" {
+                return Err(ExpressionError::ScanError(
+                    "single logic_or operator".to_string(),
+                ));
+            }
+            logic_or = false;
+            continue;
+        }
+
+        if token_str == "`" {
             acute = true;
             continue;
         } else if token_str == "." {
@@ -152,18 +177,16 @@ pub fn scan(input: String) -> Result<Vec<Token>, ExpressionError> {
             *count += 1;
             tokens.push(Token::Not);
         } else if token_str == "|" {
-            if prev_token == "|" {
-                continue;
-            }
+            logic_or = true;
+
             let count = operator_priority_count_map
                 .entry(Token::Or.get_priority())
                 .or_insert(0);
             *count += 1;
             tokens.push(Token::Or);
         } else if token_str == "&" {
-            if prev_token == "&" {
-                continue;
-            }
+            logic_and = true;
+
             let count = operator_priority_count_map
                 .entry(Token::And.get_priority())
                 .or_insert(0);
@@ -181,12 +204,14 @@ pub fn scan(input: String) -> Result<Vec<Token>, ExpressionError> {
                 .or_insert(0);
             *count += 1;
             tokens.push(Token::LeftParenthesis);
+            parenthesis += 1;
         } else if token_str == ")" {
             let count = operator_priority_count_map
                 .entry(Token::RightParenthesis.get_priority())
                 .or_insert(0);
             *count += 1;
             tokens.push(Token::RightParenthesis);
+            parenthesis -= 1;
         } else if token_str == " " {
             continue;
         } else {
@@ -196,8 +221,13 @@ pub fn scan(input: String) -> Result<Vec<Token>, ExpressionError> {
             *count += 1;
             tokens.push(Token::Identifier(token_str.clone()));
         }
+    }
 
-        prev_token = token_str;
+    if acute || logic_or || logic_and || parenthesis != 0 {
+        return Err(ExpressionError::ScanError(
+            "single logic_or, or single logic_and, or unclosing acute, or unclosing parenthesis"
+                .to_string(),
+        ));
     }
 
     tokens.push(Token::RightParenthesis);

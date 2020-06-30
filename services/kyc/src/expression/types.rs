@@ -1,4 +1,8 @@
+use core::fmt;
+use std::fmt::Display;
+
 use derive_more::Display;
+
 use protocol::types::Address;
 
 #[derive(Debug, Display)]
@@ -29,9 +33,44 @@ pub enum Token {
 
 #[derive(Debug)]
 pub struct Node {
-    pub token: Token,
-    pub left:  Option<Box<Node>>,
-    pub right: Option<Box<Node>>,
+    pub token:  Token,
+    pub left:   Option<Box<Node>>,
+    pub right:  Option<Box<Node>>,
+    // this indicate that this node'token has been parsed, and only can be other's child,
+    pub parsed: bool,
+}
+
+impl Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.left.is_some() && self.right.is_some() {
+            write!(
+                f,
+                "{{{}, L:{}, R:{}, p:{}}}",
+                self.token,
+                self.left.as_ref().expect("").as_ref(),
+                self.right.as_ref().expect("").as_ref(),
+                self.parsed
+            )
+        } else if self.left.is_none() && self.right.is_some() {
+            write!(
+                f,
+                "{{{}, L:null, R:{}, p:{}}}",
+                self.token,
+                self.right.as_ref().expect("").as_ref(),
+                self.parsed
+            )
+        } else if self.left.is_some() && self.right.is_none() {
+            write!(
+                f,
+                "{{{}, L:{}, R:null, p:{}}}",
+                self.token,
+                self.left.as_ref().expect("").as_ref(),
+                self.parsed
+            )
+        } else {
+            write!(f, "{{{}, L:null, R:null, p:{}}}", self.token, self.parsed)
+        }
+    }
 }
 
 #[derive(Debug)]
