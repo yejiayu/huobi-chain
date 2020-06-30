@@ -1,7 +1,4 @@
-use crate::{
-    types::{AddressList, Event, Genesis, NewAdmin},
-    AdmissionControlService, ServiceError,
-};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use cita_trie::MemoryDB;
 use core_storage::{adapter::memory::MemoryAdapter, ImplStorage};
@@ -11,10 +8,16 @@ use framework::binding::{
 };
 use protocol::{
     traits::NoopDispatcher,
-    types::{Address, ServiceContext, ServiceContextParams},
+    types::{
+        Address, Bytes, Hash, RawTransaction, ServiceContext, ServiceContextParams,
+        SignedTransaction, TransactionRequest,
+    },
 };
 
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use crate::{
+    types::{AddressList, Event, Genesis, NewAdmin},
+    AdmissionControlService, ServiceError,
+};
 
 type SDK = DefaultServiceSDK<
     GeneralServiceState<MemoryDB>,
@@ -38,10 +41,9 @@ fn should_properly_init_genesis() {
         deny_list: vec![caller.clone()],
     });
 
-    let resp = service.is_blocked(mock_context(caller.clone()), caller);
+    let resp = service.is_blocked(mock_context(caller.clone()), mock_transaction(caller));
 
     assert!(!resp.is_error());
-    assert_eq!(resp.succeed_data, true);
     assert_eq!(service.admin(), admin);
 }
 
@@ -112,8 +114,8 @@ fn should_only_forbid_address_by_admin() {
     });
 
     for addr in deny_list {
-        let resp = service.is_blocked(mock_context(admin.clone()), addr);
-        assert_eq!(resp.succeed_data, true);
+        let resp = service.is_blocked(mock_context(admin.clone()), mock_transaction(addr));
+        assert_eq!(resp.is_error(), false);
     }
 }
 
@@ -153,8 +155,8 @@ fn should_only_permit_address_by_admin() {
     });
 
     for addr in deny_list {
-        let resp = service.is_blocked(mock_context(admin.clone()), addr);
-        assert_eq!(resp.succeed_data, false);
+        let resp = service.is_blocked(mock_context(admin.clone()), mock_transaction(addr));
+        assert!(resp.is_error());
     }
 }
 
@@ -202,4 +204,38 @@ fn mock_context(caller: Address) -> ServiceContext {
     };
 
     ServiceContext::new(params)
+}
+
+fn get_random_bytes(len: usize) -> Bytes {
+    let vec: Vec<u8> = (0..len).map(|_| rand::random::<u8>()).collect();
+    Bytes::from(vec)
+}
+
+fn mock_hash() -> Hash {
+    Hash::digest(get_random_bytes(10))
+}
+
+fn mock_transaction(addr: Address) -> SignedTransaction {
+    let tx_request = TransactionRequest {
+        service_name: "mock-service".to_owned(),
+        method:       "mock-method".to_owned(),
+        payload:      "mock-payload".to_owned(),
+    };
+
+    let raw_tx = RawTransaction {
+        chain_id:     mock_hash(),
+        nonce:        mock_hash(),
+        timeout:      100,
+        cycles_price: 1,
+        cycles_limit: 100,
+        request:      tx_request,
+        sender:       addr,
+    };
+
+    SignedTransaction {
+        raw:       raw_tx,
+        tx_hash:   mock_hash(),
+        pubkey:    Default::default(),
+        signature: Default::default(),
+    }
 }

@@ -23,6 +23,12 @@ use protocol::ProtocolResult;
 use crate::types::{AccmulateProfitPayload, DiscountLevel, GovernanceInfo, SetAdminPayload};
 use crate::{GovernanceService, INFO_KEY};
 
+lazy_static::lazy_static! {
+    static ref ADDRESS_1: Address = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+    static ref ADDRESS_2: Address = Address::from_hex("0xf8389d774afdad8755ef8e629e5a154fddc6325a").unwrap();
+    static ref ADMIN: Address = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+}
+
 macro_rules! service {
     ($service:expr, $method:ident, $ctx:expr) => {{
         let resp = $service.$method($ctx);
@@ -82,7 +88,7 @@ fn test_update_metadata() {
             payload:      r#"{ "verifier_list": [{"bls_pub_key": "0xFFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22", "address": "0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1", "propose_weight": 6, "vote_weight": 6}], "interval": 6, "propose_ratio": 6, "prevote_ratio": 6, "precommit_ratio": 6, "brake_ratio": 6, "timeout_gap": 20, "cycles_limit": 3000000, "cycles_price": 3000, "tx_num_limit": 20000, "max_tx_size": 500000 }"#
                 .to_owned(),
         },
-        sender: Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap(),
+        sender: Address::from_hex("0xf8389d774afdad8755ef8e629e5a154fddc6325a").unwrap(),
     };
     let stx = SignedTransaction {
         raw,
@@ -105,8 +111,8 @@ fn test_update_metadata() {
 
 #[test]
 fn test_set_admin() {
-    let admin_1 = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let admin_2 = Address::from_hex("0xf8389d774afdad8755ef8e629e5a154fddc6325a").unwrap();
+    let admin_1 = ADDRESS_1.clone();
+    let admin_2 = ADDRESS_2.clone();
 
     let cycles_limit = 1024 * 1024 * 1024; // 1073741824
     let context = mock_context(cycles_limit, admin_1.clone());
@@ -124,11 +130,10 @@ fn test_set_admin() {
 
 #[test]
 fn test_get_fee() {
-    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
     let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let context = mock_context(cycles_limit, admin.clone());
+    let context = mock_context(cycles_limit, ADMIN.clone());
 
-    let service = new_governance_service(admin);
+    let service = new_governance_service(ADMIN.clone());
     let floor_fee = service!(service, get_tx_floor_fee, context.clone());
     let failure_fee = service!(service, get_tx_failure_fee, context);
 
@@ -138,19 +143,16 @@ fn test_get_fee() {
 
 #[test]
 fn test_accumulate_profit() {
-    let addr_1 = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let addr_2 = Address::from_hex("0xf8389d774afdad8755ef8e629e5a154fddc6325a").unwrap();
-    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
     let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let context = mock_context(cycles_limit, admin.clone());
+    let context = mock_context(cycles_limit, ADMIN.clone());
 
-    let mut service = new_governance_service(admin);
+    let mut service = new_governance_service(ADMIN.clone());
     service!(
         service,
         accumulate_profit,
         context.clone(),
         AccmulateProfitPayload {
-            address:            addr_1,
+            address:            ADDRESS_1.clone(),
             accumulated_profit: 1,
         }
     );
@@ -159,7 +161,7 @@ fn test_accumulate_profit() {
         accumulate_profit,
         context.clone(),
         AccmulateProfitPayload {
-            address:            addr_2.clone(),
+            address:            ADDRESS_2.clone(),
             accumulated_profit: 1_000_000,
         }
     );
@@ -168,7 +170,7 @@ fn test_accumulate_profit() {
         accumulate_profit,
         context.clone(),
         AccmulateProfitPayload {
-            address:            addr_2,
+            address:            ADDRESS_2.clone(),
             accumulated_profit: 5_000_000,
         }
     );
@@ -178,21 +180,16 @@ fn test_accumulate_profit() {
 
 #[test]
 fn test_calc_fee_above_floor_fee() {
-    let addr_1 = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let addr_2 = Address::from_hex("0xf8389d774afdad8755ef8e629e5a154fddc6325a").unwrap();
-    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
     let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let context = mock_context(cycles_limit, admin);
-
-    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let mut service = new_governance_service(admin);
+    let context = mock_context(cycles_limit, ADMIN.clone());
+    let mut service = new_governance_service(ADMIN.clone());
 
     service!(
         service,
         accumulate_profit,
         context.clone(),
         AccmulateProfitPayload {
-            address:            addr_1,
+            address:            ADDRESS_1.clone(),
             accumulated_profit: 5_000_000,
         }
     );
@@ -201,7 +198,7 @@ fn test_calc_fee_above_floor_fee() {
         accumulate_profit,
         context.clone(),
         AccmulateProfitPayload {
-            address:            addr_2,
+            address:            ADDRESS_2.clone(),
             accumulated_profit: 10_000_000,
         }
     );
@@ -218,21 +215,16 @@ fn test_calc_fee_above_floor_fee() {
 
 #[test]
 fn test_calc_fee_below_floor_fee() {
-    let addr_1 = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let addr_2 = Address::from_hex("0xf8389d774afdad8755ef8e629e5a154fddc6325a").unwrap();
-    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
     let cycles_limit = 1024 * 1024 * 1024; // 1073741824
-    let context = mock_context(cycles_limit, admin);
-
-    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    let mut service = new_governance_service(admin);
+    let context = mock_context(cycles_limit, ADMIN.clone());
+    let mut service = new_governance_service(ADMIN.clone());
 
     service!(
         service,
         accumulate_profit,
         context.clone(),
         AccmulateProfitPayload {
-            address:            addr_1,
+            address:            ADDRESS_1.clone(),
             accumulated_profit: 1_000_000,
         }
     );
@@ -241,7 +233,7 @@ fn test_calc_fee_below_floor_fee() {
         accumulate_profit,
         context.clone(),
         AccmulateProfitPayload {
-            address:            addr_2,
+            address:            ADDRESS_2.clone(),
             accumulated_profit: 2_000_000,
         }
     );

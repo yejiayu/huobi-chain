@@ -13,13 +13,13 @@ serde_json = "1.0"
 rlp = "0.4"
 muta-codec-derive = "0.2"
 
-muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.1.2-beta2"}
-protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.1.2-beta2", package = "muta-protocol" }
-binding-macro = { git = "https://github.com/nervosnetwork/muta", tag = "v0.1.2-beta2" }
+muta = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433"}
+protocol = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433", package = "muta-protocol" }
+binding-macro = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433" }
 
 [dev-dependencies]
 cita_trie = "2.0"
 async-trait = "0.1"
 
-framework = { git = "https://github.com/nervosnetwork/muta", tag = "v0.1.2-beta2"}
-core-storage = { git = "https://github.com/nervosnetwork/muta", tag = "v0.1.2-beta2" }
+framework = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433"}
+core-storage = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433" }

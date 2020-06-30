@@ -2,6 +2,20 @@ timestamp = 0
 prevhash = "0x44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
 
 [[services]]
+name = "authorization"
+payload = '''
+{   
+    "admin": "0xcff1002107105460941f797828f468667aa1a2db",
+    "register_service_names": [
+        "admission_control"
+    ],
+    "verified_method_names": [
+        "is_block"
+    ]
+}
+'''
+
+[[services]]
 name = "asset"
 payload = '''
 {

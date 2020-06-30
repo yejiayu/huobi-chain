@@ -7,7 +7,7 @@ use binding_macro::{cycles, genesis, read, service, write};
 use derive_more::Display;
 use protocol::{
     traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap},
-    types::{Address, ServiceContext},
+    types::{Address, ServiceContext, SignedTransaction},
 };
 use serde::Serialize;
 
@@ -108,9 +108,12 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
 
     #[cycles(10_000)]
     #[read]
-    fn is_blocked(&self, ctx: ServiceContext, payload: Address) -> ServiceResponse<bool> {
-        let result = self.deny_list.contains(&payload);
-        ServiceResponse::from_succeed(result)
+    fn is_blocked(&self, ctx: ServiceContext, payload: SignedTransaction) -> ServiceResponse<()> {
+        if self.deny_list.contains(&payload.raw.sender) {
+            ServiceResponse::from_succeed(())
+        } else {
+            ServiceResponse::from_error(101, "The address is blocked".to_owned())
+        }
     }
 
     #[read]
