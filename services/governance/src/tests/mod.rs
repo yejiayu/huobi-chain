@@ -12,7 +12,8 @@ use framework::binding::state::{GeneralServiceState, MPTTrie};
 use framework::executor::ServiceExecutor;
 use metadata::MetadataService;
 use protocol::traits::{
-    Context, Executor, ExecutorParams, NoopDispatcher, Service, ServiceMapping, ServiceSDK, Storage,
+    Context, Dispatcher, Executor, ExecutorParams, Service, ServiceMapping, ServiceResponse,
+    ServiceSDK, Storage,
 };
 use protocol::types::{
     Address, Block, Genesis, Hash, Proof, RawTransaction, Receipt, ServiceContext,
@@ -20,8 +21,8 @@ use protocol::types::{
 };
 use protocol::ProtocolResult;
 
-use crate::types::{AccmulateProfitPayload, DiscountLevel, GovernanceInfo, SetAdminPayload};
-use crate::{GovernanceService, INFO_KEY};
+use crate::types::{AccmulateProfitPayload, Asset, DiscountLevel, GovernanceInfo, SetAdminPayload};
+use crate::{GovernanceService, INFO_KEY, TX_FEE_INLET_KEY};
 
 lazy_static::lazy_static! {
     static ref ADDRESS_1: Address = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
@@ -248,13 +249,38 @@ fn test_calc_fee_below_floor_fee() {
     assert_eq!(service.calc_tx_fee(&context), 10);
 }
 
+#[test]
+fn test_reset_profits_in_tx_hook_after() {
+    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+    let cycles_limit = 1024 * 1024 * 1024; // 1073741824
+    let ctx = mock_context(cycles_limit, admin.clone());
+
+    let mut service = new_governance_service(admin.clone());
+    assert_eq!(service.profits_len(), 0, "should not have any profits");
+
+    service!(
+        service,
+        accumulate_profit,
+        ctx.clone(),
+        AccmulateProfitPayload {
+            address:            admin,
+            accumulated_profit: 1,
+        }
+    );
+
+    // Manually call tx_hook_after
+    service.handle_tx_fee(ctx);
+
+    assert_eq!(service.profits_len(), 0, "should reset profits");
+}
+
 fn new_governance_service(
     admin: Address,
 ) -> GovernanceService<
     DefaultServiceSDK<
         GeneralServiceState<MemoryDB>,
         DefaultChainQuerier<MockStorage>,
-        NoopDispatcher,
+        MockDispatcher,
     >,
 > {
     let chain_db = DefaultChainQuerier::new(Arc::new(MockStorage {}));
@@ -264,9 +290,11 @@ fn new_governance_service(
     let mut sdk = DefaultServiceSDK::new(
         Rc::new(RefCell::new(state)),
         Rc::new(chain_db),
-        NoopDispatcher {},
+        MockDispatcher {},
     );
 
+    let fee_addr = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+    sdk.set_value(TX_FEE_INLET_KEY.to_string(), fee_addr);
     sdk.set_value(INFO_KEY.to_string(), mock_governance_info(admin));
 
     GovernanceService::new(sdk)
@@ -418,5 +446,47 @@ impl ServiceMapping for MockServiceMapping {
             "metadata".to_owned(),
             "governance".to_owned(),
         ]
+    }
+}
+
+struct MockDispatcher;
+
+impl Dispatcher for MockDispatcher {
+    fn read(&self, ctx: ServiceContext) -> ServiceResponse<String> {
+        let service = ctx.get_service_name();
+        let method = ctx.get_service_method();
+
+        if service != "asset" || method != "get_native_asset" {
+            return ServiceResponse::<String>::from_error(
+                2,
+                format!("not found method:{:?} of service:{:?}", method, service),
+            );
+        }
+
+        let asset = Asset {
+            id:        Hash::digest(Bytes::from_static(b"7")),
+            name:      "da_wan".to_owned(),
+            symbol:    "guan_mian".to_owned(),
+            supply:    2_020_626,
+            precision: 311,
+            issuer:    Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap(),
+        };
+
+        let json_asset = serde_json::to_string(&asset).expect("serde asset");
+        ServiceResponse::from_succeed(json_asset)
+    }
+
+    fn write(&self, ctx: ServiceContext) -> ServiceResponse<String> {
+        let service = ctx.get_service_name();
+        let method = ctx.get_service_method();
+
+        if service != "asset" || method != "transfer_from" {
+            return ServiceResponse::<String>::from_error(
+                2,
+                format!("not found method:{:?} of service:{:?}", method, service),
+            );
+        }
+
+        ServiceResponse::from_succeed("".to_owned())
     }
 }

@@ -318,6 +318,11 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         profit_sum
     }
 
+    #[cfg(test)]
+    fn profits_len(&self) -> u32 {
+        self.profits.len()
+    }
+
     #[tx_hook_after]
     fn handle_tx_fee(&mut self, ctx: ServiceContext) {
         let asset = self
@@ -325,6 +330,12 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             .expect("Can not get native asset");
 
         let tx_fee = self.calc_tx_fee(&ctx);
+
+        // Reset accumulated profit
+        let keys = self.profits.iter().map(|(k, _)| k).collect::<Vec<_>>();
+        for key in keys {
+            self.profits.remove(&key);
+        }
 
         let tx_fee_inlet_address: Address =
             self.sdk.get_value(&TX_FEE_INLET_KEY.to_owned()).unwrap();
