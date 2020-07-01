@@ -41,9 +41,9 @@ fn should_properly_init_genesis() {
         deny_list: vec![caller.clone()],
     });
 
-    let resp = service.is_blocked(mock_context(caller.clone()), mock_transaction(caller));
+    let resp = service.is_permitted(mock_context(caller.clone()), mock_transaction(caller));
 
-    assert!(!resp.is_error());
+    assert!(resp.is_error());
     assert_eq!(service.admin(), admin);
 }
 
@@ -114,8 +114,11 @@ fn should_only_forbid_address_by_admin() {
     });
 
     for addr in deny_list.iter() {
-        let resp = service.is_blocked(mock_context(admin.clone()), mock_transaction(addr.clone()));
-        assert_eq!(resp.is_error(), false);
+        let resp = service.is_permitted(
+            mock_context(admin.clone()),
+            mock_transaction(addr.to_owned()),
+        );
+        assert_eq!(resp.is_error(), true);
     }
 
     let result = service
@@ -164,8 +167,8 @@ fn should_only_permit_address_by_admin() {
     });
 
     for addr in deny_list {
-        let resp = service.is_blocked(mock_context(admin.clone()), mock_transaction(addr));
-        assert!(resp.is_error());
+        let resp = service.is_permitted(mock_context(admin.clone()), mock_transaction(addr));
+        assert!(!resp.is_error());
     }
 }
 

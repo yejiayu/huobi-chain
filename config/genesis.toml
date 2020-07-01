@@ -10,7 +10,7 @@ payload = '''
         "admission_control"
     ],
     "verified_method_names": [
-        "is_block"
+        "is_permitted"
     ]
 }
 '''

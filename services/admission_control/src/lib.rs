@@ -109,11 +109,11 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
 
     #[cycles(10_000)]
     #[read]
-    fn is_blocked(&self, ctx: ServiceContext, payload: SignedTransaction) -> ServiceResponse<()> {
+    fn is_permitted(&self, ctx: ServiceContext, payload: SignedTransaction) -> ServiceResponse<()> {
         if self.deny_list.contains(&payload.raw.sender) {
-            ServiceResponse::from_succeed(())
+            ServiceError::BlockedTx.into()
         } else {
-            ServiceResponse::from_error(101, "The address is blocked".to_owned())
+            ServiceResponse::from_succeed(())
         }
     }
 
