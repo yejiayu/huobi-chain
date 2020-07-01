@@ -1,9 +1,9 @@
+use std::str::FromStr;
+
 use crate::ServiceError;
 
 use protocol::{types::Address, Bytes};
 use serde::{Deserialize, Serialize};
-
-use std::str::FromStr;
 
 pub trait Validate {
     fn validate(&self) -> Result<(), ServiceError>;
@@ -43,6 +43,11 @@ impl Validate for NewAdmin {
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AddressList {
     pub addrs: Vec<Address>,
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
+pub struct StatusList {
+    pub status: Vec<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests;
 mod types;
-use types::{AddressList, Event, Genesis, NewAdmin, UnverifiedTransaction, Validate};
 
 use binding_macro::{cycles, genesis, read, service, write};
 use derive_more::Display;
@@ -10,6 +9,8 @@ use protocol::{
     types::{Address, ServiceContext, SignedTransaction},
 };
 use serde::Serialize;
+
+use types::{AddressList, Event, Genesis, NewAdmin, StatusList, UnverifiedTransaction, Validate};
 
 macro_rules! require_admin {
     ($service:expr, $ctx:expr) => {{
@@ -130,6 +131,18 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         // TODO: verify balance
 
         ServiceResponse::from_succeed(())
+    }
+
+    #[cycles(500_00)]
+    #[read]
+    fn status(&self, _ctx: ServiceContext, payload: AddressList) -> ServiceResponse<StatusList> {
+        let result = payload
+            .addrs
+            .iter()
+            .map(|address| !self.deny_list.contains(address))
+            .collect::<Vec<bool>>();
+
+        ServiceResponse::from_succeed(StatusList { status: result })
     }
 
     #[cycles(210_00)]

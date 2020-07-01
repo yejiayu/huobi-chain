@@ -113,10 +113,19 @@ fn should_only_forbid_address_by_admin() {
         addrs: deny_list.clone(),
     });
 
-    for addr in deny_list {
-        let resp = service.is_blocked(mock_context(admin.clone()), mock_transaction(addr));
+    for addr in deny_list.iter() {
+        let resp = service.is_blocked(mock_context(admin.clone()), mock_transaction(addr.clone()));
         assert_eq!(resp.is_error(), false);
     }
+
+    let result = service
+        .status(mock_context(admin), AddressList { addrs: deny_list })
+        .succeed_data
+        .status
+        .into_iter()
+        .any(|b| b);
+
+    assert!(!result)
 }
 
 #[test]
