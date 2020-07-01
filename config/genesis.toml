@@ -62,7 +62,25 @@ payload = '''
 name = "governance"
 # private key of this admin:
 # 2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2
-payload = '{"admin": "0xcff1002107105460941f797828f468667aa1a2db"}'
+payload = '''
+{
+    "info": {
+        "admin": "0xcff1002107105460941f797828f468667aa1a2db",
+        "tx_failure_fee": 1000,
+        "tx_floor_fee": 100,
+        "profit_deduct_rate_per_million": 10,
+        "tx_fee_discount": [
+            {"threshold": 10, "discount_percent": 10}
+        ],
+        "miner_benefit": 3
+    },
+    "tx_fee_inlet_address": "0xcff1002107105460941f797828f468667aa1a2db",
+    "miner_profit_outlet_address": "0x9cccacbb8a4b0353d42138613b2db72d6a661cf4",
+    "miner_charge_map": [
+        {"address": "0x9cccacbb8a4b0353d42138613b2db72d6a661cf4", "miner_charge_address": "0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"}
+    ]
+}
+'''
 
 # you can enable whitelist in riscv with init payload below
 # [[services]]
