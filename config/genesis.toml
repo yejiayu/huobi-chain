@@ -7,10 +7,12 @@ payload = '''
 {   
     "admin": "0xcff1002107105460941f797828f468667aa1a2db",
     "register_service_names": [
+        "admission_control",
         "admission_control"
     ],
     "verified_method_names": [
         "is_permitted"
+        "is_valid"
     ]
 }
 '''

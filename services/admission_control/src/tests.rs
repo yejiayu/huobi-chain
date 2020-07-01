@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 use cita_trie::MemoryDB;
 use core_storage::{adapter::memory::MemoryAdapter, ImplStorage};
@@ -7,12 +7,13 @@ use framework::binding::{
     state::{GeneralServiceState, MPTTrie},
 };
 use protocol::{
-    traits::NoopDispatcher,
+    traits::{Dispatcher, ServiceResponse},
     types::{
         Address, Bytes, Hash, RawTransaction, ServiceContext, ServiceContextParams,
         SignedTransaction, TransactionRequest,
     },
 };
+use serde::Deserialize;
 
 use crate::{
     types::{AddressList, Event, Genesis, NewAdmin},
@@ -22,7 +23,7 @@ use crate::{
 type SDK = DefaultServiceSDK<
     GeneralServiceState<MemoryDB>,
     DefaultChainQuerier<ImplStorage<MemoryAdapter>>,
-    NoopDispatcher,
+    MockDispatcher,
 >;
 
 const ADMIN: &str = "0x755cdba6ae4f479f7164792b318b2a06c759833b";
@@ -172,6 +173,46 @@ fn should_only_permit_address_by_admin() {
     }
 }
 
+#[test]
+fn should_allow_tx_with_enough_balance_to_cover_fee() {
+    let mut service = new_raw_service();
+    let admin = Address::from_hex(ADMIN).expect("admin");
+    let chris = Address::from_hex(CHRIS).expect("chris");
+
+    service.init_genesis(Genesis {
+        admin,
+        deny_list: vec![],
+    });
+
+    let ctx = mock_context(chris.clone());
+    let stx = mock_transaction(chris);
+
+    let validated = service.is_valid(ctx, stx);
+    assert!(!validated.is_error());
+}
+
+#[test]
+fn should_reject_tx_without_enough_balance_to_cover_fee() {
+    let mut service = new_raw_service();
+    let admin = Address::from_hex(ADMIN).expect("admin");
+    let wesker = Address::from_hex(WESKER).expect("wesker");
+
+    service.init_genesis(Genesis {
+        admin,
+        deny_list: vec![],
+    });
+
+    let ctx = mock_context(wesker.clone());
+    let stx = mock_transaction(wesker);
+
+    let validated = service.is_valid(ctx, stx);
+    assert!(validated.is_error());
+    assert_eq!(
+        validated.error_message,
+        ServiceError::BalanceLowerThanFee.to_string()
+    );
+}
+
 fn new_raw_service() -> AdmissionControlService<SDK> {
     let storage = ImplStorage::new(Arc::new(MemoryAdapter::new()));
     let chain_db = DefaultChainQuerier::new(Arc::new(storage));
@@ -182,7 +223,7 @@ fn new_raw_service() -> AdmissionControlService<SDK> {
     let sdk = DefaultServiceSDK::new(
         Rc::new(RefCell::new(state)),
         Rc::new(chain_db),
-        NoopDispatcher {},
+        MockDispatcher::default(),
     );
 
     AdmissionControlService::new(sdk)
@@ -249,5 +290,98 @@ fn mock_transaction(addr: Address) -> SignedTransaction {
         tx_hash:   mock_hash(),
         pubkey:    Default::default(),
         signature: Default::default(),
+    }
+}
+
+type FFF = Box<dyn Fn(ServiceContext) -> ServiceResponse<String>>;
+
+struct MockDispatcher {
+    table: HashMap<String, FFF>,
+}
+
+fn get_native_asset(_: ServiceContext) -> ServiceResponse<String> {
+    let asset = serde_json::json!({
+        "id":        Hash::digest(Bytes::from_static(b"da_wan_kuan_mian")),
+        "name":      "wan_da".to_owned(),
+        "symbol":    "mian_change".to_owned(),
+        "supply":    2_020_626,
+        "precision": 311,
+        "issuer":    Address::from_hex(CHRIS).unwrap(),
+    });
+
+    ServiceResponse::from_succeed(asset.to_string())
+}
+
+fn get_balance(ctx: ServiceContext) -> ServiceResponse<String> {
+    #[derive(Debug, Deserialize)]
+    struct Payload {
+        pub asset_id: Hash,
+        pub user:     Address,
+    }
+
+    let Payload { asset_id, user } =
+        serde_json::from_str(ctx.get_payload()).expect("decode get balance payload");
+
+    let account = if user == Address::from_hex(CHRIS).expect("chris address") {
+        serde_json::json!({
+            "id":   asset_id,
+            "user": user,
+            "balance": 2_020_626,
+        })
+    } else {
+        serde_json::json!({
+            "id":   asset_id,
+            "user": user,
+            "balance": 0,
+        })
+    };
+
+    ServiceResponse::from_succeed(account.to_string())
+}
+
+fn get_tx_failure_fee(_: ServiceContext) -> ServiceResponse<String> {
+    ServiceResponse::from_succeed(serde_json::to_string(&2077).expect("serde json fee"))
+}
+
+impl Default for MockDispatcher {
+    fn default() -> Self {
+        let mut table = HashMap::new();
+        table.insert(
+            "asset#get_native_asset".to_owned(),
+            Box::new(get_native_asset) as FFF,
+        );
+        table.insert("asset#get_balance".to_owned(), Box::new(get_balance) as FFF);
+        table.insert(
+            "governance#get_tx_failure_fee".to_owned(),
+            Box::new(get_tx_failure_fee) as FFF,
+        );
+
+        MockDispatcher { table }
+    }
+}
+
+impl Dispatcher for MockDispatcher {
+    fn read(&self, ctx: ServiceContext) -> ServiceResponse<String> {
+        let service = ctx.get_service_name();
+        let method = ctx.get_service_method();
+
+        if let Some(f) = self.table.get(&format!("{}#{}", service, method)) {
+            f(ctx)
+        } else {
+            let err_msg = format!("not found method:{:?} of service:{:?}", method, service);
+            ServiceResponse::<String>::from_error(2, err_msg)
+        }
+    }
+
+    fn write(&self, ctx: ServiceContext) -> ServiceResponse<String> {
+        let service = ctx.get_service_name();
+        let method = ctx.get_service_method();
+
+        if let Some(f) = self.table.get(&format!("{}#{}", service, method)) {
+            f(ctx)
+        } else {
+            let err_msg = format!("not found method:{:?} of service:{:?}", method, service);
+            ServiceResponse::<String>::from_error(2, err_msg)
+        }
     }
 }

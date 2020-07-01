@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::ServiceError;
 
-use protocol::{types::Address, Bytes};
+use protocol::types::Address;
 use serde::{Deserialize, Serialize};
 
 pub trait Validate {
@@ -48,11 +48,6 @@ pub struct AddressList {
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct StatusList {
     pub status: Vec<bool>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct UnverifiedTransaction {
-    pub stx_bytes: Bytes,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
