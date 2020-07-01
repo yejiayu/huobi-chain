@@ -8,7 +8,7 @@ use bytes::Bytes;
 use derive_more::Display;
 use serde::Serialize;
 
-use binding_macro::{cycles, genesis, service, tx_hook_before, write};
+use binding_macro::{cycles, genesis, service, write};
 use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap, StoreUint64};
 use protocol::types::{Address, Hash, ServiceContext};
 
@@ -21,8 +21,6 @@ use crate::types::{
 
 const ADMIN_KEY: &str = "asset_service_admin";
 const NATIVE_ASSET_KEY: &str = "native_asset";
-const FEE_ASSET_KEY: &str = "fee_asset";
-const FEE_ACCOUNT_KEY: &str = "fee_account";
 
 macro_rules! require_admin {
     ($sdk:expr, $ctx:expr) => {{
@@ -90,32 +88,10 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         self.assets.insert(asset.id.clone(), asset.clone());
 
         self.set_value(NATIVE_ASSET_KEY.to_owned(), payload.id.clone());
-        self.set_value(FEE_ASSET_KEY.to_owned(), payload.id);
-        self.set_value(FEE_ACCOUNT_KEY.to_owned(), payload.fee_account);
         self.set_value(ADMIN_KEY.to_owned(), payload.admin);
 
         self.fee.set(payload.fee);
         self.set_account_value(&asset.issuer, asset.id, AssetBalance::new(payload.supply))
-    }
-
-    #[tx_hook_before]
-    fn tx_hook_before_(&mut self, ctx: ServiceContext) {
-        let caller = ctx.get_caller();
-
-        let fee_acct: Address = self
-            .get_value(&FEE_ACCOUNT_KEY.to_owned())
-            .expect("fee asset should not be empty");
-        if caller == fee_acct {
-            return;
-        }
-
-        let value = self.fee.get();
-        let asset_id: Hash = self
-            .get_value(&FEE_ASSET_KEY.to_owned())
-            .expect("fee account should not be empty");
-
-        // FIXME: Refactor hook api
-        let _ = self._transfer(&caller, &fee_acct, asset_id, value);
     }
 
     #[cycles(100_00)]
