@@ -319,7 +319,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
     }
 
     #[cfg(test)]
-    fn profits_len(&self) -> u32 {
+    fn profits_len(&self) -> u64 {
         self.profits.len()
     }
 

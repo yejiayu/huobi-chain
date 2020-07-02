@@ -7,16 +7,16 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-muta = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433"}
-protocol = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433", package = "muta-protocol" }
-binding-macro = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433" }
+muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.0"}
+protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.0", package = "muta-protocol" }
+binding-macro = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.0" }
 
 derive_more = "0.99"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 [dev-dependencies]
-core-storage = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433" }
-framework = { git = "https://github.com/nervosnetwork/muta", rev = "a3c3433" }
+core-storage = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.0" }
+framework = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.0" }
 cita_trie = "2.0"
 rand = "0.7"
