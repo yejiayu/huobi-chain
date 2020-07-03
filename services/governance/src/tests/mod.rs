@@ -21,7 +21,9 @@ use protocol::types::{
 };
 use protocol::ProtocolResult;
 
-use crate::types::{AccmulateProfitPayload, Asset, DiscountLevel, GovernanceInfo, SetAdminPayload};
+use crate::types::{
+    AccumulateProfitPayload, Asset, DiscountLevel, GovernanceInfo, SetAdminPayload,
+};
 use crate::{GovernanceService, INFO_KEY, TX_FEE_INLET_KEY};
 
 lazy_static::lazy_static! {
@@ -152,7 +154,7 @@ fn test_accumulate_profit() {
         service,
         accumulate_profit,
         context.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            ADDRESS_1.clone(),
             accumulated_profit: 1,
         }
@@ -161,7 +163,7 @@ fn test_accumulate_profit() {
         service,
         accumulate_profit,
         context.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            ADDRESS_2.clone(),
             accumulated_profit: 1_000_000,
         }
@@ -170,7 +172,7 @@ fn test_accumulate_profit() {
         service,
         accumulate_profit,
         context.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            ADDRESS_2.clone(),
             accumulated_profit: 5_000_000,
         }
@@ -189,7 +191,7 @@ fn test_calc_fee_above_floor_fee() {
         service,
         accumulate_profit,
         context.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            ADDRESS_1.clone(),
             accumulated_profit: 5_000_000,
         }
@@ -198,7 +200,7 @@ fn test_calc_fee_above_floor_fee() {
         service,
         accumulate_profit,
         context.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            ADDRESS_2.clone(),
             accumulated_profit: 10_000_000,
         }
@@ -224,7 +226,7 @@ fn test_calc_fee_below_floor_fee() {
         service,
         accumulate_profit,
         context.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            ADDRESS_1.clone(),
             accumulated_profit: 1_000_000,
         }
@@ -233,7 +235,7 @@ fn test_calc_fee_below_floor_fee() {
         service,
         accumulate_profit,
         context.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            ADDRESS_2.clone(),
             accumulated_profit: 2_000_000,
         }
@@ -262,7 +264,7 @@ fn test_reset_profits_in_tx_hook_after() {
         service,
         accumulate_profit,
         ctx.clone(),
-        AccmulateProfitPayload {
+        AccumulateProfitPayload {
             address:            admin,
             accumulated_profit: 1,
         }

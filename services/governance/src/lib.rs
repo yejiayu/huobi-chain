@@ -14,7 +14,7 @@ use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap};
 use protocol::types::{Address, Metadata, ServiceContext, ServiceContextParams};
 
 use crate::types::{
-    AccmulateProfitPayload, Asset, DiscountLevel, GovernanceInfo, InitGenesisPayload,
+    AccumulateProfitPayload, Asset, DiscountLevel, GovernanceInfo, InitGenesisPayload,
     MinerChargeConfig, RecordProfitEvent, SetAdminEvent, SetAdminPayload, SetGovernInfoEvent,
     SetGovernInfoPayload, SetMinerEvent, TransferFromPayload, UpdateIntervalEvent,
     UpdateIntervalPayload, UpdateMetadataEvent, UpdateMetadataPayload, UpdateRatioEvent,
@@ -278,7 +278,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
     fn accumulate_profit(
         &mut self,
         ctx: ServiceContext,
-        payload: AccmulateProfitPayload,
+        payload: AccumulateProfitPayload,
     ) -> ServiceResponse<()> {
         let address = payload.address;
         let new_profit = payload.accumulated_profit;
@@ -316,11 +316,6 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         }
 
         profit_sum
-    }
-
-    #[cfg(test)]
-    fn profits_len(&self) -> u64 {
-        self.profits.len()
     }
 
     #[tx_hook_after]
@@ -435,6 +430,16 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             .try_into()
             .unwrap_or_else(|err| panic!(err));
         fee
+    }
+
+    #[cfg(test)]
+    fn profits_len(&self) -> u64 {
+        self.profits.len()
+    }
+
+    #[cfg(test)]
+    fn get_balance(&self, _ctx: &ServiceContext) -> u64 {
+        100_000
     }
 
     #[cfg(not(test))]
@@ -563,11 +568,6 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
                 ServiceResponse::from_succeed(())
             }
         }
-    }
-
-    #[cfg(test)]
-    fn get_balance(&self, _ctx: &ServiceContext) -> u64 {
-        100_000
     }
 }
 

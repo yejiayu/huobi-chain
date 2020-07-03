@@ -221,7 +221,7 @@ impl From<UpdateRatioPayload> for UpdateRatioEvent {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct AccmulateProfitPayload {
+pub struct AccumulateProfitPayload {
     pub address:            Address,
     pub accumulated_profit: u64,
 }
