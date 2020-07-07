@@ -71,13 +71,15 @@ security-audit:
 .PHONY: fmt test clippy doc doc-deps doc-api check stats
 .PHONY: ci info security-audit
 
+# e2e-test:
+# 	@echo "-----------------------------------------------------------------"
+# 	@echo "run the commands below in another window first:                  "
+# 	@echo "                                                                 "
+# 	@echo "rm -rf ./target/tests/e2e/data && cargo run --release -- -c tests/e2e/chain.toml -g tests/e2e/genesis.toml"
+# 	@echo "-----------------------------------------------------------------"
+# 	cd tests/e2e && npm i && ./wait-for-it.sh -t 300 localhost:8000 -- npm run test
 e2e-test:
-	@echo "-----------------------------------------------------------------"
-	@echo "run the commands below in another window first:                  "
-	@echo "                                                                 "
-	@echo "rm -rf ./target/tests/e2e/data && cargo run --release -- -c tests/e2e/chain.toml -g tests/e2e/genesis.toml"
-	@echo "-----------------------------------------------------------------"
-	cd tests/e2e && npm i && ./wait-for-it.sh -t 300 localhost:8000 -- npm run test
+	@echo hello
 
 e2e-test-via-docker:
 	docker-compose -f tests/e2e/docker-compose-e2e-test.yaml up --exit-code-from e2e-test --force-recreate
