@@ -1,17 +1,25 @@
 /* eslint-env node, jest */
-import { retry } from '@mutajs/client';
-import { Account } from '@mutajs/account';
-import { Hash } from '@mutajs/types';
-import { hexToNum } from '@mutajs/utils';
+import { retry } from '@mutadev/client';
+import { hexToNum } from '@mutadev/utils';
+// eslint-disable-next-line no-unused-vars
+import { Hash } from '@mutadev/types';
+// eslint-disable-next-line no-unused-vars
+import { Account } from '@mutadev/account';
 import {
   client,
   accounts,
   admin,
   feeAssetID,
   // eslint-disable-next-line
-} from './utils';
+} from "./utils";
 
-async function createAsset(txSender: Account, name: string, symbol: string, supply: number, precision: number) {
+async function createAsset(
+  txSender: Account,
+  name: string,
+  symbol: string,
+  supply: number,
+  precision: number,
+) {
   const payload = {
     name,
     symbol,
@@ -45,7 +53,12 @@ async function getAsset(assetID: Hash) {
   return res;
 }
 
-async function transfer(txSender: Account, assetID: Hash, to: Hash, value: number) {
+async function transfer(
+  txSender: Account,
+  assetID: Hash,
+  to: Hash,
+  value: number,
+) {
   const payload = {
     asset_id: assetID,
     to,
@@ -78,7 +91,12 @@ async function getBalance(assetID: Hash, user: Hash) {
   return res;
 }
 
-async function approve(txSender: Account, assetID: Hash, to: Hash, value: number) {
+async function approve(
+  txSender: Account,
+  assetID: Hash,
+  to: Hash,
+  value: number,
+) {
   const payload = {
     asset_id: assetID,
     to,
@@ -112,7 +130,13 @@ async function getAllowance(assetID: Hash, grantor: Hash, grantee: Hash) {
   return res;
 }
 
-async function transferFrom(txSender: Account, assetID: Hash, sender: Hash, recipient: Hash, value: number) {
+async function transferFrom(
+  txSender: Account,
+  assetID: Hash,
+  sender: Hash,
+  recipient: Hash,
+  value: number,
+) {
   const payload = {
     asset_id: assetID,
     sender,
@@ -155,7 +179,13 @@ describe('asset service API test via muta-sdk-js', () => {
     //   feeAssetID,
     //   feeAccount,
     // );
-    const caReceipt = await createAsset(accounts[0], 'Test Token', 'TT', 8888, 10000);
+    const caReceipt = await createAsset(
+      accounts[0],
+      'Test Token',
+      'TT',
+      8888,
+      10000,
+    );
     expect(hexToNum(caReceipt.response.response.code)).toBe(0);
     // const feeAccountBalanceAfter = await getBalance(
     //   feeAssetID,

@@ -1,12 +1,21 @@
-import { Account } from '@mutajs/account';
-import { Hash } from '@mutajs/types';
-import { retry } from '@mutajs/client';
+import { retry } from '@mutadev/client';
+// eslint-disable-next-line no-unused-vars
+import { Account } from '@mutadev/account';
+// eslint-disable-next-line no-unused-vars
+import { Hash } from '@mutadev/types';
 import {
-  client, admin, feeAssetID,
+  client,
+  admin,
+  feeAssetID,
   // eslint-disable-next-line
-} from './utils';
+} from "./utils";
 
-export async function transfer(txSender: Account, assetID: any, to: any, value: any) {
+export async function transfer(
+  txSender: Account,
+  assetID: any,
+  to: any,
+  value: any,
+) {
   const payload = {
     asset_id: assetID,
     to,

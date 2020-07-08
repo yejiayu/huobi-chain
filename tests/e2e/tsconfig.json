@@ -15,7 +15,10 @@
     "listFiles": false,
     "pretty": true,
     "composite": true,
-    "lib": ["es2017"],
+    "lib": [
+      "es2017",
+      "dom"
+    ],
     "baseUrl": "./packages",
     "paths": {
     }

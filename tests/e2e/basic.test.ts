@@ -1,9 +1,11 @@
 /* eslint-env node, jest */
-import { retry } from '@mutajs/client';
+import { retry } from '@mutadev/client';
 import {
-  client, hexToNum, admin
+  client,
+  hexToNum,
+  admin,
   // eslint-disable-next-line
-} from './utils';
+} from "./utils";
 
 describe('basic API test via muta-sdk-js', () => {
   test('getLatestBlockHeight', async () => {

@@ -1,15 +1,18 @@
 import { readFileSync } from 'fs';
-import { Muta } from 'muta-sdk';
+import { Muta, utils } from '@mutadev/muta-sdk';
+import { Account } from '@mutadev/account';
 import { parse } from 'toml';
-import { range, find } from 'lodash';
-import { hexToNum } from '@mutajs/utils';
-import { Account } from '@mutajs/account';
+import { find, range } from 'lodash';
+
+const { hexToNum } = utils;
 
 const ADMIN_PRIVATE_KEY = '0x2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2';
 const apiUrl = process.env.API_URL || 'http://localhost:8000/graphql';
 
 const genesis = parse(readFileSync('./genesis.toml', 'utf-8'));
-const metadata = JSON.parse(find(genesis.services, (s) => s.name === 'metadata').payload);
+const metadata = JSON.parse(
+  find(genesis.services, (s) => s.name === 'metadata').payload,
+);
 const chainId = metadata.chain_id;
 
 const muta = new Muta({
@@ -30,7 +33,12 @@ const assetGenesis = JSON.parse(
 const feeAssetID = assetGenesis.id;
 const feeAccount = assetGenesis.fee_acocunt;
 
-export async function transfer(txSender: any, assetID: any, to: any, value: any) {
+export async function transfer(
+  txSender: any,
+  assetID: any,
+  to: any,
+  value: any,
+) {
   const payload = {
     asset_id: assetID,
     to,
@@ -52,10 +60,5 @@ export async function transfer(txSender: any, assetID: any, to: any, value: any)
 }
 
 export {
-  accounts,
-  admin,
-  client,
-  feeAssetID,
-  feeAccount,
-  hexToNum,
+  accounts, admin, client, feeAssetID, feeAccount, hexToNum,
 };
