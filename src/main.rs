@@ -4,6 +4,7 @@ use authorization::AuthorizationService;
 use derive_more::{Display, From};
 use governance::GovernanceService;
 use metadata::MetadataService;
+use multi_signature::MultiSignatureService;
 use muta::MutaBuilder;
 use protocol::traits::{Service, ServiceMapping, ServiceSDK};
 use protocol::{ProtocolError, ProtocolErrorKind, ProtocolResult};
@@ -24,6 +25,7 @@ impl ServiceMapping for DefaultServiceMapping {
             "riscv" => Box::new(RiscvService::init(sdk)) as Box<dyn Service>,
             "governance" => Box::new(GovernanceService::new(sdk)) as Box<dyn Service>,
             "admission_control" => Box::new(AdmissionControlService::new(sdk)) as Box<dyn Service>,
+            "multi_signature" => Box::new(MultiSignatureService::new(sdk)) as Box<dyn Service>,
             _ => {
                 return Err(MappingError::NotFoundService {
                     service: name.to_owned(),
@@ -43,6 +45,7 @@ impl ServiceMapping for DefaultServiceMapping {
             "riscv".to_owned(),
             "governance".to_owned(),
             "admission_control".to_owned(),
+            "multi_signature".to_owned(),
         ]
     }
 }

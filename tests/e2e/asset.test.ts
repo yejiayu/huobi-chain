@@ -1,4 +1,7 @@
 /* eslint-env node, jest */
+import { retry } from '@mutajs/client';
+import { Account } from '@mutajs/account';
+import { Hash } from '@mutajs/types';
 import { hexToNum } from '@mutajs/utils';
 import {
   client,
@@ -8,7 +11,7 @@ import {
   // eslint-disable-next-line
 } from './utils';
 
-async function createAsset(txSender, name, symbol, supply, precision) {
+async function createAsset(txSender: Account, name: string, symbol: string, supply: number, precision: number) {
   const payload = {
     name,
     symbol,
@@ -20,16 +23,17 @@ async function createAsset(txSender, name, symbol, supply, precision) {
     method: 'create_asset',
     payload,
     serviceName: 'asset',
+    sender: txSender.address,
   });
 
   const signedTx = txSender.signTransaction(tx);
   const hash = await client.sendTransaction(signedTx);
-  const receipt = await client.getReceipt(hash);
+  const receipt = await retry(() => client.getReceipt(hash));
 
   return receipt;
 }
 
-async function getAsset(assetID) {
+async function getAsset(assetID: Hash) {
   const res = await client.queryService({
     serviceName: 'asset',
     method: 'get_asset',
@@ -41,7 +45,7 @@ async function getAsset(assetID) {
   return res;
 }
 
-async function transfer(txSender, assetID, to, value) {
+async function transfer(txSender: Account, assetID: Hash, to: Hash, value: number) {
   const payload = {
     asset_id: assetID,
     to,
@@ -52,16 +56,17 @@ async function transfer(txSender, assetID, to, value) {
     method: 'transfer',
     payload,
     serviceName: 'asset',
+    sender: txSender.address,
   });
 
   const signedTx = txSender.signTransaction(tx);
   const hash = await client.sendTransaction(signedTx);
-  const receipt = await client.getReceipt(hash);
+  const receipt = await retry(() => client.getReceipt(hash));
 
   return receipt;
 }
 
-async function getBalance(assetID, user) {
+async function getBalance(assetID: Hash, user: Hash) {
   const res = await client.queryService({
     serviceName: 'asset',
     method: 'get_balance',
@@ -73,7 +78,7 @@ async function getBalance(assetID, user) {
   return res;
 }
 
-async function approve(txSender, assetID, to, value) {
+async function approve(txSender: Account, assetID: Hash, to: Hash, value: number) {
   const payload = {
     asset_id: assetID,
     to,
@@ -84,15 +89,17 @@ async function approve(txSender, assetID, to, value) {
     method: 'approve',
     payload,
     serviceName: 'asset',
+    sender: txSender.address,
   });
 
   const signedTx = txSender.signTransaction(tx);
   const hash = await client.sendTransaction(signedTx);
-  const receipt = await client.getReceipt(hash);
+  const receipt = await retry(() => client.getReceipt(hash));
+
   return receipt;
 }
 
-async function getAllowance(assetID, grantor, grantee) {
+async function getAllowance(assetID: Hash, grantor: Hash, grantee: Hash) {
   const res = await client.queryService({
     serviceName: 'asset',
     method: 'get_allowance',
@@ -105,7 +112,7 @@ async function getAllowance(assetID, grantor, grantee) {
   return res;
 }
 
-async function transferFrom(txSender, assetID, sender, recipient, value) {
+async function transferFrom(txSender: Account, assetID: Hash, sender: Hash, recipient: Hash, value: number) {
   const payload = {
     asset_id: assetID,
     sender,
@@ -117,10 +124,12 @@ async function transferFrom(txSender, assetID, sender, recipient, value) {
     method: 'transfer_from',
     payload,
     serviceName: 'asset',
+    sender: txSender.address,
   });
   const signedTx = txSender.signTransaction(tx);
   const hash = await client.sendTransaction(signedTx);
-  const receipt = await client.getReceipt(hash);
+  const receipt = await retry(() => client.getReceipt(hash));
+
   return receipt;
 }
 

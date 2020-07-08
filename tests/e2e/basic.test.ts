@@ -1,6 +1,7 @@
 /* eslint-env node, jest */
+import { retry } from '@mutajs/client';
 import {
-  client, accounts, hexToNum,
+  client, hexToNum, admin
   // eslint-disable-next-line
 } from './utils';
 
@@ -24,10 +25,11 @@ describe('basic API test via muta-sdk-js', () => {
         supply: 1000000000,
       },
       serviceName: 'asset',
+      sender: admin.address,
     });
     tx.cyclesLimit = '0xE8D4A51FFF';
-    const account = accounts[0];
-    const signedTx = account.signTransaction(tx);
+    const signedTx = admin.signTransaction(tx);
+
     try {
       await client.sendTransaction(signedTx);
       expect(true).toBe(false);
@@ -48,10 +50,9 @@ describe('basic API test via muta-sdk-js', () => {
         bigdata: 'a'.repeat(300000),
       },
       serviceName: 'asset',
+      sender: admin.address,
     });
-
-    const account = accounts[0];
-    const signedTx = account.signTransaction(tx);
+    const signedTx = admin.signTransaction(tx);
 
     try {
       await client.sendTransaction(signedTx);
@@ -70,13 +71,12 @@ describe('basic API test via muta-sdk-js', () => {
         supply: 1000000000,
       },
       serviceName: 'asset',
+      sender: admin.address,
     });
-
-    const account = accounts[0];
-    const signedTx = account.signTransaction(tx);
+    const signedTx = admin.signTransaction(tx);
 
     const hash = await client.sendTransaction(signedTx);
-    const receipt = await client.getReceipt(hash);
+    const receipt = await retry(() => client.getReceipt(hash));
     expect(receipt.txHash).toBe(hash);
 
     const committedTx = await client.getTransaction(hash);

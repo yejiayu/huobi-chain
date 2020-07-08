@@ -1746,6 +1746,7 @@ dependencies = [
  "derive_more 0.99.9",
  "governance",
  "metadata 0.4.0-beta2",
+ "multi-signature",
  "muta",
  "muta-protocol",
  "riscv",
@@ -2274,6 +2275,25 @@ name = "miracl_amcl"
 version = "3.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89d10a1ea3ffe41d318ccd9f21a1f2366c8103b95e1deaa9449793f4b10cefe8"
+
+[[package]]
+name = "multi-signature"
+version = "0.1.0-alpha.0"
+source = "git+https://github.com/nervosnetwork/muta?tag=v0.2.0-dev.0#2a413e6041861b0ba0424ac8f8256da3810958c1"
+dependencies = [
+ "binding-macro",
+ "byteorder",
+ "common-crypto",
+ "derive_more 0.99.9",
+ "hasher",
+ "hex",
+ "muta-codec-derive",
+ "muta-protocol",
+ "rand 0.7.3",
+ "rlp 0.4.5",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "muta"
