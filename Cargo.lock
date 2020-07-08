@@ -1745,6 +1745,7 @@ dependencies = [
  "clap",
  "derive_more 0.99.9",
  "governance",
+ "kyc",
  "metadata 0.4.0-beta2",
  "multi-signature",
  "muta",

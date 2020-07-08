@@ -16,6 +16,7 @@ clap = "2.33"
 
 metadata = { path = "services/metadata" }
 asset = { path = "services/asset" }
+kyc = { path = "services/kyc" }
 riscv = { path = "services/riscv" }
 admission_control = { path = "services/admission_control" }
 governance = { path = "services/governance" }

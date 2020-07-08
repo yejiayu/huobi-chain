@@ -3,6 +3,7 @@ use asset::AssetService;
 use authorization::AuthorizationService;
 use derive_more::{Display, From};
 use governance::GovernanceService;
+use kyc::KycService;
 use metadata::MetadataService;
 use multi_signature::MultiSignatureService;
 use muta::MutaBuilder;
@@ -22,10 +23,11 @@ impl ServiceMapping for DefaultServiceMapping {
             "authorization" => Box::new(AuthorizationService::new(sdk)) as Box<dyn Service>,
             "asset" => Box::new(AssetService::new(sdk)) as Box<dyn Service>,
             "metadata" => Box::new(MetadataService::new(sdk)) as Box<dyn Service>,
+            "kyc" => Box::new(KycService::new(sdk)) as Box<dyn Service>,
+            "multi_signature" => Box::new(MultiSignatureService::new(sdk)) as Box<dyn Service>,
             "riscv" => Box::new(RiscvService::init(sdk)) as Box<dyn Service>,
             "governance" => Box::new(GovernanceService::new(sdk)) as Box<dyn Service>,
             "admission_control" => Box::new(AdmissionControlService::new(sdk)) as Box<dyn Service>,
-            "multi_signature" => Box::new(MultiSignatureService::new(sdk)) as Box<dyn Service>,
             _ => {
                 return Err(MappingError::NotFoundService {
                     service: name.to_owned(),
@@ -42,10 +44,11 @@ impl ServiceMapping for DefaultServiceMapping {
             "authorization".to_owned(),
             "asset".to_owned(),
             "metadata".to_owned(),
+            "kyc".to_owned(),
+            "multi_signature".to_owned(),
             "riscv".to_owned(),
             "governance".to_owned(),
             "admission_control".to_owned(),
-            "multi_signature".to_owned(),
         ]
     }
 }
