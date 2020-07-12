@@ -600,17 +600,3 @@ impl Validate for ChangeOrgAdmin {
         }
     }
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Event<Data> {
-    pub topic: String,
-    pub data:  Data,
-}
-
-impl<Data: for<'a> Deserialize<'a>> FromStr for Event<Data> {
-    type Err = serde_json::Error;
-
-    fn from_str(str: &str) -> Result<Self, Self::Err> {
-        serde_json::from_str(str)
-    }
-}

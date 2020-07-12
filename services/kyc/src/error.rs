@@ -32,17 +32,15 @@ pub enum ServiceError {
 
 impl ServiceError {
     pub fn code(&self) -> u64 {
-        use ServiceError::*;
-
         match self {
-            BadPayload(_) => 101,
-            Serde(_) => 102,
-            OrgNotFound(_) => 103,
-            NonAuthorized => 104,
-            OrgAlreadyExists => 105,
-            OutOfCycles => 106,
-            Expression(_) => 107,
-            UnapprovedOrg => 108,
+            ServiceError::BadPayload(_) => 101,
+            ServiceError::Serde(_) => 102,
+            ServiceError::OrgNotFound(_) => 103,
+            ServiceError::NonAuthorized => 104,
+            ServiceError::OrgAlreadyExists => 105,
+            ServiceError::OutOfCycles => 106,
+            ServiceError::Expression(_) => 107,
+            ServiceError::UnapprovedOrg => 108,
         }
     }
 }

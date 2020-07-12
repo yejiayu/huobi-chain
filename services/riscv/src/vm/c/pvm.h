@@ -197,7 +197,7 @@ uint64_t pvm_caller(uint8_t *addr);
  *
  * @code{.c}
  *    uint8_t addr[50];
- *    pvm_adress(addr);
+ *    pvm_address(addr);
  * @endcode
  * @param addr[out]: pointer to buffer for loaded contract address to write
  * @return size of contract address in bytes
@@ -265,14 +265,17 @@ uint64_t pvm_timestamp();
  * Function pvm_emit_event emit event message string. Message is UTF-8 encoded.
  *
  * @code{.c}
- *   const char *msg = "{ \"msg\": \"test event\" }";
- *   pvm_emit_event((uint8_t *)msg, strlen(msg));
+ *   const char *name = "event_name"
+ *   const char *event = "{ \"msg\": \"test event\" }";
+ *   pvm_emit_event((uint8_t *)name, strlen(name), (uint8_t *)event, strlen(event));
  * @endcode
- * @param msg[in]: a pointer to msg to emit
- * @throw IO(InvalidInput) if msg pointer is null
+ * @param name[in]: a pointer to event's name to emit
+ * @param event[in]: a pointer to event's body to emit
+ * @throw IO(InvalidInput) if name pointer is null
+ * @throw IO(InvalidInput) if event pointer is null
  * @throw IO(InvalidData) if msg is invalid utf-8 string
  */
-void pvm_emit_event(const uint8_t *msg, uint64_t msg_sz);
+void pvm_emit_event(const uint8_t *name_ptr, uint64_t name_sz, uint8_t *event_ptr, uint64_t event_sz);
 
 /**
  * @brief load transaction hash
@@ -294,7 +297,7 @@ uint64_t pvm_tx_hash(uint8_t *tx_hash);
  * Function pvm_nonce loads transaction nonce hash.
  *
  * @code{.c}
- *   uint8_t *nonce = malloc(pvm_nonce(NULL));
+ *   uint8_t *nonce = malloc(pvm_tx_nonce(NULL));
  *   pvm_tx_nonce(nonce);
  * @endcode
  * @param nonce[out]: pointer to buffer for loaded nonce to write

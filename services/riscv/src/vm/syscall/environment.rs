@@ -128,15 +128,25 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallEnvironment {
                 Ok(true)
             }
             SYSCODE_EMIT_EVENT => {
-                let ptr = machine.registers()[ckb_vm::registers::A0].to_u64();
-                let len = machine.registers()[ckb_vm::registers::A1].to_u64();
-                if ptr == 0 {
+                let name_ptr = machine.registers()[ckb_vm::registers::A0].to_u64();
+                let name_len = machine.registers()[ckb_vm::registers::A1].to_u64();
+                if name_ptr == 0 {
                     return Err(ckb_vm::Error::IO(io::ErrorKind::InvalidInput));
                 }
 
-                let msg = String::from_utf8(get_arr(machine, ptr, len)?)
+                let name = String::from_utf8(get_arr(machine, name_ptr, name_len)?)
                     .map_err(|_| ckb_vm::Error::IO(std::io::ErrorKind::InvalidData))?;
-                self.context.emit_event(msg);
+
+                let event_ptr = machine.registers()[ckb_vm::registers::A2].to_u64();
+                let event_len = machine.registers()[ckb_vm::registers::A3].to_u64();
+                if event_ptr == 0 {
+                    return Err(ckb_vm::Error::IO(io::ErrorKind::InvalidInput));
+                }
+
+                let event = String::from_utf8(get_arr(machine, event_ptr, event_len)?)
+                    .map_err(|_| ckb_vm::Error::IO(std::io::ErrorKind::InvalidData))?;
+
+                self.context.emit_event(name, event);
 
                 Ok(true)
             }

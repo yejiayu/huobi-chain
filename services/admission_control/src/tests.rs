@@ -16,7 +16,7 @@ use protocol::{
 use serde::Deserialize;
 
 use crate::{
-    types::{AddressList, Event, Genesis, NewAdmin},
+    types::{AddressList, Genesis, NewAdmin},
     AdmissionControlService, ServiceError,
 };
 
@@ -71,10 +71,9 @@ fn should_only_change_admin_by_admin() {
     });
     assert_eq!(service.admin(), new_admin);
     assert_eq!(ctx.get_events().len(), 1);
-
-    let event: Event<NewAdmin> = ctx.get_events()[0].data.parse().expect("parse event");
-    assert_eq!(event.topic, "change_admin");
-    assert_eq!(event.data, NewAdmin {
+    assert_eq!(ctx.get_events()[0].name, "ChangeAdmin");
+    let event_data: NewAdmin = serde_json::from_str(ctx.get_events()[0].data.as_str()).unwrap();
+    assert_eq!(event_data, NewAdmin {
         new_admin: new_admin.clone(),
     });
 
@@ -108,9 +107,9 @@ fn should_only_forbid_address_by_admin() {
     assert!(!resp.is_error());
     assert_eq!(ctx.get_events().len(), 1);
 
-    let event: Event<AddressList> = ctx.get_events()[0].data.parse().expect("parse event");
-    assert_eq!(event.topic, "forbid");
-    assert_eq!(event.data, AddressList {
+    assert_eq!(ctx.get_events()[0].name, "Forbid");
+    let event_data: AddressList = serde_json::from_str(ctx.get_events()[0].data.as_str()).unwrap();
+    assert_eq!(event_data, AddressList {
         addrs: deny_list.clone(),
     });
 
@@ -161,9 +160,9 @@ fn should_only_permit_address_by_admin() {
     assert!(!resp.is_error());
     assert_eq!(ctx.get_events().len(), 1);
 
-    let event: Event<AddressList> = ctx.get_events()[0].data.parse().expect("parse event");
-    assert_eq!(event.topic, "permit");
-    assert_eq!(event.data, AddressList {
+    assert_eq!(ctx.get_events()[0].name, "Permit");
+    let event_data: AddressList = serde_json::from_str(ctx.get_events()[0].data.as_str()).unwrap();
+    assert_eq!(event_data, AddressList {
         addrs: deny_list.clone(),
     });
 

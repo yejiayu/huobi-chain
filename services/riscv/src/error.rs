@@ -45,22 +45,20 @@ pub enum ServiceError {
 
 impl ServiceError {
     pub fn code(&self) -> u64 {
-        use ServiceError::*;
-
         match self {
-            NotInExecContext(_) => 101,
-            ContractNotFound(_) => 102,
-            CodeNotFound => 103,
-            NonZeroExit { .. } => 104,
-            CkbVm(_) => 105,
-            Serde(_) => 106,
-            HexDecode(_) => 107,
-            InvalidKey(_) => 108,
-            NonAuthorized => 109,
-            OutOfCycles => 110,
-            InvalidContractAddress => 111,
-            WriteInReadonlyContext => 112,
-            AssertFailed(_) => 113,
+            ServiceError::NotInExecContext(_) => 101,
+            ServiceError::ContractNotFound(_) => 102,
+            ServiceError::CodeNotFound => 103,
+            ServiceError::NonZeroExit { .. } => 104,
+            ServiceError::CkbVm(_) => 105,
+            ServiceError::Serde(_) => 106,
+            ServiceError::HexDecode(_) => 107,
+            ServiceError::InvalidKey(_) => 108,
+            ServiceError::NonAuthorized => 109,
+            ServiceError::OutOfCycles => 110,
+            ServiceError::InvalidContractAddress => 111,
+            ServiceError::WriteInReadonlyContext => 112,
+            ServiceError::AssertFailed(_) => 113,
         }
     }
 }

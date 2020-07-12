@@ -1,6 +1,6 @@
 use crate::{
     types::{
-        ChangeOrgAdmin, ChangeOrgApproved, EvalUserTagExpression, Event, FixedTagList, Genesis,
+        ChangeOrgAdmin, ChangeOrgApproved, EvalUserTagExpression, FixedTagList, Genesis,
         GetUserTags, NewOrgEvent, OrgName, RegisterNewOrg, TagName, UpdateUserTags, Validate,
     },
     ExpressionDataFeed, KycService, ServiceError, UpdateOrgSupportTags,
@@ -209,10 +209,10 @@ fn should_register_unapproved_org() {
     let events = ctx.get_events();
     assert_eq!(events.len(), 1);
 
-    let event: Event<NewOrgEvent> = serde_json::from_str(&events[0].data).expect("parse event");
-    assert_eq!(event.topic, "register_org");
-    assert_eq!(event.data.name, org.name);
-    assert_eq!(event.data.supported_tags, org.supported_tags);
+    let event: NewOrgEvent = serde_json::from_str(&events[0].data).expect("parse event");
+    assert_eq!(events[0].name, "RegisterOrg");
+    assert_eq!(event.name, org.name);
+    assert_eq!(event.supported_tags, org.supported_tags);
 }
 
 #[test]
@@ -389,9 +389,9 @@ fn should_update_user_tags() {
 
     let events = ctx.get_events();
     assert_eq!(events.len(), 1);
-    let event: Event<UpdateUserTags> = serde_json::from_str(&events[0].data).expect("parse event");
-    assert_eq!(event.topic, "update_user_tags");
-    assert_eq!(event.data, update_user_tags);
+    let event: UpdateUserTags = serde_json::from_str(&events[0].data).expect("parse event");
+    assert_eq!(events[0].name, "UpdateUserTag");
+    assert_eq!(event, update_user_tags);
 
     let updated_tags = service_call!(kyc, get_user_tags, ctx, GetUserTags {
         org_name: genesis.org_name,

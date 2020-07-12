@@ -52,8 +52,8 @@ uint64_t pvm_timestamp() {
   return syscall(SYSCODE_TIMESTAMP, 0, 0, 0, 0, 0, 0);
 }
 
-void pvm_emit_event(const uint8_t *msg, uint64_t msg_sz) {
-  syscall(SYSCODE_EMIT_EVENT, msg, msg_sz, 0, 0, 0, 0);
+void pvm_emit_event(const uint8_t *name_ptr, uint64_t name_sz, uint8_t *event_ptr, uint64_t event_sz) {
+  syscall(SYSCODE_EMIT_EVENT, name_ptr, name_sz, event_ptr, event_sz, 0, 0);
 }
 
 uint64_t pvm_tx_hash(uint8_t *tx_hash) {

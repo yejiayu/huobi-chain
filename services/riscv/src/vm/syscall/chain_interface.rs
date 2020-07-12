@@ -35,8 +35,8 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallChainInterfac
     }
 
     fn ecall(&mut self, machine: &mut Mac) -> Result<bool, ckb_vm::Error> {
-        use ckb_vm::Error::*;
-        use std::io::ErrorKind::*;
+        use ckb_vm::Error::IO;
+        use std::io::ErrorKind::InvalidData;
 
         let code = machine.registers()[ckb_vm::registers::A7].to_u64();
 

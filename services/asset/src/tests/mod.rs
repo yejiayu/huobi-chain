@@ -161,8 +161,8 @@ fn test_transfer_from() {
         grantor:  caller.clone(),
         grantee:  recipient.clone(),
     });
-    assert_eq!(allowance.asset_id, asset.id.clone());
-    assert_eq!(allowance.grantee, recipient.clone());
+    assert_eq!(allowance.asset_id, asset.id);
+    assert_eq!(allowance.grantee, recipient);
     assert_eq!(allowance.value, 1000);
 
     let sender_balance = service_call!(service, get_balance, ctx, GetBalancePayload {

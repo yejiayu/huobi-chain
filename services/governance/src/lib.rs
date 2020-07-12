@@ -130,10 +130,9 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         self.sdk.set_value(INFO_KEY.to_owned(), info);
 
         let event = SetAdminEvent {
-            topic: "Set New Admin".to_owned(),
             admin: payload.admin,
         };
-        Self::emit_event(&ctx, event)
+        Self::emit_event(&ctx, "SetAdmin".to_owned(), event)
     }
 
     #[cycles(210_00)]
@@ -151,11 +150,8 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         info.tx_fee_discount.sort();
         self.sdk.set_value(INFO_KEY.to_owned(), info.clone());
 
-        let event = SetGovernInfoEvent {
-            topic: "Set New Govern Info".to_owned(),
-            info,
-        };
-        Self::emit_event(&ctx, event)
+        let event = SetGovernInfoEvent { info };
+        Self::emit_event(&ctx, "SetGovernInfo".to_owned(), event)
     }
 
     #[cycles(210_00)]
@@ -173,11 +169,8 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             payload.address.clone(),
             payload.miner_charge_address.clone(),
         );
-        let event = SetMinerEvent {
-            topic: "Set New Miner Info".to_owned(),
-            info:  payload,
-        };
-        Self::emit_event(&ctx, event)
+        let event = SetMinerEvent { info: payload };
+        Self::emit_event(&ctx, "SetMiner".to_owned(), event)
     }
 
     #[cycles(210_00)]
@@ -195,7 +188,11 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             return err;
         }
 
-        Self::emit_event(&ctx, UpdateMetadataEvent::from(payload))
+        Self::emit_event(
+            &ctx,
+            "UpdateMetadata".to_owned(),
+            UpdateMetadataEvent::from(payload),
+        )
     }
 
     #[cycles(210_00)]
@@ -219,7 +216,11 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             return err;
         }
 
-        Self::emit_event(&ctx, UpdateValidatorsEvent::from(payload))
+        Self::emit_event(
+            &ctx,
+            "UpdateValidators".to_owned(),
+            UpdateValidatorsEvent::from(payload),
+        )
     }
 
     #[cycles(210_00)]
@@ -243,7 +244,11 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             return err;
         }
 
-        Self::emit_event(&ctx, UpdateIntervalEvent::from(payload))
+        Self::emit_event(
+            &ctx,
+            "UpdateInterval".to_owned(),
+            UpdateIntervalEvent::from(payload),
+        )
     }
 
     #[cycles(210_00)]
@@ -270,7 +275,11 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             return err;
         }
 
-        Self::emit_event(&ctx, UpdateRatioEvent::from(payload))
+        Self::emit_event(
+            &ctx,
+            "UpdateRatio".to_owned(),
+            UpdateRatioEvent::from(payload),
+        )
     }
 
     #[cycles(210_00)]
@@ -293,7 +302,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             self.profits.insert(address.clone(), new_profit);
         }
 
-        Self::emit_event(&ctx, RecordProfitEvent {
+        Self::emit_event(&ctx, "RecordProfit".to_owned(), RecordProfitEvent {
             owner:  address,
             amount: new_profit,
         });
@@ -560,11 +569,15 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         }
     }
 
-    fn emit_event<T: Serialize>(ctx: &ServiceContext, event: T) -> ServiceResponse<()> {
+    fn emit_event<T: Serialize>(
+        ctx: &ServiceContext,
+        name: String,
+        event: T,
+    ) -> ServiceResponse<()> {
         match serde_json::to_string(&event) {
             Err(err) => ServiceError::JsonParse(err).into(),
             Ok(json) => {
-                ctx.emit_event(json);
+                ctx.emit_event(name, json);
                 ServiceResponse::from_succeed(())
             }
         }

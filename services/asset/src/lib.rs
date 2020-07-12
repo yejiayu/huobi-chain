@@ -110,10 +110,10 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     #[cycles(100_00)]
     #[read]
     fn get_asset(&self, ctx: ServiceContext, payload: GetAssetPayload) -> ServiceResponse<Asset> {
-        self.assets
-            .get(&payload.id)
-            .map(ServiceResponse::from_succeed)
-            .unwrap_or_else(|| ServiceError::AssetNotFound(payload.id).into())
+        match self.assets.get(&payload.id) {
+            Some(s) => ServiceResponse::from_succeed(s),
+            None => ServiceError::AssetNotFound(payload.id).into(),
+        }
     }
 
     #[cycles(100_00)]
@@ -185,7 +185,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         let balance = AssetBalance::new(payload.supply);
         self.set_account_value(&asset.issuer, asset.id.clone(), balance);
 
-        Self::emit_event(&ctx, &asset);
+        Self::emit_event(&ctx, "CreateAsset".to_owned(), &asset);
         ServiceResponse::from_succeed(asset)
     }
 
@@ -210,7 +210,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             to: payload.to,
             value: payload.value,
         };
-        Self::emit_event(&ctx, event)
+        Self::emit_event(&ctx, "TransferAsset".to_owned(), event)
     }
 
     #[cycles(210_00)]
@@ -235,7 +235,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             grantee:  payload.to,
             value:    payload.value,
         };
-        Self::emit_event(&ctx, event)
+        Self::emit_event(&ctx, "ApproveAsset".to_owned(), event)
     }
 
     #[cycles(210_00)]
@@ -288,7 +288,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             recipient: payload.recipient,
             value: payload.value,
         };
-        Self::emit_event(&ctx, event)
+        Self::emit_event(&ctx, "TransferFrom".to_owned(), event)
     }
 
     #[cycles(210_00)]
@@ -299,7 +299,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         self.sdk
             .set_value(ADMIN_KEY.to_owned(), payload.addr.clone());
 
-        Self::emit_event(&ctx, payload)
+        Self::emit_event(&ctx, "ChangeAdmin".to_owned(), payload)
     }
 
     // TODO: verify proof
@@ -317,7 +317,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
         self.set_account_value(&payload.to, payload.asset_id.clone(), recipient_balance);
 
-        Self::emit_event(&ctx, MintEvent {
+        Self::emit_event(&ctx, "MintAsset".to_owned(), MintEvent {
             asset_id: payload.asset_id,
             to:       payload.to,
             amount:   payload.amount,
@@ -337,7 +337,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
         self.set_account_value(&ctx.get_caller(), payload.asset_id.clone(), burner_balance);
 
-        Self::emit_event(&ctx, BurnEvent {
+        Self::emit_event(&ctx, "BurnAsset".to_owned(), BurnEvent {
             asset_id: payload.asset_id,
             from:     ctx.get_caller(),
             amount:   payload.amount,
@@ -400,11 +400,15 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             .expect("admin not found")
     }
 
-    fn emit_event<T: Serialize>(ctx: &ServiceContext, event: T) -> ServiceResponse<()> {
+    fn emit_event<T: Serialize>(
+        ctx: &ServiceContext,
+        name: String,
+        event: T,
+    ) -> ServiceResponse<()> {
         match serde_json::to_string(&event) {
             Err(err) => ServiceError::JsonParse(err).into(),
             Ok(json) => {
-                ctx.emit_event(json);
+                ctx.emit_event(name, json);
                 ServiceResponse::from_succeed(())
             }
         }

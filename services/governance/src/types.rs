@@ -23,8 +23,7 @@ pub struct MinerChargeConfig {
 
 #[derive(RlpFixedCodec, Deserialize, Serialize, Clone, Debug)]
 pub struct SetMinerEvent {
-    pub topic: String,
-    pub info:  MinerChargeConfig,
+    pub info: MinerChargeConfig,
 }
 
 #[derive(RlpFixedCodec, Deserialize, Serialize, Clone, Debug, Default)]
@@ -67,14 +66,12 @@ pub struct SetGovernInfoPayload {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct SetAdminEvent {
-    pub topic: String,
     pub admin: Address,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct SetGovernInfoEvent {
-    pub topic: String,
-    pub info:  GovernanceInfo,
+    pub info: GovernanceInfo,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -118,7 +115,6 @@ impl From<Metadata> for UpdateMetadataPayload {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct UpdateMetadataEvent {
-    pub topic:           String,
     pub verifier_list:   Vec<ValidatorExtend>,
     pub interval:        u64,
     pub propose_ratio:   u64,
@@ -135,7 +131,6 @@ pub struct UpdateMetadataEvent {
 impl From<UpdateMetadataPayload> for UpdateMetadataEvent {
     fn from(payload: UpdateMetadataPayload) -> Self {
         UpdateMetadataEvent {
-            topic:           "Metadata Updated".to_owned(),
             verifier_list:   payload.verifier_list,
             interval:        payload.interval,
             propose_ratio:   payload.propose_ratio,
@@ -158,14 +153,12 @@ pub struct UpdateValidatorsPayload {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct UpdateValidatorsEvent {
-    pub topic:         String,
     pub verifier_list: Vec<ValidatorExtend>,
 }
 
 impl From<UpdateValidatorsPayload> for UpdateValidatorsEvent {
     fn from(payload: UpdateValidatorsPayload) -> Self {
         UpdateValidatorsEvent {
-            topic:         "Validators Updated".to_owned(),
             verifier_list: payload.verifier_list,
         }
     }
@@ -178,14 +171,12 @@ pub struct UpdateIntervalPayload {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct UpdateIntervalEvent {
-    pub topic:    String,
     pub interval: u64,
 }
 
 impl From<UpdateIntervalPayload> for UpdateIntervalEvent {
     fn from(payload: UpdateIntervalPayload) -> Self {
         UpdateIntervalEvent {
-            topic:    "Interval Updated".to_owned(),
             interval: payload.interval,
         }
     }
@@ -201,7 +192,6 @@ pub struct UpdateRatioPayload {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct UpdateRatioEvent {
-    pub topic:           String,
     pub propose_ratio:   u64,
     pub prevote_ratio:   u64,
     pub precommit_ratio: u64,
@@ -211,7 +201,6 @@ pub struct UpdateRatioEvent {
 impl From<UpdateRatioPayload> for UpdateRatioEvent {
     fn from(payload: UpdateRatioPayload) -> Self {
         UpdateRatioEvent {
-            topic:           "Ratio Updated".to_owned(),
             propose_ratio:   payload.propose_ratio,
             prevote_ratio:   payload.prevote_ratio,
             precommit_ratio: payload.precommit_ratio,

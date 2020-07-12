@@ -10,7 +10,7 @@ use protocol::{
 };
 use serde::{Deserialize, Serialize};
 
-use types::{AddressList, Event, Genesis, NewAdmin, StatusList, Validate};
+use types::{AddressList, Genesis, NewAdmin, StatusList, Validate};
 
 macro_rules! require_admin {
     ($service:expr, $ctx:expr) => {{
@@ -176,10 +176,7 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
             payload.new_admin.clone(),
         );
 
-        Self::emit_event(&ctx, Event {
-            topic: "change_admin".to_owned(),
-            data:  payload,
-        })
+        Self::emit_event(&ctx, "ChangeAdmin".to_owned(), payload)
     }
 
     #[write]
@@ -191,10 +188,7 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
             self.deny_list.insert(addr.to_owned(), true);
         }
 
-        Self::emit_event(&ctx, Event {
-            topic: "forbid".to_owned(),
-            data:  payload,
-        })
+        Self::emit_event(&ctx, "Forbid".to_owned(), payload)
     }
 
     #[write]
@@ -206,10 +200,7 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
             self.deny_list.remove(addr);
         }
 
-        Self::emit_event(&ctx, Event {
-            topic: "permit".to_owned(),
-            data:  payload,
-        })
+        Self::emit_event(&ctx, "Permit".to_owned(), payload)
     }
 
     fn get_native_balance(
@@ -269,11 +260,15 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         serde_json::from_str(&resp.succeed_data).map_err(|e| ServiceError::Codec(e).into())
     }
 
-    fn emit_event<T: Serialize>(ctx: &ServiceContext, event: T) -> ServiceResponse<()> {
+    fn emit_event<T: Serialize>(
+        ctx: &ServiceContext,
+        name: String,
+        event: T,
+    ) -> ServiceResponse<()> {
         match serde_json::to_string(&event) {
             Err(err) => ServiceError::Codec(err).into(),
             Ok(json) => {
-                ctx.emit_event(json);
+                ctx.emit_event(name, json);
                 ServiceResponse::from_succeed(())
             }
         }

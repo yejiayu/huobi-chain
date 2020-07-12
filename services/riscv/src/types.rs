@@ -1,13 +1,12 @@
 use crate::ServiceError;
 
-use rlp;
 use serde::{Deserialize, Serialize};
 
 use protocol::fixed_codec::{FixedCodec, FixedCodecError};
 use protocol::types::{Address, Hash};
 use protocol::{Bytes, ProtocolResult};
 
-use std::{convert::TryFrom, ops::Deref, str::FromStr};
+use std::{convert::TryFrom, ops::Deref};
 
 #[repr(u8)]
 #[derive(Deserialize, Serialize, Clone, Debug, Copy)]
@@ -213,18 +212,4 @@ pub struct InitGenesisPayload {
     pub deploy_auth:          Vec<Address>,
     #[serde(default)]
     pub admins:               Vec<Address>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Event<Data> {
-    pub topic: String,
-    pub data:  Data,
-}
-
-impl<Data: for<'a> Deserialize<'a>> FromStr for Event<Data> {
-    type Err = serde_json::Error;
-
-    fn from_str(str: &str) -> Result<Self, Self::Err> {
-        serde_json::from_str(str)
-    }
 }
