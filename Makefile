@@ -126,15 +126,15 @@ contract_test: libpvm.a
 contract_test_docker:
 	$(DOCKER_BUILD) "cd /src && make contract_test"
 
-duktape: libpvm.a
-	$(CC) -I$(DUKTAPE_SRC) -I$(RISCV_SRC) $(DUKTAPE_SRC)/duktape.c $(RISCV_SRC)/duktape_ee.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(RISCV_SRC)/duktape_ee.bin
-
-duktape_docker:
-	$(DOCKER_BUILD) "cd /src && make duktape"
-
 libpvm.a:
 	$(CC) -I$(RISCV_SRC) -c $(RISCV_SRC)/pvm.c -o /tmp/pvm.o
 	ar rcs $(RISCV_SRC)/libpvm.a /tmp/pvm.o
 
-pvm_docker:
-	$(DOCKER_BUILD) "cd /src && make pvm_structs_test"
+libpvm.a_docker:
+	$(DOCKER_BUILD) "cd /src && make libpvm.a"
+
+pvm_general_test: libpvm.a
+	$(CC) -I$(RISCV_SRC) $(TEST_SRC)/general.c $(RISCV_SRC)/libpvm.a $(LDFLAGS) -o $(TEST_SRC)/general
+
+pvm_general_test_docker:
+	$(DOCKER_BUILD) "cd /src && make pvm_general_test"

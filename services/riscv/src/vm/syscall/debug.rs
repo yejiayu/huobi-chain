@@ -25,7 +25,6 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallDebug {
 
         let msg = get_str(machine, ptr)?;
         log::debug!(target: "riscv_debug", "{}", msg);
-
         Ok(true)
     }
 }
