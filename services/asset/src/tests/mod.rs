@@ -11,9 +11,9 @@ use protocol::traits::NoopDispatcher;
 use protocol::types::{Address, Bytes, Hash, Hex, ServiceContext, ServiceContextParams};
 
 use crate::types::{
-    ApprovePayload, BurnAsset, BurnEvent, CreateAssetPayload, GetAllowancePayload, GetAssetPayload,
-    GetBalancePayload, InitGenesisPayload, MintAsset, MintEvent, NewAdmin, TransferFromPayload,
-    TransferPayload,
+    ApprovePayload, BurnAssetEvent, BurnAssetPayload, ChangeAdminPayload, CreateAssetPayload,
+    GetAllowancePayload, GetAssetPayload, GetBalancePayload, InitGenesisPayload, MintAssetEvent,
+    MintAssetPayload, RelayAssetEvent, RelayAssetPayload, TransferFromPayload, TransferPayload,
 };
 use crate::AssetService;
 
@@ -32,10 +32,11 @@ macro_rules! service_call {
 macro_rules! create_asset {
     ($service:expr, $ctx:expr, $supply:expr, $precision:expr) => {{
         service_call!($service, create_asset, $ctx, CreateAssetPayload {
-            name:      "miao".to_owned(),
-            symbol:    "😺".to_owned(),
+            name:      "meow".to_owned(),
+            symbol:    "MIMI".to_owned(),
             supply:    $supply,
             precision: $precision,
+            relayable: true,
         })
     }};
 }
@@ -87,6 +88,7 @@ fn test_transfer() {
         asset_id: asset.id.clone(),
         to:       recipient.clone(),
         value:    1024,
+        memo:     "test".to_owned(),
     });
 
     let caller_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
@@ -116,6 +118,7 @@ fn test_approve() {
         asset_id: asset.id.clone(),
         to:       recipient.clone(),
         value:    1024,
+        memo:     "test".to_owned(),
     });
 
     let allowance = service_call!(service, get_allowance, ctx, GetAllowancePayload {
@@ -141,6 +144,7 @@ fn test_transfer_from() {
         asset_id: asset.id.clone(),
         to:       recipient.clone(),
         value:    1024,
+        memo:     "test".to_owned(),
     });
 
     let recipient_ctx = mock_context(recipient.clone());
@@ -153,6 +157,7 @@ fn test_transfer_from() {
             sender:    caller.clone(),
             recipient: recipient.clone(),
             value:     24,
+            memo:      "test".to_owned(),
         }
     );
 
@@ -184,13 +189,13 @@ fn test_change_admin() {
     let caller = TestService::caller();
     let ctx = mock_context(caller.clone());
 
-    let changed = service.change_admin(ctx, NewAdmin {
+    let changed = service.change_admin(ctx, ChangeAdminPayload {
         addr: caller.clone(),
     });
     assert!(changed.is_error());
 
     let ctx = mock_context(TestService::admin());
-    service_call!(service, change_admin, ctx, NewAdmin {
+    service_call!(service, change_admin, ctx, ChangeAdminPayload {
         addr: caller.clone(),
     });
 
@@ -206,11 +211,11 @@ fn test_mint() {
 
     let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
 
-    let asset_to_mint = MintAsset {
+    let asset_to_mint = MintAssetPayload {
         asset_id: asset.id.clone(),
         to:       recipient.clone(),
         amount:   100,
-        proof:    Hex::default(),
+        proof:    Hex::from_string("0x1122".to_owned()).unwrap(),
         memo:     "".to_owned(),
     };
     let minted = service.mint(ctx, asset_to_mint.clone());
@@ -220,16 +225,20 @@ fn test_mint() {
     service_call!(service, mint, ctx.clone(), asset_to_mint);
     assert_eq!(ctx.get_events().len(), 1);
 
-    let event: MintEvent = serde_json::from_str(&ctx.get_events()[0].data).expect("event");
+    let event: MintAssetEvent = serde_json::from_str(&ctx.get_events()[0].data).expect("event");
     assert_eq!(event.asset_id, asset.id);
     assert_eq!(event.to, recipient);
     assert_eq!(event.amount, 100);
 
-    let recipient_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
-        asset_id: asset.id,
+    let recipient_balance = service_call!(service, get_balance, ctx.clone(), GetBalancePayload {
+        asset_id: asset.id.clone(),
         user:     recipient,
     });
     assert_eq!(recipient_balance.balance, 100);
+
+    let asset_ret = service_call!(service, get_asset, ctx, GetAssetPayload { id: asset.id });
+
+    assert_eq!(asset_ret.supply, 10100)
 }
 
 #[test]
@@ -239,25 +248,90 @@ fn test_burn() {
     let ctx = mock_context(caller.clone());
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
-    let asset_to_burn = BurnAsset {
+    let asset_to_burn = BurnAssetPayload {
         asset_id: asset.id.clone(),
         amount:   100,
-        proof:    Hex::default(),
+        proof:    Hex::from_string("0xaaBB".to_owned()).unwrap(),
         memo:     "".to_owned(),
     };
     service_call!(service, burn, ctx.clone(), asset_to_burn);
 
     assert_eq!(ctx.get_events().len(), 2);
-    let event: BurnEvent = serde_json::from_str(&ctx.get_events()[1].data).expect("event");
+    let event: BurnAssetEvent = serde_json::from_str(&ctx.get_events()[1].data).expect("event");
     assert_eq!(event.asset_id, asset.id);
     assert_eq!(event.from, caller);
     assert_eq!(event.amount, 100);
 
-    let caller_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+    let caller_balance = service_call!(service, get_balance, ctx.clone(), GetBalancePayload {
         asset_id: asset.id.clone(),
         user:     caller,
     });
     assert_eq!(caller_balance.balance, asset.supply - 100);
+
+    let asset_ret = service_call!(service, get_asset, ctx, GetAssetPayload { id: asset.id });
+
+    assert_eq!(asset_ret.supply, 9900)
+}
+
+#[test]
+fn test_relayable() {
+    let mut service = TestService::new();
+    let caller = TestService::caller();
+    let ctx = mock_context(caller.clone());
+    let asset = create_asset!(service, ctx.clone(), 10000, 10);
+
+    let asset_to_relay = RelayAssetPayload {
+        asset_id: asset.id.clone(),
+        amount:   100,
+        proof:    Hex::from_string("0xaaBB".to_owned()).unwrap(),
+        memo:     "".to_owned(),
+    };
+    service_call!(service, relay, ctx.clone(), asset_to_relay);
+
+    assert_eq!(ctx.get_events().len(), 3);
+    let event: RelayAssetEvent = serde_json::from_str(&ctx.get_events()[2].data).expect("event");
+    assert_eq!(event.asset_id, asset.id);
+    assert_eq!(event.from, caller);
+    assert_eq!(event.amount, 100);
+
+    let caller_balance = service_call!(service, get_balance, ctx.clone(), GetBalancePayload {
+        asset_id: asset.id.clone(),
+        user:     caller,
+    });
+    assert_eq!(caller_balance.balance, asset.supply - 100);
+
+    let asset_ret = service_call!(service, get_asset, ctx, GetAssetPayload { id: asset.id });
+
+    assert_eq!(asset_ret.supply, 9900)
+}
+
+#[test]
+fn test_unrelayable() {
+    let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+
+    let mut service = TestService::new();
+    let ctx = mock_context(caller);
+
+    // test create_asset
+
+    let asset = service
+        .create_asset(ctx.clone(), CreateAssetPayload {
+            name:      "Cat9".to_owned(),
+            symbol:    "MIMI".to_owned(),
+            supply:    10000,
+            precision: 100,
+            relayable: false,
+        })
+        .succeed_data;
+
+    let resp = service.relay(ctx, RelayAssetPayload {
+        asset_id: asset.id,
+        amount:   100,
+        proof:    Hex::from_string("0xaaBB".to_owned()).unwrap(),
+        memo:     "".to_owned(),
+    });
+
+    assert!(resp.is_error())
 }
 
 #[test]
@@ -271,6 +345,7 @@ fn test_transfer_to_self() {
         asset_id: asset.id.clone(),
         to:       caller.clone(),
         value:    100,
+        memo:     "test".to_owned(),
     });
 
     let caller_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
@@ -278,6 +353,96 @@ fn test_transfer_to_self() {
         user:     caller,
     });
     assert_eq!(caller_balance.balance, asset.supply);
+}
+
+#[test]
+fn test_check_format() {
+    let caller = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+
+    let mut service = TestService::new();
+    let ctx = mock_context(caller);
+
+    // test create_asset
+
+    let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
+        name:      "咪咪".to_owned(),
+        symbol:    "MIMI".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
+
+    let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
+        name:      "we1l".to_owned(),
+        symbol:    "😺".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
+
+    let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
+        name:      "we1l".to_owned(),
+        symbol:    "m".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
+
+    let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
+        name:      "_we1l".to_owned(),
+        symbol:    "M".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
+
+    let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
+        name:      "we1l_".to_owned(),
+        symbol:    "M".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
+
+    let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
+        name:      " we1l".to_owned(),
+        symbol:    "M".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
+
+    let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
+        name:      "we1l ".to_owned(),
+        symbol:    "M".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
+
+    let create_asset_resp = service.create_asset(ctx, CreateAssetPayload {
+        name:      "1we1l ".to_owned(),
+        symbol:    "M".to_owned(),
+        supply:    10000,
+        precision: 100,
+        relayable: true,
+    });
+
+    assert!(create_asset_resp.is_error());
 }
 
 struct TestService(AssetService<SDK>);
@@ -330,13 +495,14 @@ impl TestService {
         InitGenesisPayload {
             id: Hash::digest(Bytes::from_static(b"test")),
             name: "test".to_owned(),
-            symbol: "test".to_owned(),
+            symbol: "TEST".to_owned(),
             supply: 1000,
             precision: 10,
             issuer: admin.clone(),
             fee_account: admin.clone(),
             fee: 1,
             admin,
+            relayable: true,
         }
     }
 }

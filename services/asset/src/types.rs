@@ -1,5 +1,4 @@
 #![allow(clippy::mutable_key_type)]
-
 use std::{
     cmp::Ordering,
     collections::BTreeMap,
@@ -28,6 +27,7 @@ pub struct InitGenesisPayload {
     pub fee_account: Address,
     pub fee:         u64,
     pub admin:       Address,
+    pub relayable:   bool,
 }
 
 impl InitGenesisPayload {
@@ -55,6 +55,7 @@ pub struct CreateAssetPayload {
     pub symbol:    String,
     pub supply:    u64,
     pub precision: u64,
+    pub relayable: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -67,6 +68,7 @@ pub struct TransferPayload {
     pub asset_id: Hash,
     pub to:       Address,
     pub value:    u64,
+    pub memo:     String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -75,6 +77,7 @@ pub struct TransferEvent {
     pub from:     Address,
     pub to:       Address,
     pub value:    u64,
+    pub memo:     String,
 }
 
 pub type ApprovePayload = TransferPayload;
@@ -85,6 +88,7 @@ pub struct ApproveEvent {
     pub grantor:  Address,
     pub grantee:  Address,
     pub value:    u64,
+    pub memo:     String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -93,6 +97,7 @@ pub struct TransferFromPayload {
     pub sender:    Address,
     pub recipient: Address,
     pub value:     u64,
+    pub memo:      String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -102,6 +107,7 @@ pub struct TransferFromEvent {
     pub sender:    Address,
     pub recipient: Address,
     pub value:     u64,
+    pub memo:      String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -140,6 +146,7 @@ pub struct Asset {
     pub supply:    u64,
     pub precision: u64,
     pub issuer:    Address,
+    pub relayable: bool,
 }
 
 pub struct AssetBalance {
@@ -272,7 +279,7 @@ impl Default for AssetBalance {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MintAsset {
+pub struct MintAssetPayload {
     pub asset_id: Hash,
     pub to:       Address,
     pub amount:   u64,
@@ -281,28 +288,35 @@ pub struct MintAsset {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BurnAsset {
+pub struct BurnAssetPayload {
     pub asset_id: Hash,
     pub amount:   u64,
     pub proof:    Hex,
     pub memo:     String,
 }
 
+pub type RelayAssetPayload = BurnAssetPayload;
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MintEvent {
+pub struct MintAssetEvent {
     pub asset_id: Hash,
     pub to:       Address,
     pub amount:   u64,
+    pub proof:    Hex,
+    pub memo:     String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct BurnEvent {
+pub struct BurnAssetEvent {
     pub asset_id: Hash,
     pub from:     Address,
     pub amount:   u64,
+    pub proof:    Hex,
+    pub memo:     String,
 }
+pub type RelayAssetEvent = BurnAssetEvent;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct NewAdmin {
+pub struct ChangeAdminPayload {
     pub addr: Address,
 }
