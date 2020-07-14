@@ -15,26 +15,6 @@ use protocol::ProtocolResult;
 
 use crate::ServiceError;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct IssuerWithBalance {
-    pub addr:    Address,
-    pub balance: u64,
-}
-
-impl IssuerWithBalance {
-    pub fn new(addr: Address, balance: u64) -> Self {
-        IssuerWithBalance { addr, balance }
-    }
-
-    pub fn verify(&self) -> Result<(), &'static str> {
-        if self.addr == Address::default() {
-            Err("invalid issuer")
-        } else {
-            Ok(())
-        }
-    }
-}
-
 /// Payload
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct InitGenesisPayload {
@@ -43,7 +23,7 @@ pub struct InitGenesisPayload {
     pub symbol:      String,
     pub supply:      u64,
     pub precision:   u64,
-    pub issuers:     Vec<IssuerWithBalance>,
+    pub issuer:      Address,
     pub fee_account: Address,
     pub fee:         u64,
     pub admin:       Address,
@@ -55,7 +35,7 @@ impl InitGenesisPayload {
         if self.id == Hash::default() {
             return Err("invalid asset id");
         }
-        if self.issuers.iter().any(|issuer| issuer.verify().is_err()) {
+        if self.issuer == Address::default() {
             return Err("invalid issuer");
         }
         if self.fee_account == Address::default() {
@@ -63,19 +43,6 @@ impl InitGenesisPayload {
         }
         if self.admin == Address::default() {
             return Err("invalid admin");
-        }
-
-        let mut total_balance = 0u64;
-        for issuer in self.issuers.iter() {
-            let (checked_value, overflow) = total_balance.overflowing_add(issuer.balance);
-            if overflow {
-                return Err("sum of issuers balance overflow");
-            }
-
-            total_balance = checked_value;
-        }
-        if total_balance > self.supply {
-            return Err("sum of issuers balance is greater than supply");
         }
 
         Ok(())
@@ -178,7 +145,7 @@ pub struct Asset {
     pub symbol:    String,
     pub supply:    u64,
     pub precision: u64,
-    pub issuers:   Vec<Address>,
+    pub issuer:    Address,
     pub relayable: bool,
 }
 
