@@ -32,12 +32,16 @@ const KYC_SERVICE_ADMIN_KEY: &str = "kyc_service_admin";
 
 macro_rules! require_service_admin {
     ($service:expr, $ctx:expr) => {{
-        let admin = $service
+        let admin = if let Some(tmp) = $service
             .sdk
-            .get_value(&KYC_SERVICE_ADMIN_KEY.to_owned())
-            .expect("admin not found");
+            .get_value::<_, Address>(&KYC_SERVICE_ADMIN_KEY.to_owned())
+        {
+            tmp
+        } else {
+            return ServiceError::NonAuthorized.into();
+        };
 
-        if $ctx.get_caller() != admin {
+        if admin != $ctx.get_caller() {
             return ServiceError::NonAuthorized.into();
         }
     }};

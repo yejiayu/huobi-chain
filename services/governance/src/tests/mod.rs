@@ -213,7 +213,7 @@ fn test_calc_fee_above_floor_fee() {
     // 45 * 50% = 22
     // floor fee 10
     // max(27,10) = 22
-    assert_eq!(service.calc_tx_fee(&context), 22);
+    assert_eq!(service.calc_tx_fee(&context).unwrap(), 22);
 }
 
 #[test]
@@ -248,7 +248,7 @@ fn test_calc_fee_below_floor_fee() {
     // 9 * 50% = 4
     // floor fee 10
     // max(4,10) = 10
-    assert_eq!(service.calc_tx_fee(&context), 10);
+    assert_eq!(service.calc_tx_fee(&context).unwrap(), 10);
 }
 
 #[test]

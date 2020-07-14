@@ -24,9 +24,11 @@ const NATIVE_ASSET_KEY: &str = "native_asset";
 
 macro_rules! require_admin {
     ($sdk:expr, $ctx:expr) => {{
-        let admin: Address = $sdk
-            .get_value(&ADMIN_KEY.to_owned())
-            .expect("admin not found");
+        let admin = if let Some(tmp) = $sdk.get_value::<_, Address>(&ADMIN_KEY.to_owned()) {
+            tmp
+        } else {
+            return ServiceError::Unauthorized.into();
+        };
 
         if admin != $ctx.get_caller() {
             return ServiceError::Unauthorized.into();

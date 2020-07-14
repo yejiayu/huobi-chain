@@ -14,12 +14,16 @@ use types::{AddressList, Genesis, NewAdmin, StatusList, Validate};
 
 macro_rules! require_admin {
     ($service:expr, $ctx:expr) => {{
-        let admin = $service
+        let admin = if let Some(tmp) = $service
             .sdk
-            .get_value(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
-            .expect("admin not found");
+            .get_value::<_, Address>(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
+        {
+            tmp
+        } else {
+            return ServiceError::NonAuthorized.into();
+        };
 
-        if $ctx.get_caller() != admin {
+        if admin != $ctx.get_caller() {
             return ServiceError::NonAuthorized.into();
         }
     }};
