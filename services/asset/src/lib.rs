@@ -11,9 +11,9 @@ use serde::Serialize;
 use crate::types::{
     ApproveEvent, ApprovePayload, Asset, AssetBalance, BurnAssetEvent, BurnAssetPayload,
     ChangeAdminPayload, CreateAssetPayload, GetAllowancePayload, GetAllowanceResponse,
-    GetAssetPayload, GetBalancePayload, GetBalanceResponse, InitGenesisPayload, MintAssetEvent,
-    MintAssetPayload, RelayAssetEvent, RelayAssetPayload, TransferEvent, TransferFromEvent,
-    TransferFromPayload, TransferPayload,
+    GetAssetPayload, GetBalancePayload, GetBalanceResponse, HookTransferFromPayload,
+    InitGenesisPayload, MintAssetEvent, MintAssetPayload, RelayAssetEvent, RelayAssetPayload,
+    TransferEvent, TransferFromEvent, TransferFromPayload, TransferPayload,
 };
 use binding_macro::{cycles, genesis, service, write};
 use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap, StoreUint64};
@@ -42,6 +42,18 @@ macro_rules! require_asset_exists {
             return ServiceError::AssetNotFound($asset_id).into();
         }
     };
+}
+
+macro_rules! get_native_asset {
+    ($service:expr) => {{
+        let res = $service
+            .sdk
+            .get_value::<_, Hash>(&NATIVE_ASSET_KEY.to_owned());
+        if res.is_none() {
+            return ServiceError::NoNativeAsset.into();
+        }
+        res.unwrap()
+    }};
 }
 
 pub struct AssetService<SDK> {
@@ -105,9 +117,8 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     #[cycles(100_00)]
     #[read]
     fn get_native_asset(&self, _ctx: ServiceContext) -> ServiceResponse<Asset> {
-        let asset_id: Hash = self
-            .get_value(&NATIVE_ASSET_KEY.to_owned())
-            .expect("native asset id should not be empty");
+        let asset_id = get_native_asset!(self);
+
         self.read_asset_(&asset_id)
             .map(ServiceResponse::from_succeed)
             .unwrap_or_else(|| ServiceError::AssetNotFound(asset_id).into())
@@ -228,32 +239,6 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
     #[cycles(210_00)]
     #[write]
-    fn approve(&mut self, ctx: ServiceContext, payload: ApprovePayload) -> ServiceResponse<()> {
-        require_asset_exists!(self, payload.asset_id);
-
-        let caller = ctx.get_caller();
-        if caller == payload.to {
-            return ServiceError::ApproveToSelf.into();
-        }
-
-        let asset_id = &payload.asset_id;
-        let mut caller_balance = self.asset_balance(&caller, &asset_id);
-
-        caller_balance.update_allowance(payload.to.clone(), payload.value);
-        self.set_account_value(&caller, asset_id.to_owned(), caller_balance);
-
-        let event = ApproveEvent {
-            asset_id: payload.asset_id,
-            grantor:  caller,
-            grantee:  payload.to,
-            value:    payload.value,
-            memo:     payload.memo,
-        };
-        Self::emit_event(&ctx, "ApproveAsset".to_owned(), event)
-    }
-
-    #[cycles(210_00)]
-    #[write]
     fn transfer_from(
         &mut self,
         ctx: ServiceContext,
@@ -304,6 +289,66 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             memo: payload.memo,
         };
         Self::emit_event(&ctx, "TransferFrom".to_owned(), event)
+    }
+
+    #[cycles(210_00)]
+    #[write]
+    fn hook_transfer_from(
+        &mut self,
+        ctx: ServiceContext,
+        payload: HookTransferFromPayload,
+    ) -> ServiceResponse<()> {
+        if let Some(admin_key) = ctx.get_extra() {
+            if admin_key != Bytes::from_static(b"governance") {
+                return ServiceError::Unauthorized.into();
+            }
+        }
+
+        let asset_id = get_native_asset!(self);
+        if let Err(err) = self._transfer(
+            &payload.sender,
+            &payload.recipient,
+            asset_id.clone(),
+            payload.value,
+        ) {
+            return err.into();
+        }
+
+        let event = TransferFromEvent {
+            asset_id,
+            caller: ctx.get_caller(),
+            sender: payload.sender,
+            recipient: payload.recipient,
+            value: payload.value,
+            memo: payload.memo,
+        };
+        Self::emit_event(&ctx, "HookTransferFrom".to_owned(), event)
+    }
+
+    #[cycles(210_00)]
+    #[write]
+    fn approve(&mut self, ctx: ServiceContext, payload: ApprovePayload) -> ServiceResponse<()> {
+        require_asset_exists!(self, payload.asset_id);
+
+        let caller = ctx.get_caller();
+        if caller == payload.to {
+            return ServiceError::ApproveToSelf.into();
+        }
+
+        let asset_id = &payload.asset_id;
+        let mut caller_balance = self.asset_balance(&caller, &asset_id);
+
+        caller_balance.update_allowance(payload.to.clone(), payload.value);
+        self.set_account_value(&caller, asset_id.to_owned(), caller_balance);
+
+        let event = ApproveEvent {
+            asset_id: payload.asset_id,
+            grantor:  caller,
+            grantee:  payload.to,
+            value:    payload.value,
+            memo:     payload.memo,
+        };
+        Self::emit_event(&ctx, "ApproveAsset".to_owned(), event)
     }
 
     #[cycles(210_00)]
@@ -573,6 +618,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Asset is not relay-able")]
     NotRelayable,
+
+    #[display(fmt = "Can not get native asset")]
+    NoNativeAsset,
 }
 
 impl ServiceError {
@@ -589,6 +637,7 @@ impl ServiceError {
             ServiceError::Unauthorized => 109,
             ServiceError::Format => 110,
             ServiceError::NotRelayable => 111,
+            ServiceError::NoNativeAsset => 112,
         }
     }
 }

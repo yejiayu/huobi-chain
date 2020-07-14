@@ -5,10 +5,10 @@ authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
 
 [dependencies]
-muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.1"}
-protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.1", package = "muta-protocol" }
-authorization = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.1"}
-multi-signature = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.1"}
+muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.2"}
+protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.2", package = "muta-protocol" }
+authorization = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.2"}
+multi-signature = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.2"}
 
 derive_more = "0.99"
 tokio = { version = "0.2", features = ["macros", "rt-core", "rt-util"]}
@@ -20,6 +20,19 @@ kyc = { path = "services/kyc" }
 riscv = { path = "services/riscv" }
 admission_control = { path = "services/admission_control" }
 governance = { path = "services/governance" }
+
+[dev-dependencies]
+bytes = "0.5"
+cita_trie = "2.0"
+async-trait = "0.1"
+hex = "0.4"
+toml = "0.5"
+lazy_static = "1.4"
+muta-codec-derive = "0.2"
+rlp = "0.4"
+framework = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-dev.2"}
+serde_json = "1.0"
+serde = "1.0"
 
 [workspace]
 members = [

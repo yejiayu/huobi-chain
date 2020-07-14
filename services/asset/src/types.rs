@@ -101,6 +101,14 @@ pub struct TransferFromPayload {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct HookTransferFromPayload {
+    pub sender:    Address,
+    pub recipient: Address,
+    pub value:     u64,
+    pub memo:      String,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TransferFromEvent {
     pub asset_id:  Hash,
     pub caller:    Address,

@@ -6,7 +6,7 @@ sudo: true
 env:
   global:
     - RUST_BACKTRACE=full
-    - USE_SYS_ROCKSDB: true
+    - USE_SYS_ROCKSDB: false
     - FMT: true
     - CHECK: true
     - TEST: true
@@ -29,8 +29,6 @@ addons:
   apt:
     packages:
     - gcc
-    - librocksdb5.8
-    - librocksdb-dev
 
 install: ./devtools/ci/install.sh
 script: ./devtools/ci/script.sh

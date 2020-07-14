@@ -31,7 +31,8 @@ payload = '''
     "issuer": "0xcff1002107105460941f797828f468667aa1a2db",
     "fee": 1,
     "fee_account": "0xcff1002107105460941f797828f468667aa1a2db",
-    "admin": "0xcff1002107105460941f797828f468667aa1a2db"
+    "admin": "0xcff1002107105460941f797828f468667aa1a2db",
+    "relayable": true
 }
 '''
 
@@ -64,8 +65,6 @@ payload = '''
 
 [[services]]
 name = "governance"
-# private key of this admin:
-# 2b672bb959fa7a852d7259b129b65aee9c83b39f427d6f7bded1f58c4c9310c2
 payload = '''
 {
     "info": {

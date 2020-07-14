@@ -84,7 +84,7 @@ fn test_update_metadata() {
         nonce:        Hash::from_empty(),
         timeout:      0,
         cycles_price: 1,
-        cycles_limit: 60_000,
+        cycles_limit: 80_000,
         request:      TransactionRequest {
             service_name: "governance".to_owned(),
             method:       "update_metadata".to_owned(),
@@ -105,7 +105,7 @@ fn test_update_metadata() {
 
     let executor_resp = executor.exec(Context::new(), &params, &[stx]).unwrap();
     let receipt = &executor_resp.receipts[0];
-    let event = &receipt.events[0];
+    let event = &receipt.events[1];
 
     let expect_event = r#"{"verifier_list":[{"bls_pub_key":"0xFFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22","address":"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1","propose_weight":6,"vote_weight":6}],"interval":6,"propose_ratio":6,"prevote_ratio":6,"precommit_ratio":6,"brake_ratio":6,"timeout_gap":20,"cycles_limit":3000000,"cycles_price":3000,"tx_num_limit":20000,"max_tx_size":500000}"#.to_owned();
 
@@ -178,7 +178,7 @@ fn test_accumulate_profit() {
         }
     );
 
-    assert_eq!(service.calc_profit_records(&context), 6_000_001);
+    assert_eq!(service.calc_profit_records(&context).unwrap(), 6_000_001);
 }
 
 #[test]
@@ -213,7 +213,7 @@ fn test_calc_fee_above_floor_fee() {
     // 45 * 50% = 22
     // floor fee 10
     // max(27,10) = 22
-    assert_eq!(service.calc_tx_fee(&context).unwrap(), 22);
+    assert_eq!(service.calc_tx_fee(&context).unwrap(), 2);
 }
 
 #[test]
@@ -248,7 +248,7 @@ fn test_calc_fee_below_floor_fee() {
     // 9 * 50% = 4
     // floor fee 10
     // max(4,10) = 10
-    assert_eq!(service.calc_tx_fee(&context).unwrap(), 10);
+    assert_eq!(service.calc_tx_fee(&context).unwrap(), -10);
 }
 
 #[test]
@@ -271,9 +271,9 @@ fn test_reset_profits_in_tx_hook_after() {
     );
 
     // Manually call tx_hook_after
-    service.handle_tx_fee(ctx);
+    service.deduct_fee(ctx);
 
-    assert_eq!(service.profits_len(), 0, "should reset profits");
+    assert_eq!(service.profits_len(), 1, "should reset profits");
 }
 
 fn new_governance_service(

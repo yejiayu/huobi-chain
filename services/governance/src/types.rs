@@ -216,11 +216,11 @@ pub struct AccumulateProfitPayload {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct TransferFromPayload {
-    pub asset_id:  Hash,
+pub struct HookTransferFromPayload {
     pub sender:    Address,
     pub recipient: Address,
     pub value:     u64,
+    pub memo:      String,
 }
 
 #[derive(RlpFixedCodec, Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
