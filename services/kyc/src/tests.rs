@@ -1,7 +1,8 @@
 use crate::{
     types::{
-        ChangeOrgAdmin, ChangeOrgApproved, EvalUserTagExpression, FixedTagList, Genesis,
-        GetUserTags, NewOrgEvent, OrgName, RegisterNewOrg, TagName, UpdateUserTags, Validate,
+        ChangeOrgAdmin, ChangeOrgApproved, ChangeServiceAdmin, EvalUserTagExpression, FixedTagList,
+        Genesis, GetUserTags, NewOrgEvent, OrgName, RegisterNewOrg, TagName, UpdateUserTags,
+        Validate,
     },
     ExpressionDataFeed, KycService, ServiceError, UpdateOrgSupportTags,
 };
@@ -81,7 +82,9 @@ fn should_correctly_init_genesis() {
 
     // Change service admin
     let ctx = mock_context(TestService::service_admin());
-    let changed = service.change_service_admin(ctx.clone(), TestService::chen_ten());
+    let changed = service.change_service_admin(ctx.clone(), ChangeServiceAdmin {
+        new_admin: TestService::chen_ten(),
+    });
     assert!(!changed.is_error());
 
     // Change org admin

@@ -600,3 +600,18 @@ impl Validate for ChangeOrgAdmin {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChangeServiceAdmin {
+    pub new_admin: Address,
+}
+
+impl Validate for ChangeServiceAdmin {
+    fn validate(&self) -> Result<(), ServiceError> {
+        if self.new_admin == Address::default() {
+            Err(BadPayload("invalid admin address").into())
+        } else {
+            Ok(())
+        }
+    }
+}

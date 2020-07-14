@@ -7,9 +7,9 @@ use error::ServiceError;
 
 use expression::traits::ExpressionDataFeed;
 use types::{
-    ChangeOrgAdmin, ChangeOrgApproved, EvalUserTagExpression, FixedTagList, Genesis, GetUserTags,
-    KycOrgInfo, NewOrgEvent, OrgName, RegisterNewOrg, TagName, UpdateOrgSupportTags,
-    UpdateUserTags, Validate,
+    ChangeOrgAdmin, ChangeOrgApproved, ChangeServiceAdmin, EvalUserTagExpression, FixedTagList,
+    Genesis, GetUserTags, KycOrgInfo, NewOrgEvent, OrgName, RegisterNewOrg, TagName,
+    UpdateOrgSupportTags, UpdateUserTags, Validate,
 };
 
 use binding_macro::{cycles, genesis, service};
@@ -277,12 +277,16 @@ impl<SDK: ServiceSDK> KycService<SDK> {
     fn change_service_admin(
         &mut self,
         ctx: ServiceContext,
-        new_admin: Address,
+        payload: ChangeServiceAdmin,
     ) -> ServiceResponse<()> {
+        if let Err(e) = payload.validate() {
+            return e.into();
+        }
+
         require_service_admin!(self, &ctx);
 
         self.sdk
-            .set_value(KYC_SERVICE_ADMIN_KEY.to_owned(), new_admin);
+            .set_value(KYC_SERVICE_ADMIN_KEY.to_owned(), payload.new_admin);
         ServiceResponse::from_succeed(())
     }
 
