@@ -12,8 +12,9 @@ use protocol::types::{Address, Bytes, Hash, Hex, ServiceContext, ServiceContextP
 
 use crate::types::{
     ApprovePayload, BurnAssetEvent, BurnAssetPayload, ChangeAdminPayload, CreateAssetPayload,
-    GetAllowancePayload, GetAssetPayload, GetBalancePayload, InitGenesisPayload, MintAssetEvent,
-    MintAssetPayload, RelayAssetEvent, RelayAssetPayload, TransferFromPayload, TransferPayload,
+    GetAllowancePayload, GetAssetPayload, GetBalancePayload, InitGenesisPayload, IssuerWithBalance,
+    MintAssetEvent, MintAssetPayload, RelayAssetEvent, RelayAssetPayload, TransferFromPayload,
+    TransferPayload,
 };
 use crate::AssetService;
 
@@ -445,6 +446,131 @@ fn test_check_format() {
     assert!(create_asset_resp.is_error());
 }
 
+#[test]
+fn test_multiple_issuers_genesis() {
+    let storage = ImplStorage::new(Arc::new(MemoryAdapter::new()));
+    let chain_db = DefaultChainQuerier::new(Arc::new(storage));
+
+    let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
+    let state = GeneralServiceState::new(trie);
+
+    let sdk = DefaultServiceSDK::new(
+        Rc::new(RefCell::new(state)),
+        Rc::new(chain_db),
+        NoopDispatcher {},
+    );
+
+    let admin = Address::from_hex(ADMIN).unwrap();
+    let caller = Address::from_hex(CALLER).unwrap();
+
+    let mut service = AssetService::new(sdk);
+    let asset_id = Hash::digest(Bytes::from_static(b"test"));
+    let genesis = InitGenesisPayload {
+        id:          asset_id.clone(),
+        name:        "test".to_owned(),
+        symbol:      "TEST".to_owned(),
+        supply:      1000,
+        precision:   10,
+        issuers:     vec![
+            IssuerWithBalance::new(admin.clone(), 500),
+            IssuerWithBalance::new(caller.clone(), 500),
+        ],
+        fee_account: admin.clone(),
+        fee:         1,
+        admin:       admin.clone(),
+        relayable:   true,
+    };
+
+    service.init_genesis(genesis);
+
+    let ctx = mock_context(caller.clone());
+    for addr in vec![caller, admin] {
+        let account = service_call!(service, get_balance, ctx.clone(), GetBalancePayload {
+            asset_id: asset_id.clone(),
+            user:     addr,
+        });
+        assert_eq!(account.balance, 500);
+    }
+}
+
+#[test]
+#[should_panic]
+fn test_genesis_issuers_balance_overflow() {
+    let storage = ImplStorage::new(Arc::new(MemoryAdapter::new()));
+    let chain_db = DefaultChainQuerier::new(Arc::new(storage));
+
+    let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
+    let state = GeneralServiceState::new(trie);
+
+    let sdk = DefaultServiceSDK::new(
+        Rc::new(RefCell::new(state)),
+        Rc::new(chain_db),
+        NoopDispatcher {},
+    );
+
+    let admin = Address::from_hex(ADMIN).unwrap();
+    let caller = Address::from_hex(CALLER).unwrap();
+
+    let mut service = AssetService::new(sdk);
+    let asset_id = Hash::digest(Bytes::from_static(b"test"));
+    let genesis = InitGenesisPayload {
+        id: asset_id,
+        name: "test".to_owned(),
+        symbol: "TEST".to_owned(),
+        supply: 1000,
+        precision: 10,
+        issuers: vec![
+            IssuerWithBalance::new(admin.clone(), u64::MAX),
+            IssuerWithBalance::new(caller, 500),
+        ],
+        fee_account: admin.clone(),
+        fee: 1,
+        admin,
+        relayable: true,
+    };
+
+    service.init_genesis(genesis);
+}
+
+#[test]
+#[should_panic]
+fn test_genesis_issuers_balance_greater_than_supply() {
+    let storage = ImplStorage::new(Arc::new(MemoryAdapter::new()));
+    let chain_db = DefaultChainQuerier::new(Arc::new(storage));
+
+    let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
+    let state = GeneralServiceState::new(trie);
+
+    let sdk = DefaultServiceSDK::new(
+        Rc::new(RefCell::new(state)),
+        Rc::new(chain_db),
+        NoopDispatcher {},
+    );
+
+    let admin = Address::from_hex(ADMIN).unwrap();
+    let caller = Address::from_hex(CALLER).unwrap();
+
+    let mut service = AssetService::new(sdk);
+    let asset_id = Hash::digest(Bytes::from_static(b"test"));
+    let genesis = InitGenesisPayload {
+        id: asset_id,
+        name: "test".to_owned(),
+        symbol: "TEST".to_owned(),
+        supply: 1000,
+        precision: 10,
+        issuers: vec![
+            IssuerWithBalance::new(admin.clone(), 900),
+            IssuerWithBalance::new(caller, 500),
+        ],
+        fee_account: admin.clone(),
+        fee: 1,
+        admin,
+        relayable: true,
+    };
+
+    service.init_genesis(genesis);
+}
+
 struct TestService(AssetService<SDK>);
 
 impl Deref for TestService {
@@ -498,7 +624,7 @@ impl TestService {
             symbol: "TEST".to_owned(),
             supply: 1000,
             precision: 10,
-            issuer: admin.clone(),
+            issuers: vec![IssuerWithBalance::new(admin.clone(), 1000)],
             fee_account: admin.clone(),
             fee: 1,
             admin,
