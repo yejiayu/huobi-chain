@@ -394,6 +394,18 @@
     "@mutadev/wallet" "0.2.0-dev.0"
     utility-types "^3.10.0"
 
+"@mutadev/service@^0.2.0-dev.0":
+  version "0.2.0-dev.0"
+  resolved "https://registry.yarnpkg.com/@mutadev/service/-/service-0.2.0-dev.0.tgz#31228bd49d5d8871bdf7fb9a7daa50596789f043"
+  integrity sha512-2fnG7WlPYkn7MsAjvPxx2dfvGWm2OvTSCbLm2SpKm1u5aAwSjCK3bWd6Kd99LFPdFyE18xEDQ+aPW+F0drA5/g==
+  dependencies:
+    "@mutadev/account" "0.2.0-dev.0"
+    "@mutadev/client" "0.2.0-dev.0"
+    "@mutadev/shared" "0.2.0-dev.0"
+    "@mutadev/types" "0.2.0-dev.0"
+    "@mutadev/utils" "0.2.0-dev.0"
+    lodash "^4.17.15"
+
 "@mutadev/shared@0.2.0-dev.0":
   version "0.2.0-dev.0"
   resolved "https://registry.npm.taobao.org/@mutadev/shared/download/@mutadev/shared-0.2.0-dev.0.tgz#3a37ce6914547925a6cf14f297cba9fd3361941a"
@@ -747,6 +759,11 @@ array-includes@^3.1.1:
     define-properties "^1.1.3"
     es-abstract "^1.17.0"
     is-string "^1.0.5"
+
+array-uniq@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/array-uniq/-/array-uniq-1.0.2.tgz#5fcc373920775723cfd64d65c64bef53bf9eba6d"
+  integrity sha1-X8w3OSB3VyPP1k1lxkvvU7+eum0=
 
 array-unique@^0.3.2:
   version "0.3.2"
@@ -2068,6 +2085,11 @@ http-signature@~1.2.0:
     assert-plus "^1.0.0"
     jsprim "^1.2.2"
     sshpk "^1.7.0"
+
+huobi-chain-sdk@^0.0.8:
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/huobi-chain-sdk/-/huobi-chain-sdk-0.0.8.tgz#8fb852dcfaa85c2cb9afc03b9739f1a09fed1ef5"
+  integrity sha512-XY7W9z16GIL3CWQnSd8mKLGAmbRVHAhqvGJzBecFB6s+Zy04XrNkdcemiZA8zq3oRE7bO6lhZRqBV3eAZBdm2g==
 
 iconv-lite@0.4.24, iconv-lite@^0.4.24:
   version "0.4.24"
@@ -3543,6 +3565,13 @@ randombytes@^2.0.1, randombytes@^2.1.0:
   integrity sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==
   dependencies:
     safe-buffer "^5.1.0"
+
+randomstring@^1.1.5:
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/randomstring/-/randomstring-1.1.5.tgz#6df0628f75cbd5932930d9fe3ab4e956a18518c3"
+  integrity sha1-bfBij3XL1ZMpMNn+OrTpVqGFGMM=
+  dependencies:
+    array-uniq "1.0.2"
 
 react-is@^16.8.4:
   version "16.13.1"

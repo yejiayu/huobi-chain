@@ -95,3 +95,24 @@ payload = '''
     "deploy_auth": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
 }
 '''
+
+[[services]]
+name = "kyc"
+payload = '''
+{
+   "org_name": "huobi",
+   "org_description": "",
+   "org_admin": "0xcff1002107105460941f797828f468667aa1a2db",
+   "supported_tags": [ "name", "gender", "age" ],
+   "service_admin": "0xcff1002107105460941f797828f468667aa1a2db"
+}
+'''
+
+[[services]]
+name = "admission_control"
+payload = '''
+{
+   "admin": "0xcff1002107105460941f797828f468667aa1a2db",
+   "deny_list": [ "0xd2d268749ffe54def4e2e73e5e06a4ebf0d6f585" ]
+}
+'''

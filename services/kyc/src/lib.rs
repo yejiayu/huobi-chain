@@ -151,7 +151,7 @@ impl<SDK: ServiceSDK> KycService<SDK> {
 
     #[cycles(21_000)]
     #[read]
-    fn get_orgs(&self, ctx: ServiceContext, _: String) -> ServiceResponse<Vec<OrgName>> {
+    fn get_orgs(&self, ctx: ServiceContext) -> ServiceResponse<Vec<OrgName>> {
         let mut org_names = Vec::new();
 
         for (org_name, _) in self.orgs_approved.iter() {

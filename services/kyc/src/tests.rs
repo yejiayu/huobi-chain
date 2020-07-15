@@ -27,6 +27,16 @@ use std::{
 };
 
 macro_rules! service_call {
+    ($service:expr, $method:ident, $ctx:expr) => {{
+        let resp = $service.$method($ctx);
+        if resp.is_error() {
+            println!("{}", resp.error_message);
+        }
+        assert!(!resp.is_error());
+
+        resp.succeed_data
+    }};
+
     ($service:expr, $method:ident, $ctx:expr, $payload:expr) => {{
         let resp = $service.$method($ctx, $payload);
         if resp.is_error() {
@@ -77,7 +87,7 @@ fn should_correctly_init_genesis() {
 
     // Fetch org comes with genesis
     let caller = Address::from_hex(CHEN_TEN).expect("caller");
-    let org_names = service_call!(service, get_orgs, mock_context(caller), r#""#.to_owned());
+    let org_names = service_call!(service, get_orgs, mock_context(caller));
     assert_eq!(org_names, vec!["Da_Lisi".parse().expect("Da lisi")]);
 
     // Change service admin
@@ -101,7 +111,7 @@ fn should_cost_10_000_cycles_per_name_on_get_orgs() {
     let ctx = mock_context(TestService::service_admin());
     let cycles_before = ctx.get_cycles_used();
 
-    service_call!(kyc, get_orgs, ctx.clone(), r#""#.to_owned());
+    service_call!(kyc, get_orgs, ctx.clone());
 
     let cycles_after = ctx.get_cycles_used();
     // We only have 1 org in genesis
