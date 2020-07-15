@@ -28,7 +28,7 @@ payload = '''
     "symbol": "HTTest",
     "supply": 50000000000000000,
     "precision": 8,
-    "issuer": "0xcff1002107105460941f797828f468667aa1a2db",
+    "issuers": [{"addr": "0xcff1002107105460941f797828f468667aa1a2db", "balance": 50000000000000000}],
     "fee": 1,
     "fee_account": "0xcff1002107105460941f797828f468667aa1a2db",
     "admin": "0xcff1002107105460941f797828f468667aa1a2db",

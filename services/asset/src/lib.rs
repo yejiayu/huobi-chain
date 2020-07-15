@@ -91,13 +91,18 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             panic!(e);
         }
 
+        let issuers = {
+            let issuers = payload.issuers.iter();
+            issuers.map(|ib| ib.addr.to_owned()).collect()
+        };
+
         let asset = Asset {
-            id:        payload.id.clone(),
-            name:      payload.name,
-            symbol:    payload.symbol,
-            supply:    payload.supply,
+            id: payload.id.clone(),
+            name: payload.name,
+            symbol: payload.symbol,
+            supply: payload.supply,
             precision: payload.precision,
-            issuer:    payload.issuer.clone(),
+            issuers,
             relayable: payload.relayable,
         };
 
@@ -109,9 +114,15 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
         self.set_value(NATIVE_ASSET_KEY.to_owned(), payload.id.clone());
         self.set_value(ADMIN_KEY.to_owned(), payload.admin);
-
         self.fee.set(payload.fee);
-        self.set_account_value(&asset.issuer, asset.id, AssetBalance::new(payload.supply))
+
+        for issuer_balance in payload.issuers {
+            self.set_account_value(
+                &issuer_balance.addr,
+                asset.id.clone(),
+                AssetBalance::new(issuer_balance.balance),
+            )
+        }
     }
 
     #[cycles(100_00)]
@@ -195,7 +206,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             symbol:    payload.symbol,
             supply:    payload.supply,
             precision: payload.precision,
-            issuer:    caller,
+            issuers:   vec![caller],
             relayable: payload.relayable,
         };
 
@@ -205,8 +216,10 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
         self.assets.insert(asset_id, asset.clone());
 
-        let balance = AssetBalance::new(payload.supply);
-        self.set_account_value(&asset.issuer, asset.id.clone(), balance);
+        if let Some(issuer) = asset.issuers.first() {
+            let balance = AssetBalance::new(payload.supply);
+            self.set_account_value(issuer, asset.id.clone(), balance);
+        }
 
         Self::emit_event(&ctx, "CreateAsset".to_owned(), &asset);
         ServiceResponse::from_succeed(asset)

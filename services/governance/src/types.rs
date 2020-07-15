@@ -230,7 +230,7 @@ pub struct Asset {
     pub symbol:    String,
     pub supply:    u64,
     pub precision: u64,
-    pub issuer:    Address,
+    pub issuers:   Vec<Address>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

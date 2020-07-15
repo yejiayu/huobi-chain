@@ -10,7 +10,7 @@ payload = '''
     "symbol": "HT",
     "supply": 320000011,
     "precision": 100000,
-    "issuer": "0xf8389d774afdad8755ef8e629e5a154fddc6325a",
+    "issuers": [{"addr": "0xf8389d774afdad8755ef8e629e5a154fddc6325a", "balance": 320000011}],
     "fee_account": "0x503492f4bddc731a72b8caa806183f921c284f8e",
     "fee": 10,
     "admin": "0xf8389d774afdad8755ef8e629e5a154fddc6325a",
