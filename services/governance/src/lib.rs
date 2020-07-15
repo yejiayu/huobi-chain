@@ -337,6 +337,12 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
 
         let info = info.unwrap();
         let tx_fee_inlet_address = tx_fee_inlet_address.unwrap();
+        // clean fee
+        let profits = self.profits.iter().map(|pair| pair.0).collect::<Vec<_>>();
+
+        profits
+            .into_iter()
+            .for_each(|addr| self.profits.insert(addr, 0));
 
         // Pledge the tx failure fee before executed the transaction.
         let ret = self.hook_transfer_from(&ctx, HookTransferFromPayload {
