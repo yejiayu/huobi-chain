@@ -26,7 +26,7 @@ int main() {
     char result[] = "contract_execute_result";
     pvm_ret(result, strlen(result));
 
-	return 0;
+    return 0;
 }
 ```
 
@@ -51,6 +51,24 @@ CKB-VM 仅为单线程模型，合约文件可以自行提供 coroutine 实现�
 
 在 service 源代码的 example 和 test 文件夹中有大量的参考示例。本文档也提供了一个[合约开发的教程](./contract_demo)，请读者自行参阅相关章节。
 
+## 创世块配置
+
+```toml
+[[services]]
+name = 'riscv'
+payload = '''
+{
+    "enable_authorization": true,
+    "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
+    "deploy_auth": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
+}
+'''
+```
+
+- enable_authorization: 是否开启授权模式，开启后，合约的部署和执行都需要授权
+- admins: 服务的管理员地址列表
+- deploy_auth: 部署权限预授权地址
+
 ## 接口
 
 ### 部署合约
@@ -58,8 +76,6 @@ CKB-VM 仅为单线程模型，合约文件可以自行提供 coroutine 实现�
 ```rust
 pub enum InterpreterType {
     Binary = 1,
-    #[cfg(debug_assertions)]
-    Duktape = 2,
 }
 
 pub struct DeployPayload {
@@ -77,7 +93,7 @@ pub struct DeployResp {
 - method: deploy
 - 参数
   - code：合约代码，使用 hex 编码
-  - intp_type：生产环境目前仅支持 `Binary`，即 ELF 二进制文件格式，dev 和 test 环境可以使用 `Duktape`，即使用 js 代码作为合约代码
+  - intp_type：生产环境目前仅支持 `Binary`，即 ELF 二进制文件格式
   - init_args：初始化参数
 - 返回值
   - address：合约地址
@@ -92,11 +108,36 @@ pub struct ExecPayload {
 }
 ```
 
-- method: exec
+- method:
+  - 写调用： exec
+  - 只读调用：call
 - 参数
   - address：调用的合约地址
   - args：合约调用参数
 - 返回值：为合约返回的字符串
+- 注: call 调用如果有修改状态，会返回错误。
+
+### 获取合约
+
+```rust
+pub struct GetContractPayload {
+    pub address:      Address,
+    pub get_code:     bool,
+    pub storage_keys: Vec<String>,
+}
+```
+
+- method: get_contract
+- 参数
+  - address: 要获取的合约地址
+  - get_code: 是否获取合约的二进制代码
+  - storage_keys: 要获取合约内保存的数据，其键值
+- 返回值
+  - code_hsh: 合约的哈希
+  - intp_type: 合约的类型
+  - code: 合约二进制代码，可为空
+  - storage_values: 对应入参中的合约内保存的数据
+  - authorizer: 授权合约可执行的授权人地址，如未授权，则为空
 
 ### 授权部署合约/撤销授权/查看授权
 
@@ -117,3 +158,19 @@ pub struct ExecPayload {
 - 返回值
   - grant_deploy_auth 和 revoke_deploy_auth 无返回值
   - check_deploy_auth 返回待检查列表中有权限的地址
+
+### 授权合约可执行/撤销授权
+
+```rust
+pub struct AddressList {
+    pub addresses: Vec<Address>,
+}
+```
+
+- method:
+  - 授权： approve_contracts
+  - 撤销： revoke_contracts
+- payload: 均为合约地址数组
+  - addresses: 被授权/撤销的合约地址列表
+- 返回值
+  - approve_contracts 和 revoke_contracts 成功，无返回值
