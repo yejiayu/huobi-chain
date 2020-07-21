@@ -25,7 +25,6 @@ use multi_signature::MultiSignatureService;
 lazy_static::lazy_static! {
     pub static ref ADMIN_ACCOUNT: Address = Address::from_hex("0xcff1002107105460941f797828f468667aa1a2db").unwrap();
     pub static ref FEE_ACCOUNT: Address = Address::from_hex("0xcff1002107105460941f797828f468667aa1a2db").unwrap();
-    pub static ref FEE_INLET_ACCOUNT: Address = Address::from_hex("0x503492f4bddc731a72b8caa806183f921c284f8e").unwrap();
     pub static ref PROPOSER_ACCOUNT: Address = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
     pub static ref NATIVE_ASSET_ID: Hash = Hash::from_hex("0xf56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c").unwrap();
 }
@@ -94,8 +93,7 @@ macro_rules! exec_txs {
             Response {
                 exec_resp: resp,
                 fee_balance: balances[0],
-                fee_inlet_balance: balances[1],
-                proposer_balance: balances[2],
+                proposer_balance: balances[1],
             }
         }
     };
@@ -106,10 +104,9 @@ mod types;
 
 #[derive(Clone, Debug)]
 pub struct Response {
-    exec_resp:         ExecutorResp,
-    fee_balance:       u64,
-    fee_inlet_balance: u64,
-    proposer_balance:  u64,
+    exec_resp:        ExecutorResp,
+    fee_balance:      u64,
+    proposer_balance: u64,
 }
 
 pub fn construct_stx(
@@ -146,7 +143,6 @@ pub fn construct_stx(
 pub fn tx_requests() -> Vec<TransactionRequest> {
     vec![
         gen_tx_request(FEE_ACCOUNT.clone()),
-        gen_tx_request(FEE_INLET_ACCOUNT.clone()),
         gen_tx_request(PROPOSER_ACCOUNT.clone()),
     ]
 }

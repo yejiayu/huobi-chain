@@ -11,6 +11,5 @@ fn test_governance() {
         })
     );
 
-    assert_eq!(res.fee_inlet_balance, 150);
-    assert_eq!(res.proposer_balance, 10);
+    assert_eq!(res.proposer_balance, 160);
 }

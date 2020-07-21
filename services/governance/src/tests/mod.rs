@@ -24,7 +24,7 @@ use protocol::ProtocolResult;
 use crate::types::{
     AccumulateProfitPayload, Asset, DiscountLevel, GovernanceInfo, SetAdminPayload,
 };
-use crate::{GovernanceService, INFO_KEY, TX_FEE_INLET_KEY};
+use crate::{GovernanceService, INFO_KEY};
 
 lazy_static::lazy_static! {
     static ref ADDRESS_1: Address = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
@@ -105,7 +105,7 @@ fn test_update_metadata() {
 
     let executor_resp = executor.exec(Context::new(), &params, &[stx]).unwrap();
     let receipt = &executor_resp.receipts[0];
-    let event = &receipt.events[1];
+    let event = &receipt.events[2];
 
     let expect_event = r#"{"verifier_list":[{"bls_pub_key":"0xFFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22","address":"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1","propose_weight":6,"vote_weight":6}],"interval":6,"propose_ratio":6,"prevote_ratio":6,"precommit_ratio":6,"brake_ratio":6,"timeout_gap":20,"cycles_limit":3000000,"cycles_price":3000,"tx_num_limit":20000,"max_tx_size":500000}"#.to_owned();
 
@@ -276,6 +276,36 @@ fn test_reset_profits_in_tx_hook_after() {
     assert_eq!(service.profits_len(), 1, "should reset profits");
 }
 
+#[test]
+fn test_hook_before() {
+    let memdb = Arc::new(MemoryDB::new(false));
+    let toml_str = include_str!("./test_genesis.toml");
+    let genesis: Genesis = toml::from_str(toml_str).unwrap();
+
+    let root = ServiceExecutor::create_genesis(
+        genesis.services,
+        Arc::clone(&memdb),
+        Arc::new(MockStorage {}),
+        Arc::new(MockServiceMapping {}),
+    )
+    .unwrap();
+
+    let proposer = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+    let params = ExecutorParams {
+        state_root:   root,
+        height:       1,
+        timestamp:    0,
+        cycles_limit: std::u64::MAX,
+        proposer:     proposer.clone(),
+    };
+
+    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+    let mut service = new_governance_service(admin);
+
+    service.set_block_miner(&params);
+    assert_eq!(service.block_miner(), proposer);
+}
+
 fn new_governance_service(
     admin: Address,
 ) -> GovernanceService<
@@ -295,8 +325,6 @@ fn new_governance_service(
         MockDispatcher {},
     );
 
-    let fee_addr = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
-    sdk.set_value(TX_FEE_INLET_KEY.to_string(), fee_addr);
     sdk.set_value(INFO_KEY.to_string(), mock_governance_info(admin));
 
     GovernanceService::new(sdk)

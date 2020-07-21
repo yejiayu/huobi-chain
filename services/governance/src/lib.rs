@@ -9,7 +9,9 @@ use bytes::Bytes;
 use derive_more::{Display, From};
 use serde::Serialize;
 
-use binding_macro::{cycles, genesis, hook_after, service, tx_hook_after, tx_hook_before};
+use binding_macro::{
+    cycles, genesis, hook_after, hook_before, service, tx_hook_after, tx_hook_before,
+};
 use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap};
 use protocol::types::{Address, Metadata, ServiceContext, ServiceContextParams};
 
@@ -26,7 +28,7 @@ use std::convert::{From, TryInto};
 use crate::types::{Asset, GetBalancePayload, GetBalanceResponse};
 
 const INFO_KEY: &str = "admin";
-const TX_FEE_INLET_KEY: &str = "fee_address";
+const BLOCK_MINER_KEY: &str = "block_miner";
 const MINER_PROFIT_OUTLET_KEY: &str = "miner_address";
 const MILLION: u64 = 1_000_000;
 const HUNDRED: u64 = 100;
@@ -77,8 +79,6 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         let mut info = payload.info;
         info.tx_fee_discount.sort();
         self.sdk.set_value(INFO_KEY.to_string(), info);
-        self.sdk
-            .set_value(TX_FEE_INLET_KEY.to_string(), payload.tx_fee_inlet_address);
         self.sdk.set_value(
             MINER_PROFIT_OUTLET_KEY.to_string(),
             payload.miner_profit_outlet_address,
@@ -322,21 +322,29 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         Ok(profit_sum)
     }
 
+    #[hook_before]
+    fn set_block_miner(&mut self, params: &ExecutorParams) {
+        let miner_addr = {
+            let opt_miner = self.miners.get(&params.proposer);
+            opt_miner.unwrap_or_else(|| params.proposer.clone())
+        };
+
+        self.sdk.set_value(BLOCK_MINER_KEY.to_owned(), miner_addr);
+    }
+
     #[tx_hook_before]
     fn pledge_fee(&mut self, ctx: ServiceContext) -> ServiceResponse<String> {
         let info = self
             .sdk
             .get_value::<_, GovernanceInfo>(&INFO_KEY.to_owned());
-        let tx_fee_inlet_address = self
-            .sdk
-            .get_value::<_, Address>(&TX_FEE_INLET_KEY.to_owned());
+        let miner_addr = self.sdk.get_value(&BLOCK_MINER_KEY.to_owned());
 
-        if info.is_none() || tx_fee_inlet_address.is_none() {
+        if info.is_none() || miner_addr.is_none() {
             return ServiceError::MissingInfo.into();
         }
 
         let info = info.unwrap();
-        let tx_fee_inlet_address = tx_fee_inlet_address.unwrap();
+        let miner_addr = miner_addr.unwrap();
         // clean fee
         let profits = self.profits.iter().map(|pair| pair.0).collect::<Vec<_>>();
 
@@ -345,12 +353,13 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             .for_each(|addr| self.profits.insert(addr, 0));
 
         // Pledge the tx failure fee before executed the transaction.
-        let ret = self.hook_transfer_from(&ctx, HookTransferFromPayload {
+        let transfer_from_payload = HookTransferFromPayload {
             sender:    ctx.get_caller(),
-            recipient: tx_fee_inlet_address,
+            recipient: miner_addr,
             value:     info.tx_failure_fee,
             memo:      "pledge tx failure fee".to_string(),
-        });
+        };
+        let ret = self.hook_transfer_from(&ctx, transfer_from_payload.clone());
 
         if let Err(e) = ret {
             if e.is_error() {
@@ -358,7 +367,12 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             }
         }
 
-        ServiceResponse::from_succeed("".to_owned())
+        let resp = Self::emit_event(&ctx, "PledgeFee".to_owned(), transfer_from_payload);
+        if resp.is_error() {
+            ServiceResponse::from_error(resp.code, resp.error_message)
+        } else {
+            ServiceResponse::from_succeed("".to_owned())
+        }
     }
 
     #[tx_hook_after]
@@ -373,26 +387,25 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             return ServiceResponse::from_succeed("".to_owned());
         }
 
-        let tx_fee_inlet_address = self
-            .sdk
-            .get_value::<_, Address>(&TX_FEE_INLET_KEY.to_owned());
-        if tx_fee_inlet_address.is_none() {
+        let miner_addr = self.sdk.get_value(&BLOCK_MINER_KEY.to_owned());
+        if miner_addr.is_none() {
             return ServiceError::MissingInfo.into();
         }
 
-        let tx_fee_inlet_address = tx_fee_inlet_address.unwrap();
+        let miner_addr = miner_addr.unwrap();
         let (tx, rx) = if tx_fee > 0 {
-            (ctx.get_caller(), tx_fee_inlet_address)
+            (ctx.get_caller(), miner_addr)
         } else {
-            (tx_fee_inlet_address, ctx.get_caller())
+            (miner_addr, ctx.get_caller())
         };
 
-        let ret = self.hook_transfer_from(&ctx, HookTransferFromPayload {
+        let transfer_from_payload = HookTransferFromPayload {
             sender:    tx,
             recipient: rx,
             value:     tx_fee.abs() as u64,
             memo:      "collect tx fee".to_string(),
-        });
+        };
+        let ret = self.hook_transfer_from(&ctx, transfer_from_payload.clone());
 
         if let Err(e) = ret {
             if e.is_error() {
@@ -400,7 +413,12 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             }
         }
 
-        ServiceResponse::from_succeed("".to_owned())
+        let resp = Self::emit_event(&ctx, "DeductFee".to_owned(), transfer_from_payload);
+        if resp.is_error() {
+            ServiceResponse::from_error(resp.code, resp.error_message)
+        } else {
+            ServiceResponse::from_succeed("".to_owned())
+        }
     }
 
     #[hook_after]
@@ -495,6 +513,13 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             .try_into()
             .map_err(|_| ServiceError::Overflow)?;
         Ok(fee)
+    }
+
+    #[cfg(test)]
+    fn block_miner(&self) -> Address {
+        self.sdk
+            .get_value::<_, Address>(&BLOCK_MINER_KEY.to_owned())
+            .unwrap()
     }
 
     #[cfg(test)]
