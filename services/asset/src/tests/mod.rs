@@ -206,8 +206,7 @@ fn test_change_admin() {
 #[test]
 fn test_mint() {
     let mut service = TestService::new();
-    let caller = TestService::caller();
-    let ctx = mock_context(caller);
+    let ctx = mock_context(TestService::caller());
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
     let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
@@ -219,14 +218,14 @@ fn test_mint() {
         proof:    Hex::from_string("0x1122".to_owned()).unwrap(),
         memo:     "".to_owned(),
     };
-    let minted = service.mint(ctx, asset_to_mint.clone());
-    assert!(minted.is_error(), "mint require admin permission");
+    let ctx_admin = mock_context(TestService::admin());
+    let minted = service.mint(ctx_admin, asset_to_mint.clone());
+    assert!(minted.is_error(), "mint require issuer permission");
 
-    let ctx = mock_context(TestService::admin());
     service_call!(service, mint, ctx.clone(), asset_to_mint);
-    assert_eq!(ctx.get_events().len(), 1);
+    assert_eq!(ctx.get_events().len(), 2);
 
-    let event: MintAssetEvent = serde_json::from_str(&ctx.get_events()[0].data).expect("event");
+    let event: MintAssetEvent = serde_json::from_str(&ctx.get_events()[1].data).expect("event");
     assert_eq!(event.asset_id, asset.id);
     assert_eq!(event.to, recipient);
     assert_eq!(event.amount, 100);

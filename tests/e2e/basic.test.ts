@@ -15,7 +15,10 @@ describe('basic API test via muta-sdk-js', () => {
 
   test('getBlock', async () => {
     const block = await client.getBlock('0x01');
-    expect(hexToNum(block.header.height)).toBe(1);
+    expect(block).not.toBe(undefined);
+    if(block != undefined) {
+      expect(hexToNum(block.header.height)).toBe(1);
+    }
   });
 
   test('send_tx_exceed_cycles_limit', async () => {
@@ -82,6 +85,9 @@ describe('basic API test via muta-sdk-js', () => {
     expect(receipt.txHash).toBe(hash);
 
     const committedTx = await client.getTransaction(hash);
-    expect(committedTx.txHash).toBe(hash);
+    expect(committedTx).not.toBe(undefined);
+    if(committedTx != undefined) {
+      expect(committedTx.txHash).toBe(hash);
+    }
   });
 });

@@ -62,6 +62,7 @@ fn test_deploy_and_run() {
     let context = TestContext::default().make_admin();
 
     let code = read_code!("src/tests/simple_storage");
+
     let deploy_result = service!(service, deploy, context.clone(), DeployPayload {
         code:      code.clone(),
         intp_type: InterpreterType::Binary,

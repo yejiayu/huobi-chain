@@ -382,13 +382,16 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     #[cycles(210_00)]
     #[write]
     fn mint(&mut self, ctx: ServiceContext, payload: MintAssetPayload) -> ServiceResponse<()> {
-        require_admin!(self.sdk, &ctx);
-
         let mut asset = if let Some(asset) = self.read_asset_(&payload.asset_id) {
             asset
         } else {
             return ServiceError::AssetNotFound(payload.asset_id.clone()).into();
         };
+
+        let caller = ctx.get_caller();
+        if !asset.issuers.contains(&caller) {
+            return ServiceError::Unauthorized.into();
+        }
 
         let (checked_value, overflow) = asset.supply.overflowing_add(payload.amount);
         if overflow {

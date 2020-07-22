@@ -345,102 +345,105 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
-"@mutadev/account@0.2.0-dev.0", "@mutadev/account@^0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/account/download/@mutadev/account-0.2.0-dev.0.tgz#450c678a53dba09fb16c7a03910a355259026b13"
-  integrity sha1-RQxnilPboJ+xbHoDkQo1UlkCaxM=
+"@mutadev/account@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/account/-/account-0.2.0-dev.2.tgz#39b46168aced8678e322b30fee87e482c936936f"
+  integrity sha512-SLkCOgP1CGhM20WuyJDLGeiR3ff8hYtYG6C6bxaXpHoIvCajDv4R9TMeol6Gq8M2JYYj0edrZ0dU3x3yIqHB2w==
   dependencies:
-    "@mutadev/utils" "0.2.0-dev.0"
+    "@mutadev/defaults" "0.2.0-dev.2"
+    "@mutadev/utils" "0.2.0-dev.2"
 
-"@mutadev/client-raw@0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/client-raw/download/@mutadev/client-raw-0.2.0-dev.0.tgz#d0d52ee92690e097fa69553f760e42a82134ce05"
-  integrity sha1-0NUu6SaQ4Jf6aVU/dg5CqCE0zgU=
+"@mutadev/client-raw@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/client-raw/-/client-raw-0.2.0-dev.2.tgz#7fd738acb84bedd74f45a065f76974104828d202"
+  integrity sha512-2tjjmD5KmurSPALZwsNsvA+QHle6gkW+zQJNV5onlzjigj7WZRZG5BCKWXD40TWSshuSIc2XEyiwy20weM52ig==
   dependencies:
     graphql-request "^1.8.2"
     graphql-tag "^2.10.1"
 
-"@mutadev/client@0.2.0-dev.0", "@mutadev/client@^0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/client/download/@mutadev/client-0.2.0-dev.0.tgz#95b80c8b7b07262b016306becfdb3666df4c0e4d"
-  integrity sha1-lbgMi3sHJisBYwa+z9s2Zt9MDk0=
+"@mutadev/client@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/client/-/client-0.2.0-dev.2.tgz#bcd9eb9aa154eeb034c9d57bfc128eb96ea38f15"
+  integrity sha512-Y1WqPqhuGTwlW0cEz20ANhlvDKBlZWIL3tNWuxPwJknS5thrQSAQfQchFCgxgQwuEWhnFKCvqBrokWzHOMH3Wg==
   dependencies:
-    "@mutadev/client-raw" "0.2.0-dev.0"
-    "@mutadev/defaults" "0.2.0-dev.0"
-    "@mutadev/shared" "0.2.0-dev.0"
-    "@mutadev/types" "0.2.0-dev.0"
-    "@mutadev/utils" "0.2.0-dev.0"
+    "@mutadev/account" "0.2.0-dev.2"
+    "@mutadev/client-raw" "0.2.0-dev.2"
+    "@mutadev/defaults" "0.2.0-dev.2"
+    "@mutadev/shared" "0.2.0-dev.2"
+    "@mutadev/types" "0.2.0-dev.2"
+    "@mutadev/utils" "0.2.0-dev.2"
     "@types/lodash" "^4.14.149"
-    invariant "^2.2.4"
     lodash "^4.17.15"
     p-limit "^2.3.0"
     utility-types "^3.10.0"
 
-"@mutadev/defaults@0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/defaults/download/@mutadev/defaults-0.2.0-dev.0.tgz#bc8dcf5796b60582c1b582b396cbef7467dd7df9"
-  integrity sha1-vI3PV5a2BYLBtYKzlsvvdGfdffk=
+"@mutadev/defaults@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/defaults/-/defaults-0.2.0-dev.2.tgz#a51ec2e4fd85b0934f9c528cf91f61f53d4774d3"
+  integrity sha512-+zNzscnfN7FD31J0OjmoWhuXbAPfBAq2dXXekqoUru/QE21imxMDLN1O+aXbMnyGFXkxEms8mLJfEk/NQ7Wkog==
 
-"@mutadev/muta-sdk@0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/muta-sdk/download/@mutadev/muta-sdk-0.2.0-dev.0.tgz#f502b0c315afc4c64759dc1717a4decb7061bd86"
-  integrity sha1-9QKwwxWvxMZHWdwXF6Tey3BhvYY=
+"@mutadev/muta-sdk@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/muta-sdk/-/muta-sdk-0.2.0-dev.2.tgz#ddb88a3fc76e2a601bcec151da10b3a45c1f8b40"
+  integrity sha512-lNSMDd0UaEQegj3bDmLHvppHdqicdO6OfGap2eUA7anAXPrAABzRyqKANF3uEEby5G4qQBpHprkDmmJG/GH+SQ==
   dependencies:
-    "@mutadev/account" "0.2.0-dev.0"
-    "@mutadev/client" "0.2.0-dev.0"
-    "@mutadev/defaults" "0.2.0-dev.0"
-    "@mutadev/shared" "0.2.0-dev.0"
-    "@mutadev/types" "0.2.0-dev.0"
-    "@mutadev/wallet" "0.2.0-dev.0"
+    "@mutadev/account" "0.2.0-dev.2"
+    "@mutadev/client" "0.2.0-dev.2"
+    "@mutadev/defaults" "0.2.0-dev.2"
+    "@mutadev/shared" "0.2.0-dev.2"
+    "@mutadev/types" "0.2.0-dev.2"
+    "@mutadev/wallet" "0.2.0-dev.2"
     utility-types "^3.10.0"
 
-"@mutadev/service@^0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@mutadev/service/-/service-0.2.0-dev.0.tgz#31228bd49d5d8871bdf7fb9a7daa50596789f043"
-  integrity sha512-2fnG7WlPYkn7MsAjvPxx2dfvGWm2OvTSCbLm2SpKm1u5aAwSjCK3bWd6Kd99LFPdFyE18xEDQ+aPW+F0drA5/g==
+"@mutadev/service@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/service/-/service-0.2.0-dev.2.tgz#ede1d52ba8f33e9a49e1e2cfc856c81f82b569b0"
+  integrity sha512-EqV977gRQ6NCGNqX+bpy/BHnfXuMCmpYYCeschm8upmd5uoC0ywqWSExYwuJwT2p9rIh8afOizjV/2ouTsxD0Q==
   dependencies:
-    "@mutadev/account" "0.2.0-dev.0"
-    "@mutadev/client" "0.2.0-dev.0"
-    "@mutadev/shared" "0.2.0-dev.0"
-    "@mutadev/types" "0.2.0-dev.0"
-    "@mutadev/utils" "0.2.0-dev.0"
+    "@mutadev/account" "0.2.0-dev.2"
+    "@mutadev/client" "0.2.0-dev.2"
+    "@mutadev/shared" "0.2.0-dev.2"
+    "@mutadev/types" "0.2.0-dev.2"
+    "@mutadev/utils" "0.2.0-dev.2"
     lodash "^4.17.15"
+    utility-types "^3.10.0"
 
-"@mutadev/shared@0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/shared/download/@mutadev/shared-0.2.0-dev.0.tgz#3a37ce6914547925a6cf14f297cba9fd3361941a"
-  integrity sha1-OjfOaRRUeSWmzxTyl8up/TNhlBo=
+"@mutadev/shared@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/shared/-/shared-0.2.0-dev.2.tgz#8a68debe176122a28f5625478318e29d87fbfa88"
+  integrity sha512-awGAOk2VjZXdfbkKV3xaDx5zHVmSQEF6Pgn+saAaooWJnNEIzADMYOOYSDijkIrn7Lb18y0XghDSBBIg6vjcpA==
   dependencies:
     "@types/invariant" "^2.2.4"
     bignumber.js "^9.0.0"
     invariant "^2.2.4"
 
-"@mutadev/types@0.2.0-dev.0", "@mutadev/types@^0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/types/download/@mutadev/types-0.2.0-dev.0.tgz#cef4a92090992e59f6bc74bc98c65db76b93ef9e"
-  integrity sha1-zvSpIJCZLln2vHS8mMZdt2uT754=
+"@mutadev/types@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/types/-/types-0.2.0-dev.2.tgz#647eb3f53e4d2532e15351ce2b84d47a5f29256c"
+  integrity sha512-uvZb4cM4mJ3H/LOkSBvwpKqAfOcbRGdHcEX3ZH++uwQevxVKE9677ymqGiAs0CVLQDffOcm7flsQvfMIUGdJwA==
   dependencies:
     bignumber.js "^9.0.0"
 
-"@mutadev/utils@0.2.0-dev.0", "@mutadev/utils@^0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/utils/download/@mutadev/utils-0.2.0-dev.0.tgz#ecd1e83cd0888355e2666d66224fd52190c8a0cc"
-  integrity sha1-7NHoPNCIg1XiZm1mIk/VIZDIoMw=
+"@mutadev/utils@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/utils/-/utils-0.2.0-dev.2.tgz#284ae4cbdfef68d829067d533a3056a6d0354fd2"
+  integrity sha512-W9QVgA2biOXVZzQ66l4kDcZ5KTGbqH+ZIJZdsRxvILZ0ZpAewN7juGn3FX3MKMuyDJlE66h7ToPB0mc18C03KA==
   dependencies:
-    "@mutadev/types" "0.2.0-dev.0"
+    "@mutadev/shared" "0.2.0-dev.2"
+    "@mutadev/types" "0.2.0-dev.2"
     json-bigint "^0.3.0"
     keccak "^3.0.0"
     randombytes "^2.1.0"
     rlp "^2.2.5"
     secp256k1 "^4.0.0"
 
-"@mutadev/wallet@0.2.0-dev.0":
-  version "0.2.0-dev.0"
-  resolved "https://registry.npm.taobao.org/@mutadev/wallet/download/@mutadev/wallet-0.2.0-dev.0.tgz#752dc05585ad059ee750e0103e64f958587e8a1b"
-  integrity sha1-dS3AVYWtBZ7nUOAQPmT5WFh+ihs=
+"@mutadev/wallet@0.2.0-dev.2":
+  version "0.2.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@mutadev/wallet/-/wallet-0.2.0-dev.2.tgz#7cbf880f6b98e0c15a47b23a404b197b041d8876"
+  integrity sha512-AQpjBswAgnEOXxy6bPc4I3i8kWDFIaAnULVqu9XiPQsUoZIXzSRVBFqfxo/HYEOwd0W/M8zcTJTScDqY0sspsQ==
   dependencies:
-    "@mutadev/account" "0.2.0-dev.0"
-    "@mutadev/utils" "0.2.0-dev.0"
+    "@mutadev/account" "0.2.0-dev.2"
+    "@mutadev/utils" "0.2.0-dev.2"
     bip39 "^3.0.2"
     hdkey "^1.1.1"
 
@@ -2086,10 +2089,10 @@ http-signature@~1.2.0:
     jsprim "^1.2.2"
     sshpk "^1.7.0"
 
-huobi-chain-sdk@^0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/huobi-chain-sdk/-/huobi-chain-sdk-0.0.8.tgz#8fb852dcfaa85c2cb9afc03b9739f1a09fed1ef5"
-  integrity sha512-XY7W9z16GIL3CWQnSd8mKLGAmbRVHAhqvGJzBecFB6s+Zy04XrNkdcemiZA8zq3oRE7bO6lhZRqBV3eAZBdm2g==
+huobi-chain-sdk@^0.0.11:
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/huobi-chain-sdk/-/huobi-chain-sdk-0.0.11.tgz#fd87e0d240fc22ad56db7ccbd976755d8f2bb4f6"
+  integrity sha512-IbbZK6KrkZWn46O6pXURVMUWniZJtCmm8oCS5Dp1UcNfLtPOQv168twAsOTqm6hC1JPNXiBz563VIriFtcDFXg==
 
 iconv-lite@0.4.24, iconv-lite@^0.4.24:
   version "0.4.24"

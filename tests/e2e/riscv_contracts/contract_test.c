@@ -35,7 +35,7 @@ uint64_t test_service_read() {
 uint64_t test_transfer_from_contract() {
     const char* service = "asset";
     const char* method = "transfer";
-    const char* payload = "{\"asset_id\":\"0xf56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c\", \"to\":\"0x0000000000000000000000000000000000000001\", \"value\": 100}";
+    const char* payload = "{\"asset_id\":\"0xf56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c\", \"to\":\"0x0000000000000000000000000000000000000001\", \"value\": 100, \"memo\": \"tt\"}";
 
     uint8_t ret[1000] = {0};
     uint64_t ret_len = pvm_service_call(service, method,

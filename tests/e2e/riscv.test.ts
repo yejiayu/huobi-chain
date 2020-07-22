@@ -1,184 +1,156 @@
 /* eslint-env node, jest */
 import { readFileSync } from 'fs';
-import { Muta } from '@mutadev/muta-sdk';
-// eslint-disable-next-line
-import { Account } from "@mutadev/account";
-import { hexToNum } from '@mutadev/utils';
-import { retry } from '@mutadev/client';
-// eslint-disable-next-line import/extensions,import/no-unresolved
-import { addFeeTokenToAccounts, getBalance, transfer } from './helper';
-import {
-  client,
-  accounts,
-  admin,
-  feeAssetID,
-  // eslint-disable-next-line
-} from "./utils";
+import { Address } from '@mutadev/types';
+import { InterpreterType, RISCVService } from 'huobi-chain-sdk';
+import { admin, client, genRandomAccount, get_balance, transfer } from './utils';
 
-function strToHex(s: string) {
-  return Buffer.from(s, 'utf8').toString('hex');
-}
+const riscvService = new RISCVService(client, admin);
 
-const deployAccount = Muta.accountFromPrivateKey(
-  'd6ef93ed5d27327fd10349a75d3b7a91aa5c1d0f42994be10c1cb0e357e722f5',
-);
-
-class Receipt {
-  code: Number;
-
-  errorMessage: string;
-
-  succeedData: string;
-
-  constructor(succeedData: string, code: number, errorMessage: string) {
-    this.succeedData = succeedData;
-    this.errorMessage = errorMessage;
-    this.code = code;
-  }
-
-  decode(): any {
-    try {
-      return JSON.parse(this.succeedData);
-    } catch (err) {
-      throw this.succeedData;
-    }
-  }
-}
-
-async function getReceipt(txHash: any) {
-  const raw = await retry(() => client.getReceipt(txHash));
-
-  return new Receipt(
-    raw.response.response.succeedData,
-    hexToNum(raw.response.response.code),
-    raw.response.response.errorMessage,
-  );
-}
-
-async function read(method: string, payload: any) {
-  const res = await client.queryService({
-    serviceName: 'riscv',
-    method,
-    payload: JSON.stringify(payload),
-  });
-
-  return JSON.parse(res.succeedData);
-}
-
-async function write(method: string, payload: any, account: Account) {
-  const tx = await client.composeTransaction({
-    serviceName: 'riscv',
-    method,
-    payload: JSON.stringify(payload),
-    sender: account.address,
-  });
-
-  const stx = account.signTransaction(tx);
-  const txHash = await client.sendTransaction(stx);
-  const receipt = await getReceipt(txHash);
-
-  if (receipt.code !== 0) {
-    throw receipt;
-  }
-
-  return receipt;
-}
-
-async function deploy(
-  code: any,
-  initArgs: string,
-  intpType: string,
-  account: any = null,
-) {
-  const payload = {
-    intp_type: intpType,
+async function deploy(code: string, initArgs: string, service = riscvService, expectCode = 0) {
+  const res0 = await service.write.deploy({
+    code,
+    intp_type: InterpreterType.Binary,
     init_args: initArgs,
-    code: code.toString('hex'),
-  };
-
-  const receipt = await write('deploy', payload, account || deployAccount);
-  return receipt.decode().address;
+  });
+  const resCode = Number(res0.response.response.code);
+  expect(resCode).toBe(expectCode);
+  if(resCode == 0) {
+    return res0.response.response.succeedData.address;
+  } else {
+    return ''
+  }
 }
 
-async function authorize(
-  method: string,
-  addressList: any,
-  account: any = null,
-) {
-  return write(method, { addresses: addressList }, account || admin);
+async function check_deploy_auth(address: Address, is_exist: boolean) {
+  const res0 = await riscvService.read.check_deploy_auth({
+    addresses: [ address ],
+  });
+  expect(Number(res0.code)).toBe(0);
+  const addresses = res0.succeedData.addresses;
+  if(is_exist) {
+    expect(addresses.indexOf(address)).not.toBe(-1);
+  } else {
+    expect(addresses.indexOf(address)).toBe(-1);
+  }
 }
 
-async function exec(address: string, args: string, account: any = null) {
-  return write('exec', { address, args }, account || admin);
+async function grant_deploy_auth(address: Address, service = riscvService, expectCode = 0) {
+  const res0 = await service.write.grant_deploy_auth({
+    addresses: [ address ],
+  });
+  expect(Number(res0.response.response.code)).toBe(expectCode);
 }
 
-async function call(address: string, args: string) {
-  return read('call', { address, args });
+async function revoke_deploy_auth(address: Address, service = riscvService, expectCode = 0) {
+  const res0 = await service.write.revoke_deploy_auth({
+    addresses: [ address ],
+  });
+  expect(Number(res0.response.response.code)).toBe(expectCode);
+}
+
+async function call(contractAddress: Address, args: string, service = riscvService, expectCode = 0) {
+  const res0 = await service.read.call({
+    address: contractAddress,
+    args,
+  });
+  const code = Number(res0.code);
+  expect(code).toBe(expectCode);
+  if(code == 0) {
+    return res0.succeedData;
+  } else {
+    return '';
+  }
+}
+
+async function exec(contractAddress: Address, args: string, service = riscvService, expectCode = 0) {
+  const res0 = await service.write.exec({
+    address: contractAddress,
+    args,
+  });
+  expect(Number(res0.response.response.code)).toBe(expectCode);
+}
+
+async function approve_contracts(contractAddress: Address, service = riscvService, expectCode = 0) {
+  const res0 = await service.write.approve_contracts({
+    addresses: [ contractAddress ],
+  });
+  expect(Number(res0.response.response.code)).toBe(expectCode);
+}
+
+async function revoke_contracts(contractAddress: Address, service = riscvService, expectCode = 0) {
+  const res0 = await service.write.revoke_contracts({
+    addresses: [ contractAddress ],
+  });
+  expect(Number(res0.response.response.code)).toBe(expectCode);
+}
+
+async function get_contract(contractAddress: Address, getCode: boolean, storageKeys: Array<string>) {
+  const res0 = await riscvService.read.get_contract({
+    address: contractAddress,
+    get_code: getCode,
+    storage_keys: storageKeys,
+  });
+  expect(Number(res0.code)).toBe(0);
+  return res0.succeedData;
 }
 
 describe('riscv service', () => {
-  beforeAll(async () => {
-    const accountsToAddFee = accounts.map((a) => a.address);
-    accountsToAddFee.push(deployAccount.address);
-    await addFeeTokenToAccounts(accountsToAddFee);
+  test('test_deploy_auth', async () => {
+    const code = readFileSync('../../services/riscv/src/tests/simple_storage');
+    const account = genRandomAccount();
+    const newService = new RISCVService(client, account);
+    await transfer(account.address, 9999999);
+    // deploy before auth
+    await deploy(code.toString('hex'), 'set k init', newService, 0x6d);
+    // auth
+    await check_deploy_auth(account.address, false);
+    await grant_deploy_auth(account.address);
+    await check_deploy_auth(account.address, true);
+    // deploy after auth
+    await deploy(code.toString('hex'), 'set k init', newService);
+    // revoke
+    await revoke_deploy_auth(account.address);
+    // deploy after revoke
+    await deploy(code.toString('hex'), 'set k init', newService, 0x6d);
+    await check_deploy_auth(account.address, false);
   });
 
-  test('test_riscv_deploy_auth', async () => {
-    const acc = accounts[1];
+  test('test_contract_auth', async () => {
     const code = readFileSync('../../services/riscv/src/tests/simple_storage');
-
-    // not authed
-    try {
-      await deploy(code, 'set k init', 'Binary', acc);
-    } catch (err) {
-      expect(err.errorMessage).toBe('Not authorized');
-    }
-
-    // check auth
-    let authorized = await read('check_deploy_auth', {
-      addresses: [acc.address, accounts[2].address],
-    });
-    expect(authorized.addresses).toStrictEqual([]);
-
-    // grant deploy auth to account
-    await authorize('grant_deploy_auth', [acc.address]);
-
-    // check auth again
-    authorized = await read('check_deploy_auth', {
-      addresses: [acc.address, accounts[2].address],
-    });
-    expect(authorized.addresses).toStrictEqual([acc.address]);
-
-    // deploy again
-    await deploy(code, 'set k init', 'Binary', acc);
-
-    // revoke auth
-    await authorize('revoke_deploy_auth', [acc.address]);
-
-    // check auth
-    authorized = await read('check_deploy_auth', {
-      addresses: [acc.address, accounts[2].address],
-    });
-    expect(authorized.addresses).toStrictEqual([]);
+    const account = genRandomAccount();
+    const newService = new RISCVService(client, account);
+    await transfer(account.address, 9999999);
+    await grant_deploy_auth(account.address);
+    const contractAddress = await deploy(code.toString('hex'), 'set k init', newService);
+    // before auth
+    await call(contractAddress, 'get k', riscvService, 0x6d);
+    await exec(contractAddress, 'set k v', riscvService, 0x6d);
+    // auth
+    await approve_contracts(contractAddress);
+    await call(contractAddress, 'get k');
+    await exec(contractAddress, 'set k v');
+    // revoke
+    await revoke_contracts(contractAddress);
+    await call(contractAddress, 'get k', riscvService, 0x6d);
+    await exec(contractAddress, 'set k v', riscvService, 0x6d);
   });
 
-  test('test_riscv_normal_process', async () => {
+  test('test_normal_process', async () => {
     const code = readFileSync('../../services/riscv/src/tests/simple_storage');
-    const address = await deploy(code, 'set k init', 'Binary');
-    // approve contract
-    await authorize('approve_contracts', [address]);
+    const account = genRandomAccount();
+    const newService = new RISCVService(client, account);
+    await transfer(account.address, 9999999);
+    await grant_deploy_auth(account.address);
+    const contractAddress = await deploy(code.toString('hex'), 'set k init', newService);
+    await approve_contracts(contractAddress);
 
-    expect(await call(address, 'get k')).toBe('init');
-    await exec(address, 'set k v', admin);
-    expect(await call(address, 'get k')).toBe('v');
-
+    const res0 = await call(contractAddress, 'get k');
+    expect(res0).toBe('init');
+    await exec(contractAddress, 'set k v', newService);
+    const res1 = await call(contractAddress, 'get k');
+    expect(res1).toBe('v');
     // get code
-    const contract = await read('get_contract', {
-      address,
-      get_code: true,
-      storage_keys: [Buffer.from('k', 'utf8').toString('hex'), '', '1a'],
-    });
-
+    const contract = await get_contract(contractAddress, true, [Buffer.from('k', 'utf8').toString('hex'), '', '1a']);
     expect(contract.code).toBe(code.toString('hex'));
     expect(contract.storage_values).toStrictEqual([
       Buffer.from('v', 'utf8').toString('hex'),
@@ -189,63 +161,29 @@ describe('riscv service', () => {
 
   test('test_service_call', async () => {
     const code = readFileSync('./riscv_contracts/contract_test');
-    const address = await deploy(code, '', 'Binary');
-    // approve contract
-    await authorize('approve_contracts', [address]);
-
+    await grant_deploy_auth(admin.address);
+    const contractAddress = await deploy(code.toString('hex'), '');
+    await approve_contracts(contractAddress);
     // contract call
-    const indirectDummy = (
-      await exec(address, 'test_call_dummy_method')
-    ).decode();
-    const dummy = (await exec(address, 'dummy_method')).decode();
-    expect(indirectDummy).toBe(dummy);
-
-    // invoke pvm_service_call failed
-    // try {
-    //   await exec(address, 'test_service_call_read_fail');
-    // } catch (err) {
-    //   console.log(err);
-    //   expect(err.errorMessage.includes('VM: InvalidEcall(')).toBe(true);
-    // }
-
-    // invoke pvm_service_read success
-    await call(address, 'test_service_read');
-
-    // transfer via asset service
-    const balanceBefore = await getBalance(feeAssetID, address);
-    expect(JSON.parse(balanceBefore.succeedData).balance).toBe(0);
-
-    const amount = 10000;
-    const transferReceipt = await transfer(admin, feeAssetID, address, amount);
-    expect(hexToNum(transferReceipt.response.response.code)).toBe(0);
-
-    const balanceAfter = await getBalance(feeAssetID, address);
-    expect(JSON.parse(balanceAfter.succeedData).balance).toBe(10000);
+    await exec(contractAddress, 'test_service_call_read_fail', riscvService, 0x2);
+    await call(contractAddress, 'test_service_read');
+    // transfer to contract
+    const amount = 0x768762;
+    await transfer(contractAddress, amount);
+    const balance = await get_balance(contractAddress);
+    expect(balance.minus(amount).eq(0)).toBe(true);
 
     const recipientAddress = '0x0000000000000000000000000000000000000001';
-    let recipientBalance = await getBalance(feeAssetID, recipientAddress);
-    const recipientBalanceBefore = JSON.parse(recipientBalance.succeedData)
-      .balance;
-
+    const balance_before = await get_balance(recipientAddress);
     // transfer 100 from contract to recipientAddress via contract
-    await exec(address, 'test_transfer_from_contract');
-
-    recipientBalance = await getBalance(feeAssetID, recipientAddress);
-    const recipientBalanceAfter = JSON.parse(recipientBalance.succeedData)
-      .balance;
-    expect(recipientBalanceBefore + 100).toBe(recipientBalanceAfter);
-
-    const contractBalance = await getBalance(feeAssetID, address);
-    expect(JSON.parse(contractBalance.succeedData).balance).toBe(9900);
+    await exec(contractAddress, 'test_transfer_from_contract');
+    const balance_after = await get_balance(recipientAddress);
+    expect(balance_after.minus(balance_before).eq(100)).toBe(true);
   });
 
   test('test_riscv_invalid_contract', async () => {
-    const code = strToHex('invalid contract');
-
-    try {
-      await deploy(code, 'invalid params', 'Binary');
-    } catch (err) {
-      expect(err.errorMessage).toBe('VM: ParseError');
-    }
+    const code = Buffer.from('invalid contract', 'utf8').toString('hex')
+    await grant_deploy_auth(admin.address);
+    await deploy(code, 'invalid params', riscvService, 0x69);
   });
 });
