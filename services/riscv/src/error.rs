@@ -41,6 +41,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Assert failed: {}", _0)]
     AssertFailed(String),
+
+    #[display(fmt = "Can not get admin")]
+    CannotGetAdmin,
 }
 
 impl ServiceError {
@@ -59,6 +62,7 @@ impl ServiceError {
             ServiceError::InvalidContractAddress => 111,
             ServiceError::WriteInReadonlyContext => 112,
             ServiceError::AssertFailed(_) => 113,
+            ServiceError::CannotGetAdmin => 114,
         }
     }
 }

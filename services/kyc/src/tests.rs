@@ -406,11 +406,14 @@ fn should_update_user_tags() {
     assert_eq!(events[0].name, "UpdateUserTag");
     assert_eq!(event, update_user_tags);
 
-    let updated_tags = service_call!(kyc, get_user_tags, ctx, GetUserTags {
+    let updated_tags = service_call!(kyc, get_user_tags, ctx.clone(), GetUserTags {
         org_name: genesis.org_name,
         user:     TestService::chen_ten(),
     });
     assert_eq!(updated_tags, tags);
+
+    let admin = service_call!(kyc, get_admin, ctx);
+    assert_eq!(admin, Address::from_hex(SERVICE_ADMIN).unwrap());
 }
 
 #[test]

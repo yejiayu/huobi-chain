@@ -28,6 +28,8 @@ use serde::Serialize;
 
 use std::{cell::RefCell, rc::Rc};
 
+const RISCV_ADMIN_KEY: &str = "riscv_admin";
+
 #[macro_export]
 macro_rules! sub_cycles {
     ($ctx:expr, $cycles:expr) => {
@@ -38,9 +40,13 @@ macro_rules! sub_cycles {
 }
 
 macro_rules! require_admin {
-    ($authorization:expr, $ctx:expr) => {
-        if !$authorization.is_admin($ctx) {
-            return ServiceError::NonAuthorized.into();
+    ($sdk:expr, $ctx:expr) => {
+        if let Some(admin) = $sdk.get_value::<_, Address>(&RISCV_ADMIN_KEY.to_owned()) {
+            if admin != $ctx.get_caller() {
+                return ServiceError::NonAuthorized.into();
+            }
+        } else {
+            return ServiceError::CannotGetAdmin.into();
         }
     };
 }
@@ -70,7 +76,24 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
     // # Panic
     #[genesis]
     fn init_genesis(&mut self, payload: InitGenesisPayload) {
+        self.sdk
+            .borrow_mut()
+            .set_value(RISCV_ADMIN_KEY.to_owned(), payload.admin.clone());
         self.authorization.init_genesis(payload);
+    }
+
+    #[read]
+    fn get_admin(&self, ctx: ServiceContext) -> ServiceResponse<Address> {
+        sub_cycles!(ctx, 21000);
+        if let Some(admin) = self
+            .sdk
+            .borrow_mut()
+            .get_value::<_, Address>(&RISCV_ADMIN_KEY.to_owned())
+        {
+            ServiceResponse::from_succeed(admin)
+        } else {
+            ServiceError::CannotGetAdmin.into()
+        }
     }
 
     #[read]
@@ -195,7 +218,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         ctx: ServiceContext,
         payload: AddressList,
     ) -> ServiceResponse<()> {
-        require_admin!(self.authorization, &ctx);
+        require_admin!(self.sdk.borrow_mut(), &ctx);
         sub_cycles!(ctx, payload.addresses.len() as u64 * 10_000);
 
         let authorization_mut = &mut self.authorization;
@@ -214,7 +237,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         ctx: ServiceContext,
         payload: AddressList,
     ) -> ServiceResponse<()> {
-        require_admin!(self.authorization, &ctx);
+        require_admin!(self.sdk.borrow_mut(), &ctx);
         sub_cycles!(ctx, payload.addresses.len() as u64 * 10_000);
 
         for addr in payload.addresses.iter() {
@@ -312,7 +335,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         ctx: ServiceContext,
         payload: AddressList,
     ) -> ServiceResponse<()> {
-        require_admin!(self.authorization, &ctx);
+        require_admin!(self.sdk.borrow_mut(), &ctx);
         sub_cycles!(ctx, payload.addresses.len() as u64 * 10_000);
 
         let authorizer = Authorizer::new(ctx.get_caller());
@@ -336,7 +359,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
         ctx: ServiceContext,
         payload: AddressList,
     ) -> ServiceResponse<()> {
-        require_admin!(self.authorization, &ctx);
+        require_admin!(self.sdk.borrow_mut(), &ctx);
         sub_cycles!(ctx, payload.addresses.len() as u64 * 10_000);
 
         for address in payload.addresses.iter() {

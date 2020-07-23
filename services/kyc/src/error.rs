@@ -28,6 +28,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Unapproved org")]
     UnapprovedOrg,
+
+    #[display(fmt = "Can not get admin address")]
+    CannotGetAdmin,
 }
 
 impl ServiceError {
@@ -41,6 +44,7 @@ impl ServiceError {
             ServiceError::OutOfCycles => 106,
             ServiceError::Expression(_) => 107,
             ServiceError::UnapprovedOrg => 108,
+            ServiceError::CannotGetAdmin => 109,
         }
     }
 }

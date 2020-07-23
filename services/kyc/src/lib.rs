@@ -31,7 +31,7 @@ use std::{
 const KYC_SERVICE_ADMIN_KEY: &str = "kyc_service_admin";
 
 macro_rules! require_service_admin {
-    ($service:expr, $ctx:expr) => {{
+    ($service:expr, $ctx:expr) => {
         let admin = if let Some(tmp) = $service
             .sdk
             .get_value::<_, Address>(&KYC_SERVICE_ADMIN_KEY.to_owned())
@@ -44,7 +44,7 @@ macro_rules! require_service_admin {
         if admin != $ctx.get_caller() {
             return ServiceError::NonAuthorized.into();
         }
-    }};
+    };
 }
 
 macro_rules! require_org_exists {
@@ -163,6 +163,16 @@ impl<SDK: ServiceSDK> KycService<SDK> {
         }
 
         ServiceResponse::from_succeed(org_names)
+    }
+
+    #[cycles(10_000)]
+    #[read]
+    fn get_admin(&self, ctx: ServiceContext) -> ServiceResponse<Address> {
+        if let Some(admin) = self.sdk.get_value(&KYC_SERVICE_ADMIN_KEY.to_owned()) {
+            ServiceResponse::from_succeed(admin)
+        } else {
+            ServiceError::CannotGetAdmin.into()
+        }
     }
 
     // Note: Use Option to provide default value require by ServiceResponse

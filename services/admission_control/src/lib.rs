@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use types::{AddressList, Genesis, NewAdmin, StatusList, Validate};
 
 macro_rules! require_admin {
-    ($service:expr, $ctx:expr) => {{
+    ($service:expr, $ctx:expr) => {
         let admin = if let Some(tmp) = $service
             .sdk
             .get_value::<_, Address>(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
@@ -26,7 +26,7 @@ macro_rules! require_admin {
         if admin != $ctx.get_caller() {
             return ServiceError::NonAuthorized.into();
         }
-    }};
+    };
 }
 
 macro_rules! require_valid_payload {
@@ -64,6 +64,9 @@ pub enum ServiceError {
 
     #[display(fmt = "Balance lower than fee")]
     BalanceLowerThanFee,
+
+    #[display(fmt = "Can not get admin address")]
+    CannotGetAdmin,
 }
 
 impl ServiceError {
@@ -75,6 +78,7 @@ impl ServiceError {
             ServiceError::BlockedTx => 1003,
             ServiceError::BadPayload(_) => 1004,
             ServiceError::BalanceLowerThanFee => 1005,
+            ServiceError::CannotGetAdmin => 1006,
         }
     }
 }
@@ -119,6 +123,16 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
 
         for addr in payload.deny_list {
             self.deny_list.insert(addr, true);
+        }
+    }
+
+    #[cycles(10_000)]
+    #[read]
+    fn get_admin(&self, ctx: ServiceContext) -> ServiceResponse<Address> {
+        if let Some(admin) = self.sdk.get_value(&ADMISSION_CONTROL_ADMIN_KEY.to_owned()) {
+            ServiceResponse::from_succeed(admin)
+        } else {
+            ServiceError::CannotGetAdmin.into()
         }
     }
 

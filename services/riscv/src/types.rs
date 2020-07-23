@@ -206,6 +206,5 @@ pub struct InitGenesisPayload {
     pub enable_authorization: bool,
     #[serde(default)]
     pub deploy_auth:          Vec<Address>,
-    #[serde(default)]
-    pub admins:               Vec<Address>,
+    pub admin:                Address,
 }

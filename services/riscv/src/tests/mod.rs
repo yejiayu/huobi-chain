@@ -513,7 +513,7 @@ impl TestRiscvService {
         let admin = Address::from_hex(ADMIN).expect("admin");
         service.init_genesis(InitGenesisPayload {
             enable_authorization: true,
-            admins:               vec![admin.clone()],
+            admin:                admin.clone(),
             deploy_auth:          vec![admin],
         });
 

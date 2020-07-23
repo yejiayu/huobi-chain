@@ -92,7 +92,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
 
     #[cycles(210_00)]
     #[read]
-    fn get_admin_address(&self, ctx: ServiceContext) -> ServiceResponse<Address> {
+    fn get_admin(&self, ctx: ServiceContext) -> ServiceResponse<Address> {
         if let Some(info) = self
             .sdk
             .get_value::<_, GovernanceInfo>(&INFO_KEY.to_owned())
