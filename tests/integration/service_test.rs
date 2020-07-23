@@ -11,5 +11,5 @@ fn test_governance() {
         })
     );
 
-    assert_eq!(res.proposer_balance, 160);
+    assert_eq!(res.proposer_balance, 210);
 }

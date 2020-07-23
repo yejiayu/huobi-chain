@@ -16,23 +16,23 @@ use crate::types::{
     TransferEvent, TransferFromEvent, TransferFromPayload, TransferPayload,
 };
 use binding_macro::{cycles, genesis, service, write};
-use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap, StoreUint64};
+use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap};
 use protocol::types::{Address, Hash, ServiceContext};
 
-const ADMIN_KEY: &str = "asset_service_admin";
 const NATIVE_ASSET_KEY: &str = "native_asset";
 
-macro_rules! require_admin {
-    ($sdk:expr, $ctx:expr) => {{
-        let admin = if let Some(tmp) = $sdk.get_value::<_, Address>(&ADMIN_KEY.to_owned()) {
-            tmp
+macro_rules! get_asset_require_admin {
+    ($sdk:expr, $ctx:expr, $id: expr) => {{
+        let asset = if let Some(asset_info) = $sdk.get($id) {
+            asset_info.clone()
         } else {
-            return ServiceError::Unauthorized.into();
+            return ServiceError::AssetNotFound($id.clone()).into();
         };
 
-        if admin != $ctx.get_caller() {
+        if asset.admin != $ctx.get_caller() {
             return ServiceError::Unauthorized.into();
         }
+        asset
     }};
 }
 
@@ -59,7 +59,6 @@ macro_rules! get_native_asset {
 pub struct AssetService<SDK> {
     sdk:    SDK,
     assets: Box<dyn StoreMap<Hash, Asset>>,
-    fee:    Box<dyn StoreUint64>,
 }
 
 impl<SDK: ServiceSDK> Deref for AssetService<SDK> {
@@ -80,9 +79,8 @@ impl<SDK: ServiceSDK> DerefMut for AssetService<SDK> {
 impl<SDK: ServiceSDK> AssetService<SDK> {
     pub fn new(mut sdk: SDK) -> Self {
         let assets: Box<dyn StoreMap<Hash, Asset>> = sdk.alloc_or_recover_map("assets");
-        let fee = sdk.alloc_or_recover_uint64("fee");
 
-        Self { sdk, assets, fee }
+        Self { sdk, assets }
     }
 
     #[genesis]
@@ -91,18 +89,13 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             panic!(e);
         }
 
-        let issuers = {
-            let issuers = payload.issuers.iter();
-            issuers.map(|ib| ib.addr.to_owned()).collect()
-        };
-
         let asset = Asset {
-            id: payload.id.clone(),
-            name: payload.name,
-            symbol: payload.symbol,
-            supply: payload.supply,
+            id:        payload.id.clone(),
+            name:      payload.name,
+            symbol:    payload.symbol,
+            admin:     payload.admin.clone(),
+            supply:    payload.supply,
             precision: payload.precision,
-            issuers,
             relayable: payload.relayable,
         };
 
@@ -111,16 +104,13 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         }
 
         self.set_asset_(asset.clone());
-
         self.set_value(NATIVE_ASSET_KEY.to_owned(), payload.id.clone());
-        self.set_value(ADMIN_KEY.to_owned(), payload.admin);
-        self.fee.set(payload.fee);
 
-        for issuer_balance in payload.issuers {
+        for mint in payload.init_mints {
             self.set_account_value(
-                &issuer_balance.addr,
+                &mint.addr,
                 asset.id.clone(),
-                AssetBalance::new(issuer_balance.balance),
+                AssetBalance::new(mint.balance),
             )
         }
     }
@@ -141,6 +131,16 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         match self.read_asset_(&payload.id) {
             Some(s) => ServiceResponse::from_succeed(s),
             None => ServiceError::AssetNotFound(payload.id).into(),
+        }
+    }
+
+    #[cycles(10_000)]
+    #[read]
+    fn get_admin(&self, ctx: ServiceContext, asset_id: Hash) -> ServiceResponse<Address> {
+        if let Some(asset) = self.assets.get(&asset_id) {
+            ServiceResponse::from_succeed(asset.admin)
+        } else {
+            ServiceError::AssetNotFound(asset_id).into()
         }
     }
 
@@ -201,12 +201,12 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         }
 
         let asset = Asset {
-            id:        asset_id.clone(),
+            id:        asset_id,
             name:      payload.name,
             symbol:    payload.symbol,
+            admin:     payload.admin,
             supply:    payload.supply,
             precision: payload.precision,
-            issuers:   vec![caller],
             relayable: payload.relayable,
         };
 
@@ -214,11 +214,13 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             return ServiceError::Format.into();
         }
 
-        self.assets.insert(asset_id, asset.clone());
-
-        if let Some(issuer) = asset.issuers.first() {
-            let balance = AssetBalance::new(payload.supply);
-            self.set_account_value(issuer, asset.id.clone(), balance);
+        self.set_asset_(asset.clone());
+        for mint in payload.init_mints {
+            self.set_account_value(
+                &mint.addr,
+                asset.id.clone(),
+                AssetBalance::new(mint.balance),
+            )
         }
 
         Self::emit_event(&ctx, "CreateAsset".to_owned(), &asset);
@@ -371,10 +373,10 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         ctx: ServiceContext,
         payload: ChangeAdminPayload,
     ) -> ServiceResponse<()> {
-        require_admin!(self.sdk, &ctx);
+        let mut asset = get_asset_require_admin!(self.assets, &ctx, &payload.asset_id);
 
-        self.sdk
-            .set_value(ADMIN_KEY.to_owned(), payload.addr.clone());
+        asset.admin = payload.new_admin.clone();
+        self.set_asset_(asset);
 
         Self::emit_event(&ctx, "ChangeAdmin".to_owned(), payload)
     }
@@ -382,16 +384,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     #[cycles(210_00)]
     #[write]
     fn mint(&mut self, ctx: ServiceContext, payload: MintAssetPayload) -> ServiceResponse<()> {
-        let mut asset = if let Some(asset) = self.read_asset_(&payload.asset_id) {
-            asset
-        } else {
-            return ServiceError::AssetNotFound(payload.asset_id.clone()).into();
-        };
-
-        let caller = ctx.get_caller();
-        if !asset.issuers.contains(&caller) {
-            return ServiceError::Unauthorized.into();
-        }
+        let mut asset = get_asset_require_admin!(self.assets, &ctx, &payload.asset_id);
 
         let (checked_value, overflow) = asset.supply.overflowing_add(payload.amount);
         if overflow {
@@ -403,13 +396,11 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         self.set_asset_(asset);
 
         let mut recipient_balance = self.asset_balance(&payload.to, &payload.asset_id);
-
         if let Err(e) = recipient_balance.checked_add(payload.amount) {
             return e.into();
         }
 
         self.set_account_value(&payload.to, payload.asset_id.clone(), recipient_balance);
-
         Self::emit_event(&ctx, "MintAsset".to_owned(), MintAssetEvent {
             asset_id: payload.asset_id,
             to:       payload.to,
@@ -579,10 +570,8 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
     }
 
     #[cfg(test)]
-    fn admin(&self) -> Address {
-        self.sdk
-            .get_value(&ADMIN_KEY.to_owned())
-            .expect("admin not found")
+    fn admin(&self, asset_id: &Hash) -> Address {
+        self.assets.get(asset_id).expect("admin not found").admin
     }
 
     fn emit_event<T: Serialize>(

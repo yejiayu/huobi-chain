@@ -38,16 +38,14 @@ impl IssuerWithBalance {
 /// Payload
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct InitGenesisPayload {
-    pub id:          Hash,
-    pub name:        String,
-    pub symbol:      String,
-    pub supply:      u64,
-    pub precision:   u64,
-    pub issuers:     Vec<IssuerWithBalance>,
-    pub fee_account: Address,
-    pub fee:         u64,
-    pub admin:       Address,
-    pub relayable:   bool,
+    pub id:         Hash,
+    pub name:       String,
+    pub symbol:     String,
+    pub supply:     u64,
+    pub precision:  u64,
+    pub init_mints: Vec<IssuerWithBalance>,
+    pub admin:      Address,
+    pub relayable:  bool,
 }
 
 impl InitGenesisPayload {
@@ -55,19 +53,20 @@ impl InitGenesisPayload {
         if self.id == Hash::default() {
             return Err("invalid asset id");
         }
-        if self.issuers.iter().any(|issuer| issuer.verify().is_err()) {
+        if self
+            .init_mints
+            .iter()
+            .any(|issuer| issuer.verify().is_err())
+        {
             return Err("invalid issuer");
-        }
-        if self.fee_account == Address::default() {
-            return Err("invalid fee account");
         }
         if self.admin == Address::default() {
             return Err("invalid admin");
         }
 
         let mut total_balance = 0u64;
-        for issuer in self.issuers.iter() {
-            let (checked_value, overflow) = total_balance.overflowing_add(issuer.balance);
+        for addr in self.init_mints.iter() {
+            let (checked_value, overflow) = total_balance.overflowing_add(addr.balance);
             if overflow {
                 return Err("sum of issuers balance overflow");
             }
@@ -84,11 +83,13 @@ impl InitGenesisPayload {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct CreateAssetPayload {
-    pub name:      String,
-    pub symbol:    String,
-    pub supply:    u64,
-    pub precision: u64,
-    pub relayable: bool,
+    pub name:       String,
+    pub symbol:     String,
+    pub admin:      Address,
+    pub supply:     u64,
+    pub init_mints: Vec<IssuerWithBalance>,
+    pub precision:  u64,
+    pub relayable:  bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -184,9 +185,9 @@ pub struct Asset {
     pub id:        Hash,
     pub name:      String,
     pub symbol:    String,
+    pub admin:     Address,
     pub supply:    u64,
     pub precision: u64,
-    pub issuers:   Vec<Address>,
     pub relayable: bool,
 }
 
@@ -359,5 +360,6 @@ pub type RelayAssetEvent = BurnAssetEvent;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChangeAdminPayload {
-    pub addr: Address,
+    pub asset_id:  Hash,
+    pub new_admin: Address,
 }

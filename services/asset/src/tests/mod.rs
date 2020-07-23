@@ -33,11 +33,16 @@ macro_rules! service_call {
 macro_rules! create_asset {
     ($service:expr, $ctx:expr, $supply:expr, $precision:expr) => {{
         service_call!($service, create_asset, $ctx, CreateAssetPayload {
-            name:      "meow".to_owned(),
-            symbol:    "MIMI".to_owned(),
-            supply:    $supply,
-            precision: $precision,
-            relayable: true,
+            name:       "meow".to_owned(),
+            symbol:     "MIMI".to_owned(),
+            admin:      Address::from_hex(ADMIN.clone()).unwrap(),
+            supply:     $supply,
+            init_mints: vec![IssuerWithBalance {
+                addr:    Address::from_hex(ADMIN.clone()).unwrap(),
+                balance: $supply,
+            }],
+            precision:  $precision,
+            relayable:  true,
         })
     }};
 }
@@ -79,7 +84,7 @@ fn test_create_asset() {
 #[test]
 fn test_transfer() {
     let mut service = TestService::new();
-    let caller = TestService::caller();
+    let caller = TestService::admin();
     let ctx = mock_context(caller.clone());
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
@@ -135,7 +140,7 @@ fn test_approve() {
 #[test]
 fn test_transfer_from() {
     let mut service = TestService::new();
-    let caller = TestService::caller();
+    let caller = TestService::admin();
     let ctx = mock_context(caller.clone());
     let asset = create_asset!(service, ctx.clone(), 1000, 10);
 
@@ -191,16 +196,21 @@ fn test_change_admin() {
     let ctx = mock_context(caller.clone());
 
     let changed = service.change_admin(ctx, ChangeAdminPayload {
-        addr: caller.clone(),
+        new_admin: caller.clone(),
+        asset_id:  Hash::digest(Bytes::from_static(b"test")),
     });
     assert!(changed.is_error());
 
     let ctx = mock_context(TestService::admin());
     service_call!(service, change_admin, ctx, ChangeAdminPayload {
-        addr: caller.clone(),
+        new_admin: caller.clone(),
+        asset_id:  Hash::digest(Bytes::from_static(b"test")),
     });
 
-    assert_eq!(service.admin(), caller);
+    assert_eq!(
+        service.admin(&Hash::digest(Bytes::from_static(b"test"))),
+        caller
+    );
 }
 
 #[test]
@@ -219,24 +229,28 @@ fn test_mint() {
         memo:     "".to_owned(),
     };
     let ctx_admin = mock_context(TestService::admin());
-    let minted = service.mint(ctx_admin, asset_to_mint.clone());
-    assert!(minted.is_error(), "mint require issuer permission");
+    let minted = service.mint(ctx, asset_to_mint.clone());
+    assert!(minted.is_error(), "mint require admin permission");
 
-    service_call!(service, mint, ctx.clone(), asset_to_mint);
-    assert_eq!(ctx.get_events().len(), 2);
+    service_call!(service, mint, ctx_admin.clone(), asset_to_mint);
+    assert_eq!(ctx_admin.get_events().len(), 1);
 
-    let event: MintAssetEvent = serde_json::from_str(&ctx.get_events()[1].data).expect("event");
+    let event: MintAssetEvent =
+        serde_json::from_str(&ctx_admin.get_events()[0].data).expect("event");
     assert_eq!(event.asset_id, asset.id);
     assert_eq!(event.to, recipient);
     assert_eq!(event.amount, 100);
 
-    let recipient_balance = service_call!(service, get_balance, ctx.clone(), GetBalancePayload {
-        asset_id: asset.id.clone(),
-        user:     recipient,
-    });
+    let recipient_balance =
+        service_call!(service, get_balance, ctx_admin.clone(), GetBalancePayload {
+            asset_id: asset.id.clone(),
+            user:     recipient,
+        });
     assert_eq!(recipient_balance.balance, 100);
 
-    let asset_ret = service_call!(service, get_asset, ctx, GetAssetPayload { id: asset.id });
+    let asset_ret = service_call!(service, get_asset, ctx_admin, GetAssetPayload {
+        id: asset.id,
+    });
 
     assert_eq!(asset_ret.supply, 10100)
 }
@@ -244,7 +258,7 @@ fn test_mint() {
 #[test]
 fn test_burn() {
     let mut service = TestService::new();
-    let caller = TestService::caller();
+    let caller = TestService::admin();
     let ctx = mock_context(caller.clone());
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
@@ -276,7 +290,7 @@ fn test_burn() {
 #[test]
 fn test_relayable() {
     let mut service = TestService::new();
-    let caller = TestService::caller();
+    let caller = TestService::admin();
     let ctx = mock_context(caller.clone());
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
@@ -313,14 +327,18 @@ fn test_unrelayable() {
     let ctx = mock_context(caller);
 
     // test create_asset
-
     let asset = service
         .create_asset(ctx.clone(), CreateAssetPayload {
-            name:      "Cat9".to_owned(),
-            symbol:    "MIMI".to_owned(),
-            supply:    10000,
-            precision: 100,
-            relayable: false,
+            name:       "Cat9".to_owned(),
+            symbol:     "MIMI".to_owned(),
+            admin:      Address::from_hex(ADMIN).unwrap(),
+            supply:     10000,
+            init_mints: vec![IssuerWithBalance {
+                addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+                balance: 10000,
+            }],
+            precision:  100,
+            relayable:  false,
         })
         .succeed_data;
 
@@ -337,7 +355,7 @@ fn test_unrelayable() {
 #[test]
 fn test_transfer_to_self() {
     let mut service = TestService::new();
-    let caller = TestService::caller();
+    let caller = TestService::admin();
     let ctx = mock_context(caller.clone());
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
@@ -365,81 +383,121 @@ fn test_check_format() {
     // test create_asset
 
     let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
-        name:      "咪咪".to_owned(),
-        symbol:    "MIMI".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       "咪咪".to_owned(),
+        symbol:     "MIMI".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
 
     let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
-        name:      "we1l".to_owned(),
-        symbol:    "😺".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       "we1l".to_owned(),
+        symbol:     "😺".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
 
     let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
-        name:      "we1l".to_owned(),
-        symbol:    "m".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       "we1l".to_owned(),
+        symbol:     "m".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
 
     let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
-        name:      "_we1l".to_owned(),
-        symbol:    "M".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       "_we1l".to_owned(),
+        symbol:     "M".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
 
     let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
-        name:      "we1l_".to_owned(),
-        symbol:    "M".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       "we1l_".to_owned(),
+        symbol:     "M".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
 
     let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
-        name:      " we1l".to_owned(),
-        symbol:    "M".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       " we1l".to_owned(),
+        symbol:     "M".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
 
     let create_asset_resp = service.create_asset(ctx.clone(), CreateAssetPayload {
-        name:      "we1l ".to_owned(),
-        symbol:    "M".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       "we1l ".to_owned(),
+        symbol:     "M".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
 
     let create_asset_resp = service.create_asset(ctx, CreateAssetPayload {
-        name:      "1we1l ".to_owned(),
-        symbol:    "M".to_owned(),
-        supply:    10000,
-        precision: 100,
-        relayable: true,
+        name:       "1we1l ".to_owned(),
+        symbol:     "M".to_owned(),
+        admin:      Address::from_hex(ADMIN).unwrap(),
+        supply:     10000,
+        init_mints: vec![IssuerWithBalance {
+            addr:    Address::from_hex(<&str>::clone(&ADMIN)).unwrap(),
+            balance: 10000,
+        }],
+        precision:  100,
+        relayable:  true,
     });
 
     assert!(create_asset_resp.is_error());
@@ -465,19 +523,17 @@ fn test_multiple_issuers_genesis() {
     let mut service = AssetService::new(sdk);
     let asset_id = Hash::digest(Bytes::from_static(b"test"));
     let genesis = InitGenesisPayload {
-        id:          asset_id.clone(),
-        name:        "test".to_owned(),
-        symbol:      "TEST".to_owned(),
-        supply:      1000,
-        precision:   10,
-        issuers:     vec![
+        id:         asset_id.clone(),
+        name:       "test".to_owned(),
+        symbol:     "TEST".to_owned(),
+        supply:     1000,
+        precision:  10,
+        init_mints: vec![
             IssuerWithBalance::new(admin.clone(), 500),
             IssuerWithBalance::new(caller.clone(), 500),
         ],
-        fee_account: admin.clone(),
-        fee:         1,
-        admin:       admin.clone(),
-        relayable:   true,
+        admin:      admin.clone(),
+        relayable:  true,
     };
 
     service.init_genesis(genesis);
@@ -518,12 +574,10 @@ fn test_genesis_issuers_balance_overflow() {
         symbol: "TEST".to_owned(),
         supply: 1000,
         precision: 10,
-        issuers: vec![
+        init_mints: vec![
             IssuerWithBalance::new(admin.clone(), u64::MAX),
             IssuerWithBalance::new(caller, 500),
         ],
-        fee_account: admin.clone(),
-        fee: 1,
         admin,
         relayable: true,
     };
@@ -557,12 +611,10 @@ fn test_genesis_issuers_balance_not_equal_to_supply() {
         symbol: "TEST".to_owned(),
         supply: 1000,
         precision: 10,
-        issuers: vec![
+        init_mints: vec![
             IssuerWithBalance::new(admin.clone(), 400),
             IssuerWithBalance::new(caller, 500),
         ],
-        fee_account: admin.clone(),
-        fee: 1,
         admin,
         relayable: true,
     };
@@ -623,9 +675,7 @@ impl TestService {
             symbol: "TEST".to_owned(),
             supply: 1000,
             precision: 10,
-            issuers: vec![IssuerWithBalance::new(admin.clone(), 1000)],
-            fee_account: admin.clone(),
-            fee: 1,
+            init_mints: vec![IssuerWithBalance::new(admin.clone(), 1000)],
             admin,
             relayable: true,
         }
