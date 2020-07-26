@@ -46,6 +46,20 @@ uint64_t test_transfer_from_contract() {
     return 0;
 }
 
+uint64_t test_accumulate_profits_contract() {
+    const char* service = "governance";
+    const char* method = "accumulate_profit";
+    const char* payload = "{\"address\":\"0xf8389d774afdad8755ef8e629e5a154fddc6325a\", \"accumulated_profit\": 876544545}";
+
+    uint8_t ret[1000] = {0};
+    uint64_t ret_len = pvm_service_call(service, method,
+                          payload,  strlen(payload),
+                          ret);
+    pvm_debug(ret);
+    pvm_ret(ret, ret_len);
+    return 0;
+}
+
 uint64_t dummy_method() {
     const char* ret = "{\"a\":1}";
     pvm_debug(ret);
@@ -80,6 +94,8 @@ int main() {
         ret = dummy_method();
     } else if (strcmp(args, "test_call_dummy_method") == 0) {
         ret = test_call_dummy_method();
+    } else if (strcmp(args, "test_accumulate_profits_contract") == 0) {
+        ret = test_accumulate_profits_contract();
     } else {
         pvm_ret_str("method not found");
         return 1;

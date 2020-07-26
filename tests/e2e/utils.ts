@@ -1,8 +1,11 @@
+import { parse } from 'toml';
+import { find } from 'lodash';
+import { readFileSync } from 'fs';
 import { utils } from '@mutadev/muta-sdk';
 import { Client } from '@mutadev/client';
 import { Account } from '@mutadev/account';
 import { BigNumber } from '@mutadev/shared';
-import { AssetService } from 'huobi-chain-sdk';
+import { AssetService, InterpreterType, RISCVService } from 'huobi-chain-sdk';
 
 const { hexToNum } = utils;
 
@@ -15,6 +18,11 @@ const client = new Client({
 const admin: Account = Account.fromPrivateKey(ADMIN_PRIVATE_KEY);
 const nativeAssetId = "0xf56924db538e77bb5951eb5ff0d02b88983c49c45eea30e8ae3e7234b311436c";
 const randomString = require("randomstring");
+const genesis = parse(readFileSync('./genesis.toml', 'utf-8'));
+
+const governance = JSON.parse(
+  find(genesis.services, (s) => s.name === 'governance').payload,
+);
 
 export function genRandomString(prefix: String = 'r', length: number = 12) {
   expect(prefix.length <= length);
@@ -39,6 +47,12 @@ export function genRandomAccount() {
   return Account.fromPrivateKey('0x' + randomPriKey);
 }
 
+export function genRandomInt(min = 0x0, max = 0xfffffffff) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
 export async function transfer(to: string, value: number) {
   const service = new AssetService(client, admin);
   await service.write.transfer({
@@ -58,6 +72,28 @@ export async function get_balance(user: string) {
   return new BigNumber(res0.succeedData.balance);
 }
 
+export async function deploy(code: string, initArgs: string) {
+  const service = new RISCVService(client, admin);
+  const res0 = await service.write.grant_deploy_auth({
+    addresses: [ admin.address ],
+  });
+  expect(Number(res0.response.response.code)).toBe(0);
+
+  const res1 = await service.write.deploy({
+    code,
+    intp_type: InterpreterType.Binary,
+    init_args: initArgs,
+  });
+  expect(Number(res1.response.response.code)).toBe(0);
+
+  const contractAddress = res1.response.response.succeedData.address;
+  const res2 = await service.write.approve_contracts({
+    addresses: [ contractAddress ],
+  });
+  expect(Number(res2.response.response.code)).toBe(0);
+  return contractAddress;
+}
+
 export {
-  admin, client, hexToNum, nativeAssetId
+  admin, client, governance, hexToNum, nativeAssetId
 };

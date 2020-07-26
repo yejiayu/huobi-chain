@@ -23,7 +23,7 @@
     "paths": {
     }
   },
-  "files": ["./riscv.test.ts" , "./basic.test.ts", "./asset.test.ts", "./helper.ts", "./utils.ts"],
+  "files": ["./riscv.test.ts" , "./basic.test.ts", "./asset.test.ts", "./governance.test.ts", "./helper.ts", "./utils.ts"],
   "references": [
   ]
 }
