@@ -1,5 +1,6 @@
 use crate::{common, types::ExecPayload, ServiceError};
 
+use asset::Assets;
 use protocol::{
     traits::{ServiceResponse, ServiceSDK},
     types::{Address, Hash, ServiceContext},
@@ -54,22 +55,29 @@ impl CycleContext {
     }
 }
 
-pub struct WriteableChain<SDK> {
+pub struct WriteableChain<A, SDK> {
     ctx:             ServiceContext,
     payload:         ExecPayload,
     sdk:             Rc<RefCell<SDK>>,
+    asset:           Rc<RefCell<A>>,
     all_cycles_used: u64,
 }
 
-impl<SDK: ServiceSDK + 'static> WriteableChain<SDK> {
+impl<A, SDK> WriteableChain<A, SDK>
+where
+    A: Assets,
+    SDK: ServiceSDK + 'static,
+{
     pub fn new(
         ctx: ServiceContext,
         payload: ExecPayload,
         sdk: Rc<RefCell<SDK>>,
-    ) -> WriteableChain<SDK> {
+        asset: Rc<RefCell<A>>,
+    ) -> Self {
         Self {
             ctx,
             payload,
+            asset,
             sdk,
             all_cycles_used: 0,
         }
@@ -101,8 +109,9 @@ impl<SDK: ServiceSDK + 'static> WriteableChain<SDK> {
     }
 }
 
-impl<SDK> ChainInterface for WriteableChain<SDK>
+impl<A, SDK> ChainInterface for WriteableChain<A, SDK>
 where
+    A: Assets,
     SDK: ServiceSDK + 'static,
 {
     fn get_storage(&self, key: &Bytes) -> Bytes {
@@ -137,21 +146,18 @@ where
 
     fn service_read(
         &mut self,
-        service: &str,
-        method: &str,
-        payload: &str,
+        _service: &str,
+        _method: &str,
+        _payload: &str,
         current_cycle: u64,
     ) -> ServiceResponse<(String, u64)> {
         let mut cycle_ctx = CycleContext::new(self.ctx.clone(), self.all_cycles_used);
 
         let resp = Self::serve(&mut cycle_ctx, current_cycle, || -> _ {
-            self.sdk.borrow().read(
-                &self.ctx,
-                Some(Bytes::from(self.payload.address.as_hex())),
-                service,
-                method,
-                payload,
-            )
+            match self.asset.borrow().native_asset(&self.ctx) {
+                Ok(_) => ServiceResponse::from_succeed("asset".to_owned()),
+                Err(e) => ServiceResponse::from_error(e.code, e.error_message),
+            }
         });
 
         self.all_cycles_used = cycle_ctx.all_cycles_used;
@@ -160,21 +166,18 @@ where
 
     fn service_write(
         &mut self,
-        service: &str,
-        method: &str,
-        payload: &str,
+        _service: &str,
+        _method: &str,
+        _payload: &str,
         current_cycle: u64,
     ) -> ServiceResponse<(String, u64)> {
         let mut cycle_ctx = CycleContext::new(self.ctx.clone(), self.all_cycles_used);
 
         let resp = Self::serve(&mut cycle_ctx, current_cycle, || -> _ {
-            self.sdk.borrow_mut().write(
-                &self.ctx,
-                Some(Bytes::from(self.payload.address.as_hex())),
-                service,
-                method,
-                payload,
-            )
+            match self.asset.borrow().native_asset(&self.ctx) {
+                Ok(_) => ServiceResponse::from_succeed("asset".to_owned()),
+                Err(e) => ServiceResponse::from_error(e.code, e.error_message),
+            }
         });
 
         self.all_cycles_used = cycle_ctx.all_cycles_used;
@@ -182,23 +185,32 @@ where
     }
 }
 
-pub struct ReadonlyChain<SDK> {
-    inner: WriteableChain<SDK>,
+pub struct ReadonlyChain<A, SDK> {
+    inner: WriteableChain<A, SDK>,
 }
 
-impl<SDK: ServiceSDK + 'static> ReadonlyChain<SDK> {
+impl<A, SDK> ReadonlyChain<A, SDK>
+where
+    A: Assets,
+    SDK: ServiceSDK + 'static,
+{
     pub fn new(
         ctx: ServiceContext,
         payload: ExecPayload,
         sdk: Rc<RefCell<SDK>>,
-    ) -> ReadonlyChain<SDK> {
+        asset: Rc<RefCell<A>>,
+    ) -> Self {
         Self {
-            inner: WriteableChain::new(ctx, payload, sdk),
+            inner: WriteableChain::new(ctx, payload, sdk, asset),
         }
     }
 }
 
-impl<SDK: ServiceSDK + 'static> ChainInterface for ReadonlyChain<SDK> {
+impl<A, SDK> ChainInterface for ReadonlyChain<A, SDK>
+where
+    A: Assets,
+    SDK: ServiceSDK + 'static,
+{
     fn get_storage(&self, key: &Bytes) -> Bytes {
         self.inner.get_storage(key)
     }

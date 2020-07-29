@@ -7,33 +7,41 @@ use kyc::KycService;
 use metadata::MetadataService;
 use multi_signature::MultiSignatureService;
 use muta::MutaBuilder;
-use protocol::traits::{Service, ServiceMapping, ServiceSDK};
+use protocol::traits::{SDKFactory, Service, ServiceMapping, ServiceSDK};
 use protocol::{ProtocolError, ProtocolErrorKind, ProtocolResult};
-use riscv::RiscvService;
+
+type AuthorizationEntity<T> = AuthorizationService<
+    AdmissionControlService<
+        AssetService<T>,
+        GovernanceService<AssetService<T>, MetadataService<T>, T>,
+        T,
+    >,
+    T,
+>;
+
+type AdmissionControlEntity<T> = AdmissionControlService<
+    AssetService<T>,
+    GovernanceService<AssetService<T>, MetadataService<T>, T>,
+    T,
+>;
 
 struct DefaultServiceMapping;
 
 impl ServiceMapping for DefaultServiceMapping {
-    fn get_service<SDK: 'static + ServiceSDK>(
+    fn get_service<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
         &self,
         name: &str,
-        sdk: SDK,
+        factory: &Factory,
     ) -> ProtocolResult<Box<dyn Service>> {
         let service = match name {
-            "authorization" => Box::new(AuthorizationService::new(sdk)) as Box<dyn Service>,
-            "asset" => Box::new(AssetService::new(sdk)) as Box<dyn Service>,
-            "metadata" => Box::new(MetadataService::new(sdk)) as Box<dyn Service>,
-            "kyc" => Box::new(KycService::new(sdk)) as Box<dyn Service>,
-            "multi_signature" => Box::new(MultiSignatureService::new(sdk)) as Box<dyn Service>,
-            "riscv" => Box::new(RiscvService::init(sdk)) as Box<dyn Service>,
-            "governance" => Box::new(GovernanceService::new(sdk)) as Box<dyn Service>,
-            "admission_control" => Box::new(AdmissionControlService::new(sdk)) as Box<dyn Service>,
-            _ => {
-                return Err(MappingError::NotFoundService {
-                    service: name.to_owned(),
-                }
-                .into())
-            }
+            "authorization" => Box::new(Self::new_authorization(factory)?) as Box<dyn Service>,
+            "governance" => Box::new(Self::new_governance(factory)?) as Box<dyn Service>,
+            "admission_control" => Box::new(Self::new_admission_ctrl(factory)?) as Box<dyn Service>,
+            "asset" => Box::new(Self::new_asset(factory)?) as Box<dyn Service>,
+            "metadata" => Box::new(Self::new_metadata(factory)?) as Box<dyn Service>,
+            "kyc" => Box::new(Self::new_kyc(factory)?) as Box<dyn Service>,
+            "multi_signature" => Box::new(Self::new_multi_sig(factory)?) as Box<dyn Service>,
+            _ => panic!("not found service"),
         };
 
         Ok(service)
@@ -46,10 +54,73 @@ impl ServiceMapping for DefaultServiceMapping {
             "metadata".to_owned(),
             "kyc".to_owned(),
             "multi_signature".to_owned(),
-            "riscv".to_owned(),
             "governance".to_owned(),
             "admission_control".to_owned(),
         ]
+    }
+}
+
+impl DefaultServiceMapping {
+    fn new_asset<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
+        factory: &Factory,
+    ) -> ProtocolResult<AssetService<SDK>> {
+        Ok(AssetService::new(factory.get_sdk("asset")?))
+    }
+
+    fn new_metadata<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
+        factory: &Factory,
+    ) -> ProtocolResult<MetadataService<SDK>> {
+        Ok(MetadataService::new(factory.get_sdk("metadata")?))
+    }
+
+    fn new_multi_sig<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
+        factory: &Factory,
+    ) -> ProtocolResult<MultiSignatureService<SDK>> {
+        Ok(MultiSignatureService::new(
+            factory.get_sdk("multi_signature")?,
+        ))
+    }
+
+    fn new_kyc<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
+        factory: &Factory,
+    ) -> ProtocolResult<KycService<SDK>> {
+        Ok(KycService::new(factory.get_sdk("kyc")?))
+    }
+
+    fn new_governance<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
+        factory: &Factory,
+    ) -> ProtocolResult<GovernanceService<AssetService<SDK>, MetadataService<SDK>, SDK>> {
+        let asset = Self::new_asset(factory)?;
+        let metadata = Self::new_metadata(factory)?;
+        Ok(GovernanceService::new(
+            factory.get_sdk("governance")?,
+            asset,
+            metadata,
+        ))
+    }
+
+    fn new_admission_ctrl<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
+        factory: &Factory,
+    ) -> ProtocolResult<AdmissionControlEntity<SDK>> {
+        let asset = Self::new_asset(factory)?;
+        let governance = Self::new_governance(factory)?;
+        Ok(AdmissionControlService::new(
+            factory.get_sdk("admission_control")?,
+            asset,
+            governance,
+        ))
+    }
+
+    fn new_authorization<SDK: 'static + ServiceSDK, Factory: SDKFactory<SDK>>(
+        factory: &Factory,
+    ) -> ProtocolResult<AuthorizationEntity<SDK>> {
+        let multi_sig = Self::new_multi_sig(factory)?;
+        let admission_control = Self::new_admission_ctrl(factory)?;
+        Ok(AuthorizationService::new(
+            factory.get_sdk("authorization")?,
+            multi_sig,
+            admission_control,
+        ))
     }
 }
 

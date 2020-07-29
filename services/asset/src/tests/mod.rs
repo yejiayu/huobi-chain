@@ -7,7 +7,6 @@ use cita_trie::MemoryDB;
 use core_storage::{adapter::memory::MemoryAdapter, ImplStorage};
 use framework::binding::sdk::{DefaultChainQuerier, DefaultServiceSDK};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
-use protocol::traits::NoopDispatcher;
 use protocol::types::{Address, Bytes, Hash, Hex, ServiceContext, ServiceContextParams};
 
 use crate::types::{
@@ -50,7 +49,6 @@ macro_rules! create_asset {
 type SDK = DefaultServiceSDK<
     GeneralServiceState<MemoryDB>,
     DefaultChainQuerier<ImplStorage<MemoryAdapter>>,
-    NoopDispatcher,
 >;
 
 const CYCLE_LIMIT: u64 = 1024 * 1024 * 1024;
@@ -90,7 +88,7 @@ fn test_transfer() {
 
     let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
 
-    service_call!(service, transfer, ctx.clone(), TransferPayload {
+    service_call!(service, transfer_, ctx.clone(), TransferPayload {
         asset_id: asset.id.clone(),
         to:       recipient.clone(),
         value:    1024,
@@ -156,7 +154,7 @@ fn test_transfer_from() {
     let recipient_ctx = mock_context(recipient.clone());
     service_call!(
         service,
-        transfer_from,
+        transfer_from_,
         recipient_ctx.clone(),
         TransferFromPayload {
             asset_id:  asset.id.clone(),
@@ -359,7 +357,7 @@ fn test_transfer_to_self() {
     let ctx = mock_context(caller.clone());
     let asset = create_asset!(service, ctx.clone(), 10000, 10);
 
-    service_call!(service, transfer, ctx.clone(), TransferPayload {
+    service_call!(service, transfer_, ctx.clone(), TransferPayload {
         asset_id: asset.id.clone(),
         to:       caller.clone(),
         value:    100,
@@ -511,11 +509,7 @@ fn test_multiple_issuers_genesis() {
     let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
     let state = GeneralServiceState::new(trie);
 
-    let sdk = DefaultServiceSDK::new(
-        Rc::new(RefCell::new(state)),
-        Rc::new(chain_db),
-        NoopDispatcher {},
-    );
+    let sdk = DefaultServiceSDK::new(Rc::new(RefCell::new(state)), Rc::new(chain_db));
 
     let admin = Address::from_hex(ADMIN).unwrap();
     let caller = Address::from_hex(CALLER).unwrap();
@@ -557,11 +551,7 @@ fn test_genesis_issuers_balance_overflow() {
     let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
     let state = GeneralServiceState::new(trie);
 
-    let sdk = DefaultServiceSDK::new(
-        Rc::new(RefCell::new(state)),
-        Rc::new(chain_db),
-        NoopDispatcher {},
-    );
+    let sdk = DefaultServiceSDK::new(Rc::new(RefCell::new(state)), Rc::new(chain_db));
 
     let admin = Address::from_hex(ADMIN).unwrap();
     let caller = Address::from_hex(CALLER).unwrap();
@@ -594,11 +584,7 @@ fn test_genesis_issuers_balance_not_equal_to_supply() {
     let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
     let state = GeneralServiceState::new(trie);
 
-    let sdk = DefaultServiceSDK::new(
-        Rc::new(RefCell::new(state)),
-        Rc::new(chain_db),
-        NoopDispatcher {},
-    );
+    let sdk = DefaultServiceSDK::new(Rc::new(RefCell::new(state)), Rc::new(chain_db));
 
     let admin = Address::from_hex(ADMIN).unwrap();
     let caller = Address::from_hex(CALLER).unwrap();
@@ -648,7 +634,7 @@ fn test_hook_transfer_from_emit_no_event() {
     };
 
     let admin = TestService::admin();
-    service.hook_transfer_from(ctx.clone(), HookTransferFromPayload {
+    service.hook_transfer_from_(ctx.clone(), HookTransferFromPayload {
         sender:    admin.clone(),
         recipient: recipient.clone(),
         value:     24,
@@ -693,11 +679,7 @@ impl TestService {
         let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
         let state = GeneralServiceState::new(trie);
 
-        let sdk = DefaultServiceSDK::new(
-            Rc::new(RefCell::new(state)),
-            Rc::new(chain_db),
-            NoopDispatcher {},
-        );
+        let sdk = DefaultServiceSDK::new(Rc::new(RefCell::new(state)), Rc::new(chain_db));
 
         let mut service = AssetService::new(sdk);
         service.init_genesis(Self::genesis());

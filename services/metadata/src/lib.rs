@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests;
-mod types;
+pub mod types;
 
 use bytes::Bytes;
 use derive_more::{Display, From};
@@ -13,8 +13,51 @@ use crate::types::UpdateMetadataPayload;
 
 static ADMISSION_TOKEN: Bytes = Bytes::from_static(b"governance");
 
+macro_rules! impl_metadata {
+    ($self: expr, $method: ident, $ctx: expr) => {{
+        let res = $self.$method($ctx.clone());
+        if res.is_error() {
+            Err(ServiceResponse::from_error(res.code, res.error_message))
+        } else {
+            Ok(res.succeed_data)
+        }
+    }};
+    ($self: expr, $method: ident, $ctx: expr, $payload: expr) => {{
+        let res = $self.$method($ctx.clone(), $payload);
+        if res.is_error() {
+            Err(ServiceResponse::from_error(res.code, res.error_message))
+        } else {
+            Ok(res.succeed_data)
+        }
+    }};
+}
+
+pub trait MetaData {
+    fn get(&self, ctx: &ServiceContext) -> Result<Metadata, ServiceResponse<()>>;
+
+    fn update(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: UpdateMetadataPayload,
+    ) -> Result<(), ServiceResponse<()>>;
+}
+
 pub struct MetadataService<SDK> {
     sdk: SDK,
+}
+
+impl<SDK: ServiceSDK> MetaData for MetadataService<SDK> {
+    fn get(&self, ctx: &ServiceContext) -> Result<Metadata, ServiceResponse<()>> {
+        impl_metadata!(self, get_metadata, ctx)
+    }
+
+    fn update(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: UpdateMetadataPayload,
+    ) -> Result<(), ServiceResponse<()>> {
+        impl_metadata!(self, update_metadata, ctx, payload)
+    }
 }
 
 #[service]

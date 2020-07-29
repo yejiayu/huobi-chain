@@ -2,13 +2,16 @@
 mod tests;
 mod types;
 
+use asset::types::GetBalancePayload;
+use asset::Assets;
 use binding_macro::{cycles, genesis, service, write};
 use derive_more::Display;
+use governance::Governance;
 use protocol::{
     traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap},
     types::{Address, ServiceContext, SignedTransaction},
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use types::{AddressList, Genesis, NewAdmin, StatusList, Validate};
 
@@ -43,6 +46,10 @@ macro_rules! sub_cycles {
             return ServiceError::OutOfCycles.into();
         }
     };
+}
+
+pub trait AdmissionControl {
+    fn is_allowed(&self, ctx: &ServiceContext, payload: SignedTransaction) -> bool;
 }
 
 #[derive(Debug, Display)]
@@ -91,24 +98,42 @@ impl<T: Default> From<ServiceError> for ServiceResponse<T> {
 
 const ADMISSION_CONTROL_ADMIN_KEY: &str = "admission_control_admin";
 
-#[derive(Debug)]
-struct ServicePayload<P: Serialize> {
-    name:    &'static str,
-    method:  &'static str,
-    payload: P,
-}
-
-pub struct AdmissionControlService<SDK> {
+pub struct AdmissionControlService<A, G, SDK> {
     sdk:       SDK,
     deny_list: Box<dyn StoreMap<Address, bool>>,
+
+    asset:      A,
+    governance: G,
+}
+
+impl<A, G, SDK> AdmissionControl for AdmissionControlService<A, G, SDK>
+where
+    A: Assets,
+    G: Governance,
+    SDK: ServiceSDK + 'static,
+{
+    fn is_allowed(&self, ctx: &ServiceContext, payload: SignedTransaction) -> bool {
+        (!self.is_permitted(ctx.clone(), payload.clone()).is_error())
+            && (!self.is_valid(ctx.clone(), payload).is_error())
+    }
 }
 
 #[service]
-impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
-    pub fn new(mut sdk: SDK) -> Self {
+impl<A, G, SDK> AdmissionControlService<A, G, SDK>
+where
+    A: Assets,
+    G: Governance,
+    SDK: ServiceSDK + 'static,
+{
+    pub fn new(mut sdk: SDK, asset: A, governance: G) -> Self {
         let deny_list = sdk.alloc_or_recover_map("admission_control_deny_list");
 
-        AdmissionControlService { sdk, deny_list }
+        AdmissionControlService {
+            sdk,
+            deny_list,
+            asset,
+            governance,
+        }
     }
 
     // # Panic invalid genesis
@@ -155,12 +180,8 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
             Err(e) => return e,
         };
 
-        let failure_fee: u64 = match self.sdk_read(&ctx, ServicePayload {
-            name:    "governance",
-            method:  "get_tx_failure_fee",
-            payload: "",
-        }) {
-            Ok(fee) => fee,
+        let failure_fee = match self.governance.get_info(&ctx) {
+            Ok(info) => info.tx_failure_fee,
             Err(e) => return e,
         };
 
@@ -226,56 +247,13 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         ctx: &ServiceContext,
         caller: &Address,
     ) -> Result<u64, ServiceResponse<()>> {
-        #[derive(Debug, Deserialize)]
-        struct Asset {
-            pub id: protocol::types::Hash,
-        }
-
-        #[derive(Debug, Deserialize)]
-        struct AssetAccount {
-            pub balance: u64,
-        }
-
-        let native_asset: Asset = self.sdk_read(ctx, ServicePayload {
-            name:    "asset",
-            method:  "get_native_asset",
-            payload: "",
-        })?;
-        let asset_id = native_asset.id;
-
-        let native_account: AssetAccount = self.sdk_read(ctx, ServicePayload {
-            name:    "asset",
-            method:  "get_balance",
-            payload: serde_json::json!({
-                "asset_id": asset_id,
-                "user": caller,
-            }),
+        let asset_id = self.asset.native_asset(&ctx)?.id;
+        let native_account = self.asset.balance(&ctx, GetBalancePayload {
+            asset_id,
+            user: caller.clone(),
         })?;
 
         Ok(native_account.balance)
-    }
-
-    fn sdk_read<P: Serialize, R: for<'a> Deserialize<'a>>(
-        &self,
-        ctx: &ServiceContext,
-        service_payload: ServicePayload<P>,
-    ) -> Result<R, ServiceResponse<()>> {
-        let ServicePayload {
-            name,
-            method,
-            payload,
-        } = service_payload;
-        let json_payload = match serde_json::to_string(&payload) {
-            Ok(p) => p,
-            Err(e) => return Err(ServiceError::Codec(e).into()),
-        };
-
-        let resp = self.sdk.read(&ctx, None, name, method, &json_payload);
-        if resp.is_error() {
-            return Err(ServiceResponse::from_error(resp.code, resp.error_message));
-        }
-
-        serde_json::from_str(&resp.succeed_data).map_err(|e| ServiceError::Codec(e).into())
     }
 
     fn emit_event<T: Serialize>(
@@ -292,10 +270,10 @@ impl<SDK: ServiceSDK + 'static> AdmissionControlService<SDK> {
         }
     }
 
-    #[cfg(test)]
-    fn admin(&self) -> Address {
-        self.sdk
-            .get_value(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
-            .expect("admin not found")
-    }
+    // #[cfg(test)]
+    // fn admin(&self) -> Address {
+    //     self.sdk
+    //         .get_value(&ADMISSION_CONTROL_ADMIN_KEY.to_owned())
+    //         .expect("admin not found")
+    // }
 }

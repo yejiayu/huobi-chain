@@ -1,12 +1,11 @@
 mod common;
-#[cfg(test)]
-mod tests;
 
 pub mod authorization;
 pub mod error;
 pub mod types;
 pub mod vm;
 
+use asset::Assets;
 use authorization::Authorization;
 use error::ServiceError;
 use types::{
@@ -59,18 +58,28 @@ macro_rules! require_approved {
     };
 }
 
-pub struct RiscvService<SDK> {
+pub struct RiscvService<A, SDK> {
     sdk:           Rc<RefCell<SDK>>,
+    asset:         Rc<RefCell<A>>,
     authorization: Authorization,
 }
 
 #[service]
-impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
-    pub fn init(sdk: SDK) -> Self {
+impl<A, SDK> RiscvService<A, SDK>
+where
+    A: Assets + 'static,
+    SDK: ServiceSDK + 'static,
+{
+    pub fn init(sdk: SDK, asset: A) -> Self {
         let sdk = Rc::new(RefCell::new(sdk));
+        let asset = Rc::new(RefCell::new(asset));
         let authorization = Authorization::new(&sdk);
 
-        Self { sdk, authorization }
+        Self {
+            sdk,
+            asset,
+            authorization,
+        }
     }
 
     // # Panic
@@ -111,6 +120,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
             ctx.clone(),
             payload,
             Rc::<_>::clone(&self.sdk),
+            Rc::<_>::clone(&self.asset),
         )));
 
         self.run_interpreter(ctx, contract, readonly_chain, intp_params)
@@ -207,6 +217,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
             ctx.clone(),
             payload,
             Rc::<_>::clone(&self.sdk),
+            Rc::<_>::clone(&self.asset),
         )));
 
         self.run_interpreter(ctx, contract, writeable_chain, intp_params)
@@ -316,6 +327,7 @@ impl<SDK: ServiceSDK + 'static> RiscvService<SDK> {
             ctx.clone(),
             init_payload,
             Rc::<_>::clone(&self.sdk),
+            Rc::<_>::clone(&self.asset),
         )));
 
         let resp = self.run_interpreter(ctx, contract, writeable_chain, intp_params);

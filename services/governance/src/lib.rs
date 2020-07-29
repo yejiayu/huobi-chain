@@ -9,23 +9,24 @@ use bytes::Bytes;
 use derive_more::{Display, From};
 use serde::Serialize;
 
+use asset::types::{Asset, HookTransferFromPayload};
+use asset::Assets;
 use binding_macro::{
     cycles, genesis, hook_after, hook_before, service, tx_hook_after, tx_hook_before,
 };
+use metadata::types::UpdateMetadataPayload;
+use metadata::MetaData;
 use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap};
 use protocol::types::{Address, Metadata, ServiceContext, ServiceContextParams};
 
 use crate::types::{
-    AccumulateProfitPayload, ConsumedTxFee, DiscountLevel, GovernanceInfo, HookTransferFromPayload,
-    InitGenesisPayload, MinerChargeConfig, RecordProfitEvent, SetAdminEvent, SetAdminPayload,
-    SetGovernInfoEvent, SetGovernInfoPayload, SetMinerEvent, UpdateIntervalEvent,
-    UpdateIntervalPayload, UpdateMetadataEvent, UpdateMetadataPayload, UpdateRatioEvent,
-    UpdateRatioPayload, UpdateValidatorsEvent, UpdateValidatorsPayload,
+    AccumulateProfitPayload, ConsumedTxFee, DiscountLevel, GovernanceInfo, InitGenesisPayload,
+    MinerChargeConfig, RecordProfitEvent, SetAdminEvent, SetAdminPayload, SetGovernInfoEvent,
+    SetGovernInfoPayload, SetMinerEvent, UpdateIntervalEvent, UpdateIntervalPayload,
+    UpdateMetadataEvent, UpdateRatioEvent, UpdateRatioPayload, UpdateValidatorsEvent,
+    UpdateValidatorsPayload,
 };
 use std::convert::{From, TryInto};
-
-#[cfg(not(test))]
-use crate::types::{Asset, GetBalancePayload, GetBalanceResponse};
 
 const INFO_KEY: &str = "admin";
 const BLOCK_MINER_KEY: &str = "block_miner";
@@ -54,21 +55,79 @@ macro_rules! get_info {
     }};
 }
 
-pub struct GovernanceService<SDK> {
+macro_rules! impl_governance {
+    ($self: expr, $method: ident, $ctx: expr) => {{
+        let res = $self.$method($ctx.clone());
+        if res.is_error() {
+            Err(ServiceResponse::from_error(res.code, res.error_message))
+        } else {
+            Ok(res.succeed_data)
+        }
+    }};
+    ($self: expr, $method: ident, $ctx: expr, $payload: expr) => {{
+        let res = $self.$method($ctx.clone(), $payload);
+        if res.is_error() {
+            Err(ServiceResponse::from_error(res.code, res.error_message))
+        } else {
+            Ok(res.succeed_data)
+        }
+    }};
+}
+
+pub trait Governance {
+    fn get_info(&self, ctx: &ServiceContext) -> Result<GovernanceInfo, ServiceResponse<()>>;
+
+    fn declare_profit(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: AccumulateProfitPayload,
+    ) -> Result<(), ServiceResponse<()>>;
+}
+
+pub struct GovernanceService<A, M, SDK> {
     sdk:     SDK,
     profits: Box<dyn StoreMap<Address, u64>>,
     miners:  Box<dyn StoreMap<Address, Address>>,
+
+    asset:    A,
+    metadata: M,
+}
+
+impl<A, M, SDK> Governance for GovernanceService<A, M, SDK>
+where
+    A: Assets,
+    M: MetaData,
+    SDK: ServiceSDK,
+{
+    fn get_info(&self, ctx: &ServiceContext) -> Result<GovernanceInfo, ServiceResponse<()>> {
+        impl_governance!(self, get_govern_info, ctx)
+    }
+
+    fn declare_profit(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: AccumulateProfitPayload,
+    ) -> Result<(), ServiceResponse<()>> {
+        impl_governance!(self, accumulate_profit, ctx, payload)
+    }
 }
 
 #[service]
-impl<SDK: ServiceSDK> GovernanceService<SDK> {
-    pub fn new(mut sdk: SDK) -> Self {
+impl<A, M, SDK> GovernanceService<A, M, SDK>
+where
+    A: Assets,
+    M: MetaData,
+    SDK: ServiceSDK,
+{
+    pub fn new(mut sdk: SDK, asset: A, metadata: M) -> Self {
         let profits: Box<dyn StoreMap<Address, u64>> = sdk.alloc_or_recover_map("profit");
         let miners: Box<dyn StoreMap<Address, Address>> = sdk.alloc_or_recover_map("miner_address");
         Self {
             sdk,
             profits,
             miners,
+            asset,
+            metadata,
         }
     }
 
@@ -99,7 +158,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         {
             ServiceResponse::from_succeed(info.admin)
         } else {
-            ServiceResponse::from_error(198, "Missing info".to_owned())
+            ServiceError::MissingInfo.into()
         }
     }
 
@@ -536,49 +595,38 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         Ok(fee)
     }
 
-    #[cfg(test)]
-    fn block_miner(&self) -> Address {
-        self.sdk
-            .get_value::<_, Address>(&BLOCK_MINER_KEY.to_owned())
-            .unwrap()
-    }
+    // #[cfg(test)]
+    // fn block_miner(&self) -> Address {
+    //     self.sdk
+    //         .get_value::<_, Address>(&BLOCK_MINER_KEY.to_owned())
+    //         .unwrap()
+    // }
 
-    #[cfg(test)]
-    fn profits_len(&self) -> u64 {
-        self.profits.len()
-    }
+    // #[cfg(test)]
+    // fn profits_len(&self) -> u64 {
+    //     self.profits.len()
+    // }
 
-    #[cfg(test)]
-    fn get_balance(&self, _ctx: &ServiceContext) -> Result<u64, ServiceError> {
-        Ok(100_000)
-    }
+    // #[cfg(test)]
+    // fn get_balance(&self, _ctx: &ServiceContext) -> Result<u64, ServiceError> {
+    //     Ok(100_000)
+    // }
 
-    #[cfg(not(test))]
     fn get_balance(&self, ctx: &ServiceContext) -> Result<u64, ServiceError> {
+        use asset::types::GetBalancePayload;
+
         let asset = self
             .get_native_asset(ctx)
             .map_err(|_| ServiceError::QueryBalance)?;
 
-        let payload = GetBalancePayload {
-            asset_id: asset.id,
-            user:     ctx.get_caller(),
-        };
-        let payload = serde_json::to_string(&payload).map_err(ServiceError::JsonParse)?;
+        let balance = self
+            .asset
+            .balance(ctx, GetBalancePayload {
+                asset_id: asset.id,
+                user:     ctx.get_caller(),
+            })
+            .map_err(|_| ServiceError::QueryBalance)?;
 
-        let resp = self.sdk.read(
-            &ctx,
-            Some(ADMISSION_TOKEN.clone()),
-            "asset",
-            "get_balance",
-            payload.as_str(),
-        );
-
-        if resp.is_error() {
-            return Err(ServiceError::QueryBalance);
-        }
-
-        let balance = serde_json::from_str::<GetBalanceResponse>(resp.succeed_data.as_str())
-            .map_err(ServiceError::JsonParse)?;
         Ok(balance.balance)
     }
 
@@ -589,14 +637,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
     }
 
     fn get_metadata(&self, ctx: &ServiceContext) -> Result<Metadata, ServiceResponse<()>> {
-        let resp = self.sdk.read(ctx, None, "metadata", "get_metadata", "");
-        if resp.is_error() {
-            return Err(ServiceResponse::from_error(resp.code, resp.error_message));
-        }
-
-        let meta_json: String = resp.succeed_data;
-        let meta = serde_json::from_str(&meta_json).map_err(ServiceError::JsonParse)?;
-        Ok(meta)
+        self.metadata.get(ctx)
     }
 
     fn write_metadata(
@@ -604,24 +645,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         ctx: &ServiceContext,
         payload: UpdateMetadataPayload,
     ) -> Result<(), ServiceResponse<()>> {
-        let payload_json = match serde_json::to_string(&payload) {
-            Ok(j) => j,
-            Err(err) => return Err(ServiceError::JsonParse(err).into()),
-        };
-
-        let resp = self.sdk.write(
-            &ctx,
-            Some(ADMISSION_TOKEN.clone()),
-            "metadata",
-            "update_metadata",
-            &payload_json,
-        );
-
-        if resp.is_error() {
-            Err(ServiceResponse::from_error(resp.code, resp.error_message))
-        } else {
-            Ok(())
-        }
+        self.metadata.update(ctx, payload)
     }
 
     fn hook_transfer_from(
@@ -629,38 +653,11 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
         ctx: &ServiceContext,
         payload: HookTransferFromPayload,
     ) -> Result<(), ServiceResponse<()>> {
-        let payload_json = match serde_json::to_string(&payload) {
-            Ok(j) => j,
-            Err(err) => return Err(ServiceError::JsonParse(err).into()),
-        };
-
-        let resp = self
-            .sdk
-            .write(&ctx, None, "asset", "hook_transfer_from", &payload_json);
-
-        if resp.is_error() {
-            Err(ServiceResponse::from_error(resp.code, resp.error_message))
-        } else {
-            Ok(())
-        }
+        self.asset.hook_transfer_from(ctx, payload)
     }
 
-    #[cfg(not(test))]
-    fn get_native_asset(&self, ctx: &ServiceContext) -> Result<Asset, ServiceResponse<Asset>> {
-        let resp = self.sdk.read(
-            &ctx,
-            Some(ADMISSION_TOKEN.clone()),
-            "asset",
-            "get_native_asset",
-            "",
-        );
-
-        if resp.is_error() {
-            Err(ServiceResponse::from_error(resp.code, resp.error_message))
-        } else {
-            serde_json::from_str(&resp.succeed_data)
-                .map_err(|_| ServiceResponse::from_error(200, "decode json".to_string()))
-        }
+    fn get_native_asset(&self, ctx: &ServiceContext) -> Result<Asset, ServiceResponse<()>> {
+        self.asset.native_asset(ctx)
     }
 
     fn emit_event<T: Serialize>(

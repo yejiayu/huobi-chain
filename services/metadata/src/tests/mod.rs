@@ -7,7 +7,7 @@ use cita_trie::MemoryDB;
 
 use framework::binding::sdk::{DefaultChainQuerier, DefaultServiceSDK};
 use framework::binding::state::{GeneralServiceState, MPTTrie};
-use protocol::traits::{Context, NoopDispatcher, ServiceResponse, ServiceSDK, Storage};
+use protocol::traits::{Context, ServiceResponse, ServiceSDK, Storage};
 use protocol::types::{
     Address, Block, Hash, Hex, Metadata, Proof, Receipt, ServiceContext, ServiceContextParams,
     SignedTransaction, ValidatorExtend, METADATA_KEY,
@@ -70,21 +70,13 @@ fn test_update_metadata() {
 fn new_metadata_service(
     metadata: Metadata,
 ) -> MetadataService<
-    DefaultServiceSDK<
-        GeneralServiceState<MemoryDB>,
-        DefaultChainQuerier<MockStorage>,
-        NoopDispatcher,
-    >,
+    DefaultServiceSDK<GeneralServiceState<MemoryDB>, DefaultChainQuerier<MockStorage>>,
 > {
     let chain_db = DefaultChainQuerier::new(Arc::new(MockStorage {}));
     let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
     let state = GeneralServiceState::new(trie);
 
-    let mut sdk = DefaultServiceSDK::new(
-        Rc::new(RefCell::new(state)),
-        Rc::new(chain_db),
-        NoopDispatcher {},
-    );
+    let mut sdk = DefaultServiceSDK::new(Rc::new(RefCell::new(state)), Rc::new(chain_db));
 
     sdk.set_value(METADATA_KEY.to_string(), metadata);
 

@@ -13,10 +13,7 @@ use framework::binding::{
     sdk::{DefaultChainQuerier, DefaultServiceSDK},
     state::{GeneralServiceState, MPTTrie},
 };
-use protocol::{
-    traits::NoopDispatcher,
-    types::{Address, ServiceContext, ServiceContextParams},
-};
+use protocol::types::{Address, ServiceContext, ServiceContextParams};
 
 use std::{
     cell::RefCell,
@@ -51,7 +48,6 @@ macro_rules! service_call {
 type SDK = DefaultServiceSDK<
     GeneralServiceState<MemoryDB>,
     DefaultChainQuerier<ImplStorage<MemoryAdapter>>,
-    NoopDispatcher,
 >;
 
 const CYCLE_LIMIT: u64 = 1024 * 1024 * 1024;
@@ -67,11 +63,7 @@ fn should_correctly_init_genesis() {
     let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
     let state = GeneralServiceState::new(trie);
 
-    let sdk = DefaultServiceSDK::new(
-        Rc::new(RefCell::new(state)),
-        Rc::new(chain_db),
-        NoopDispatcher {},
-    );
+    let sdk = DefaultServiceSDK::new(Rc::new(RefCell::new(state)), Rc::new(chain_db));
 
     let mut service = KycService::new(sdk);
     let org_name: OrgName = "Da_Lisi".parse().expect("Da_Lisi");
@@ -692,11 +684,7 @@ impl TestService {
         let trie = MPTTrie::new(Arc::new(MemoryDB::new(false)));
         let state = GeneralServiceState::new(trie);
 
-        let sdk = DefaultServiceSDK::new(
-            Rc::new(RefCell::new(state)),
-            Rc::new(chain_db),
-            NoopDispatcher {},
-        );
+        let sdk = DefaultServiceSDK::new(Rc::new(RefCell::new(state)), Rc::new(chain_db));
 
         let mut service = KycService::new(sdk);
         service.init_genesis(Self::genesis());

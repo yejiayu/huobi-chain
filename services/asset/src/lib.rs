@@ -56,6 +56,53 @@ macro_rules! get_native_asset {
     }};
 }
 
+macro_rules! impl_assets {
+    ($self: expr, $method: ident, $ctx: expr) => {{
+        let res = $self.$method($ctx.clone());
+        if res.is_error() {
+            Err(ServiceResponse::from_error(res.code, res.error_message))
+        } else {
+            Ok(res.succeed_data)
+        }
+    }};
+    ($self: expr, $method: ident, $ctx: expr, $payload: expr) => {{
+        let res = $self.$method($ctx.clone(), $payload);
+        if res.is_error() {
+            Err(ServiceResponse::from_error(res.code, res.error_message))
+        } else {
+            Ok(res.succeed_data)
+        }
+    }};
+}
+
+pub trait Assets {
+    fn native_asset(&self, ctx: &ServiceContext) -> Result<Asset, ServiceResponse<()>>;
+
+    fn balance(
+        &self,
+        ctx: &ServiceContext,
+        payload: GetBalancePayload,
+    ) -> Result<GetBalanceResponse, ServiceResponse<()>>;
+
+    fn transfer(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: TransferPayload,
+    ) -> Result<(), ServiceResponse<()>>;
+
+    fn transfer_from(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: TransferFromPayload,
+    ) -> Result<(), ServiceResponse<()>>;
+
+    fn hook_transfer_from(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: HookTransferFromPayload,
+    ) -> Result<(), ServiceResponse<()>>;
+}
+
 pub struct AssetService<SDK> {
     sdk:    SDK,
     assets: Box<dyn StoreMap<Hash, Asset>>,
@@ -72,6 +119,44 @@ impl<SDK: ServiceSDK> Deref for AssetService<SDK> {
 impl<SDK: ServiceSDK> DerefMut for AssetService<SDK> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.sdk
+    }
+}
+
+impl<SDK: ServiceSDK> Assets for AssetService<SDK> {
+    fn native_asset(&self, ctx: &ServiceContext) -> Result<Asset, ServiceResponse<()>> {
+        impl_assets!(self, get_native_asset, ctx)
+    }
+
+    fn balance(
+        &self,
+        ctx: &ServiceContext,
+        payload: GetBalancePayload,
+    ) -> Result<GetBalanceResponse, ServiceResponse<()>> {
+        impl_assets!(self, get_balance, ctx, payload)
+    }
+
+    fn transfer(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: TransferPayload,
+    ) -> Result<(), ServiceResponse<()>> {
+        impl_assets!(self, transfer_, ctx, payload)
+    }
+
+    fn transfer_from(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: TransferFromPayload,
+    ) -> Result<(), ServiceResponse<()>> {
+        impl_assets!(self, transfer_from_, ctx, payload)
+    }
+
+    fn hook_transfer_from(
+        &mut self,
+        ctx: &ServiceContext,
+        payload: HookTransferFromPayload,
+    ) -> Result<(), ServiceResponse<()>> {
+        impl_assets!(self, hook_transfer_from_, ctx, payload)
     }
 }
 
@@ -229,7 +314,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
     #[cycles(210_00)]
     #[write]
-    fn transfer(&mut self, ctx: ServiceContext, payload: TransferPayload) -> ServiceResponse<()> {
+    fn transfer_(&mut self, ctx: ServiceContext, payload: TransferPayload) -> ServiceResponse<()> {
         require_asset_exists!(self, payload.asset_id);
 
         let sender = match Self::extra_caller(&ctx) {
@@ -254,7 +339,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
     #[cycles(210_00)]
     #[write]
-    fn transfer_from(
+    fn transfer_from_(
         &mut self,
         ctx: ServiceContext,
         payload: TransferFromPayload,
@@ -308,7 +393,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
     #[cycles(210_00)]
     #[write]
-    fn hook_transfer_from(
+    fn hook_transfer_from_(
         &mut self,
         ctx: ServiceContext,
         payload: HookTransferFromPayload,

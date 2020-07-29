@@ -2,24 +2,6 @@ timestamp = 0
 prevhash = "0x44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
 
 [[services]]
-name = "authorization"
-payload = '''
-{
-    "admin": "0xcff1002107105460941f797828f468667aa1a2db",
-    "verified_items": [
-        {
-            "service_name": "admission_control",
-            "method_name": "is_permitted"
-        },
-        {
-            "service_name": "admission_control",
-            "method_name": "is_valid"
-        }
-    ]
-}
-'''
-
-[[services]]
 name = "asset"
 payload = '''
 {
@@ -83,16 +65,16 @@ payload = '''
 }
 '''
 
-# you can enable whitelist in riscv with init payload below
-[[services]]
-name = 'riscv'
-payload = '''
-{
-    "enable_authorization": true,
-    "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
-    "deploy_auth": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
-}
-'''
+# # you can enable whitelist in riscv with init payload below
+# [[services]]
+# name = 'riscv'
+# payload = '''
+# {
+#     "enable_authorization": true,
+#     "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
+#     "deploy_auth": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
+# }
+# '''
 
 [[services]]
 name = "kyc"
