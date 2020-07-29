@@ -84,19 +84,19 @@ pub trait Assets {
         payload: GetBalancePayload,
     ) -> Result<GetBalanceResponse, ServiceResponse<()>>;
 
-    fn transfer(
+    fn transfer_(
         &mut self,
         ctx: &ServiceContext,
         payload: TransferPayload,
     ) -> Result<(), ServiceResponse<()>>;
 
-    fn transfer_from(
+    fn transfer_from_(
         &mut self,
         ctx: &ServiceContext,
         payload: TransferFromPayload,
     ) -> Result<(), ServiceResponse<()>>;
 
-    fn hook_transfer_from(
+    fn hook_transfer_from_(
         &mut self,
         ctx: &ServiceContext,
         payload: HookTransferFromPayload,
@@ -135,28 +135,28 @@ impl<SDK: ServiceSDK> Assets for AssetService<SDK> {
         impl_assets!(self, get_balance, ctx, payload)
     }
 
-    fn transfer(
+    fn transfer_(
         &mut self,
         ctx: &ServiceContext,
         payload: TransferPayload,
     ) -> Result<(), ServiceResponse<()>> {
-        impl_assets!(self, transfer_, ctx, payload)
+        impl_assets!(self, transfer, ctx, payload)
     }
 
-    fn transfer_from(
+    fn transfer_from_(
         &mut self,
         ctx: &ServiceContext,
         payload: TransferFromPayload,
     ) -> Result<(), ServiceResponse<()>> {
-        impl_assets!(self, transfer_from_, ctx, payload)
+        impl_assets!(self, transfer_from, ctx, payload)
     }
 
-    fn hook_transfer_from(
+    fn hook_transfer_from_(
         &mut self,
         ctx: &ServiceContext,
         payload: HookTransferFromPayload,
     ) -> Result<(), ServiceResponse<()>> {
-        impl_assets!(self, hook_transfer_from_, ctx, payload)
+        impl_assets!(self, hook_transfer_from, ctx, payload)
     }
 }
 
@@ -314,7 +314,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
     #[cycles(210_00)]
     #[write]
-    fn transfer_(&mut self, ctx: ServiceContext, payload: TransferPayload) -> ServiceResponse<()> {
+    fn transfer(&mut self, ctx: ServiceContext, payload: TransferPayload) -> ServiceResponse<()> {
         require_asset_exists!(self, payload.asset_id);
 
         let sender = match Self::extra_caller(&ctx) {
@@ -339,7 +339,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
     #[cycles(210_00)]
     #[write]
-    fn transfer_from_(
+    fn transfer_from(
         &mut self,
         ctx: ServiceContext,
         payload: TransferFromPayload,
@@ -393,7 +393,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
 
     #[cycles(210_00)]
     #[write]
-    fn hook_transfer_from_(
+    fn hook_transfer_from(
         &mut self,
         ctx: ServiceContext,
         payload: HookTransferFromPayload,

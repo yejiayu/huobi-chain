@@ -653,7 +653,7 @@ where
         ctx: &ServiceContext,
         payload: HookTransferFromPayload,
     ) -> Result<(), ServiceResponse<()>> {
-        self.asset.hook_transfer_from(ctx, payload)
+        self.asset.hook_transfer_from_(ctx, payload)
     }
 
     fn get_native_asset(&self, ctx: &ServiceContext) -> Result<Asset, ServiceResponse<()>> {
