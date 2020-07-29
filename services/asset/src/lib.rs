@@ -320,24 +320,13 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         }
 
         let asset_id = get_native_asset!(self);
-        if let Err(err) = self._transfer(
-            &payload.sender,
-            &payload.recipient,
-            asset_id.clone(),
-            payload.value,
-        ) {
+        if let Err(err) =
+            self._transfer(&payload.sender, &payload.recipient, asset_id, payload.value)
+        {
             return err.into();
         }
 
-        let event = TransferFromEvent {
-            asset_id,
-            caller: ctx.get_caller(),
-            sender: payload.sender,
-            recipient: payload.recipient,
-            value: payload.value,
-            memo: payload.memo,
-        };
-        Self::emit_event(&ctx, "HookTransferFrom".to_owned(), event)
+        ServiceResponse::from_succeed(())
     }
 
     #[cycles(210_00)]

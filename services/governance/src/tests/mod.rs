@@ -22,7 +22,7 @@ use protocol::types::{
 use protocol::ProtocolResult;
 
 use crate::types::{
-    AccumulateProfitPayload, Asset, DiscountLevel, GovernanceInfo, SetAdminPayload,
+    AccumulateProfitPayload, Asset, ConsumedTxFee, DiscountLevel, GovernanceInfo, SetAdminPayload,
 };
 use crate::{GovernanceService, INFO_KEY};
 
@@ -105,7 +105,7 @@ fn test_update_metadata() {
 
     let executor_resp = executor.exec(Context::new(), &params, &[stx]).unwrap();
     let receipt = &executor_resp.receipts[0];
-    let event = &receipt.events[2];
+    let event = &receipt.events[0];
 
     let expect_event = r#"{"verifier_list":[{"bls_pub_key":"0xFFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22","address":"0x016cbd9ee47a255a6f68882918dcdd9e14e6bee1","propose_weight":6,"vote_weight":6}],"interval":6,"propose_ratio":6,"prevote_ratio":6,"precommit_ratio":6,"brake_ratio":6,"timeout_gap":20,"cycles_limit":3000000,"cycles_price":3000,"tx_num_limit":20000,"max_tx_size":500000}"#.to_owned();
 
@@ -274,6 +274,62 @@ fn test_reset_profits_in_tx_hook_after() {
     service.deduct_fee(ctx);
 
     assert_eq!(service.profits_len(), 1, "should reset profits");
+}
+
+#[test]
+fn test_consumed_tx_fee_event() {
+    let memdb = Arc::new(MemoryDB::new(false));
+    let toml_str = include_str!("./test_genesis.toml");
+    let genesis: Genesis = toml::from_str(toml_str).unwrap();
+
+    let root = ServiceExecutor::create_genesis(
+        genesis.services,
+        Arc::clone(&memdb),
+        Arc::new(MockStorage {}),
+        Arc::new(MockServiceMapping {}),
+    )
+    .unwrap();
+
+    let proposer = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+    let params = ExecutorParams {
+        state_root: root,
+        height: 1,
+        timestamp: 0,
+        cycles_limit: std::u64::MAX,
+        proposer,
+    };
+
+    let admin = Address::from_hex("0x755cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+    let cycles_limit = 1024 * 1024 * 1024; // 1073741824
+    let ctx = mock_context(cycles_limit, admin.clone());
+
+    let mut service = new_governance_service(admin.clone());
+    assert_eq!(service.profits_len(), 0, "should not have any profits");
+
+    service.set_block_miner(&params);
+    service.pledge_fee(ctx.clone());
+
+    service!(
+        service,
+        accumulate_profit,
+        ctx.clone(),
+        AccumulateProfitPayload {
+            address:            admin.clone(),
+            accumulated_profit: 1,
+        }
+    );
+
+    // Manually call tx_hook_after
+    service.deduct_fee(ctx.clone());
+
+    let events = ctx.get_events();
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[1].name, "ConsumedTxFee");
+
+    let consumed_tx_fee: ConsumedTxFee = serde_json::from_str(&events[1].data).unwrap();
+    assert_eq!(consumed_tx_fee.caller, admin);
+    assert_eq!(consumed_tx_fee.miner, admin);
+    assert_eq!(consumed_tx_fee.amount, 10);
 }
 
 #[test]
@@ -512,7 +568,7 @@ impl Dispatcher for MockDispatcher {
         let service = ctx.get_service_name();
         let method = ctx.get_service_method();
 
-        if service != "asset" || method != "transfer_from" {
+        if service != "asset" || (method != "transfer_from" && method != "hook_transfer_from") {
             return ServiceResponse::<String>::from_error(
                 2,
                 format!("not found method:{:?} of service:{:?}", method, service),

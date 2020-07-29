@@ -244,3 +244,10 @@ pub struct GetBalanceResponse {
     pub user:     Address,
     pub balance:  u64,
 }
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ConsumedTxFee {
+    pub caller: Address,
+    pub miner:  Address,
+    pub amount: u64,
+}

@@ -12,9 +12,9 @@ use protocol::types::{Address, Bytes, Hash, Hex, ServiceContext, ServiceContextP
 
 use crate::types::{
     ApprovePayload, BurnAssetEvent, BurnAssetPayload, ChangeAdminPayload, CreateAssetPayload,
-    GetAllowancePayload, GetAssetPayload, GetBalancePayload, InitGenesisPayload, IssuerWithBalance,
-    MintAssetEvent, MintAssetPayload, RelayAssetEvent, RelayAssetPayload, TransferFromPayload,
-    TransferPayload,
+    GetAllowancePayload, GetAssetPayload, GetBalancePayload, HookTransferFromPayload,
+    InitGenesisPayload, IssuerWithBalance, MintAssetEvent, MintAssetPayload, RelayAssetEvent,
+    RelayAssetPayload, TransferFromPayload, TransferPayload,
 };
 use crate::AssetService;
 
@@ -620,6 +620,53 @@ fn test_genesis_issuers_balance_not_equal_to_supply() {
     };
 
     service.init_genesis(genesis);
+}
+
+#[test]
+fn test_hook_transfer_from_emit_no_event() {
+    let mut service = TestService::new();
+    let recipient = Address::from_hex("0x666cdba6ae4f479f7164792b318b2a06c759833b").unwrap();
+
+    let ctx = {
+        let params = ServiceContextParams {
+            tx_hash:         None,
+            nonce:           None,
+            cycles_limit:    CYCLE_LIMIT,
+            cycles_price:    1,
+            cycles_used:     Rc::new(RefCell::new(0)),
+            caller:          recipient.clone(),
+            height:          1,
+            timestamp:       0,
+            service_name:    "service_name".to_owned(),
+            service_method:  "service_method".to_owned(),
+            service_payload: "service_payload".to_owned(),
+            extra:           Some(Bytes::from_static(b"governance")),
+            events:          Rc::new(RefCell::new(vec![])),
+        };
+
+        ServiceContext::new(params)
+    };
+
+    let admin = TestService::admin();
+    service.hook_transfer_from(ctx.clone(), HookTransferFromPayload {
+        sender:    admin.clone(),
+        recipient: recipient.clone(),
+        value:     24,
+        memo:      "test".to_owned(),
+    });
+    assert_eq!(ctx.get_events().len(), 0);
+
+    let sender_balance = service_call!(service, get_balance, ctx.clone(), GetBalancePayload {
+        asset_id: TestService::genesis().id,
+        user:     admin,
+    });
+    assert_eq!(sender_balance.balance, TestService::genesis().supply - 24);
+
+    let recipient_balance = service_call!(service, get_balance, ctx, GetBalancePayload {
+        asset_id: TestService::genesis().id,
+        user:     recipient,
+    });
+    assert_eq!(recipient_balance.balance, 24);
 }
 
 struct TestService(AssetService<SDK>);

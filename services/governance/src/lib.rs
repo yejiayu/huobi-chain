@@ -16,7 +16,7 @@ use protocol::traits::{ExecutorParams, ServiceResponse, ServiceSDK, StoreMap};
 use protocol::types::{Address, Metadata, ServiceContext, ServiceContextParams};
 
 use crate::types::{
-    AccumulateProfitPayload, DiscountLevel, GovernanceInfo, HookTransferFromPayload,
+    AccumulateProfitPayload, ConsumedTxFee, DiscountLevel, GovernanceInfo, HookTransferFromPayload,
     InitGenesisPayload, MinerChargeConfig, RecordProfitEvent, SetAdminEvent, SetAdminPayload,
     SetGovernInfoEvent, SetGovernInfoPayload, SetMinerEvent, UpdateIntervalEvent,
     UpdateIntervalPayload, UpdateMetadataEvent, UpdateMetadataPayload, UpdateRatioEvent,
@@ -353,13 +353,12 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             .for_each(|addr| self.profits.insert(addr, 0));
 
         // Pledge the tx failure fee before executed the transaction.
-        let transfer_from_payload = HookTransferFromPayload {
+        let ret = self.hook_transfer_from(&ctx, HookTransferFromPayload {
             sender:    ctx.get_caller(),
             recipient: miner_addr,
             value:     info.tx_failure_fee,
             memo:      "pledge tx failure fee".to_string(),
-        };
-        let ret = self.hook_transfer_from(&ctx, transfer_from_payload.clone());
+        });
 
         if let Err(e) = ret {
             if e.is_error() {
@@ -367,12 +366,7 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             }
         }
 
-        let resp = Self::emit_event(&ctx, "PledgeFee".to_owned(), transfer_from_payload);
-        if resp.is_error() {
-            ServiceResponse::from_error(resp.code, resp.error_message)
-        } else {
-            ServiceResponse::from_succeed("".to_owned())
-        }
+        ServiceResponse::from_succeed("".to_owned())
     }
 
     #[tx_hook_after]
@@ -382,30 +376,45 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             return tx_fee.err().unwrap().into();
         }
 
-        let tx_fee = tx_fee.unwrap();
-        if tx_fee == 0 {
-            return ServiceResponse::from_succeed("".to_owned());
-        }
-
-        let miner_addr = self.sdk.get_value(&BLOCK_MINER_KEY.to_owned());
-        if miner_addr.is_none() {
-            return ServiceError::MissingInfo.into();
-        }
-
-        let miner_addr = miner_addr.unwrap();
-        let (tx, rx) = if tx_fee > 0 {
-            (ctx.get_caller(), miner_addr)
-        } else {
-            (miner_addr, ctx.get_caller())
+        let miner_addr: Address = match self.sdk.get_value(&BLOCK_MINER_KEY.to_owned()) {
+            None => return ServiceError::MissingInfo.into(),
+            Some(addr) => addr,
         };
 
-        let transfer_from_payload = HookTransferFromPayload {
+        let info: GovernanceInfo = match self.sdk.get_value(&INFO_KEY.to_owned()) {
+            None => return ServiceError::MissingInfo.into(),
+            Some(info) => info,
+        };
+
+        let tx_fee = tx_fee.unwrap();
+        if tx_fee == 0 {
+            let resp = Self::emit_event(&ctx, "ConsumedTxFee".to_owned(), ConsumedTxFee {
+                caller: ctx.get_caller(),
+                miner:  miner_addr,
+                amount: info.tx_failure_fee,
+            });
+
+            let resp = if resp.is_error() {
+                ServiceResponse::from_error(resp.code, resp.error_message)
+            } else {
+                ServiceResponse::from_succeed("".to_owned())
+            };
+
+            return resp;
+        }
+
+        let (tx, rx) = if tx_fee > 0 {
+            (ctx.get_caller(), miner_addr.clone())
+        } else {
+            (miner_addr.clone(), ctx.get_caller())
+        };
+
+        let ret = self.hook_transfer_from(&ctx, HookTransferFromPayload {
             sender:    tx,
             recipient: rx,
             value:     tx_fee.abs() as u64,
             memo:      "collect tx fee".to_string(),
-        };
-        let ret = self.hook_transfer_from(&ctx, transfer_from_payload.clone());
+        });
 
         if let Err(e) = ret {
             if e.is_error() {
@@ -413,7 +422,19 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
             }
         }
 
-        let resp = Self::emit_event(&ctx, "DeductFee".to_owned(), transfer_from_payload);
+        let amount = match consumed_tx_fee(info.tx_failure_fee, tx_fee) {
+            Err(err) => {
+                return err.into();
+            }
+            Ok(v) => v,
+        };
+
+        let resp = Self::emit_event(&ctx, "ConsumedTxFee".to_owned(), ConsumedTxFee {
+            caller: ctx.get_caller(),
+            miner: miner_addr,
+            amount,
+        });
+
         if resp.is_error() {
             ServiceResponse::from_error(resp.code, resp.error_message)
         } else {
@@ -654,6 +675,24 @@ impl<SDK: ServiceSDK> GovernanceService<SDK> {
                 ServiceResponse::from_succeed(())
             }
         }
+    }
+}
+
+fn consumed_tx_fee(tx_failure_fee: u64, tx_fee: i128) -> Result<u64, ServiceError> {
+    if tx_fee > 0 {
+        let (checked_sum, overflow) = tx_failure_fee.overflowing_add(tx_fee.abs() as u64);
+        if overflow {
+            return Err(ServiceError::Overflow);
+        }
+
+        Ok(checked_sum)
+    } else {
+        let (checked_val, overflow) = tx_failure_fee.overflowing_sub(tx_fee.abs() as u64);
+        if overflow {
+            return Err(ServiceError::Overflow);
+        }
+
+        Ok(checked_val)
     }
 }
 
