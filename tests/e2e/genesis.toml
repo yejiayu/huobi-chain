@@ -5,7 +5,7 @@ prevhash = "0x44915be5b6c20b0678cf05fcddbbaa832e25d7e6ac538784cd5c24de00d47472"
 name = "authorization"
 payload = '''
 {
-    "admin": "0xcff1002107105460941f797828f468667aa1a2db",
+    "admin": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47",
     "verified_items": [
         {
             "service_name": "admission_control",
@@ -28,8 +28,8 @@ payload = '''
     "symbol": "HTTest",
     "supply": 50000000000000000,
     "precision": 8,
-    "init_mints": [{"addr": "0xcff1002107105460941f797828f468667aa1a2db", "balance": 1000000000}],
-    "admin": "0xcff1002107105460941f797828f468667aa1a2db",
+    "init_mints": [{"addr": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47", "balance": 1000000000}],
+    "admin": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47",
     "relayable": true
 }
 '''
@@ -47,7 +47,7 @@ payload = '''
     "verifier_list": [
         {
             "bls_pub_key": "0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22",
-            "address": "0xf8389d774afdad8755ef8e629e5a154fddc6325a",
+            "address": "muta1lquf6a62lkkcw4003e3fuks4flwuvvj6wvncxg",
             "propose_weight": 1,
             "vote_weight": 1
         }
@@ -68,7 +68,7 @@ name = "governance"
 payload = '''
 {
     "info": {
-        "admin": "0xcff1002107105460941f797828f468667aa1a2db",
+        "admin": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47",
         "tx_failure_fee": 1000,
         "tx_floor_fee": 100,
         "profit_deduct_rate_per_million": 10,
@@ -77,10 +77,10 @@ payload = '''
         ],
         "miner_benefit": 3
     },
-    "tx_fee_inlet_address": "0xcff1002107105460941f797828f468667aa1a2db",
-    "miner_profit_outlet_address": "0x9cccacbb8a4b0353d42138613b2db72d6a661cf4",
+    "tx_fee_inlet_address": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47",
+    "miner_profit_outlet_address": "muta1nnx2ewu2fvp484pp8psnktdh944xv885nkwpvu",
     "miner_charge_map": [
-        {"address": "0x9cccacbb8a4b0353d42138613b2db72d6a661cf4", "miner_charge_address": "0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"}
+        {"address": "muta1nnx2ewu2fvp484pp8psnktdh944xv885nkwpvu", "miner_charge_address": "muta1nnx2ewu2fvp484pp8psnktdh944xv885nkwpvu"}
     ]
 }
 '''
@@ -91,8 +91,8 @@ name = 'riscv'
 payload = '''
 {
     "enable_authorization": true,
-    "admins": ["0xcff1002107105460941f797828f468667aa1a2db"],
-    "deploy_auth": ["0x9cccacbb8a4b0353d42138613b2db72d6a661cf4"]
+    "admins": ["muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47"],
+    "deploy_auth": ["muta1nnx2ewu2fvp484pp8psnktdh944xv885nkwpvu"]
 }
 '''
 
@@ -102,9 +102,9 @@ payload = '''
 {
    "org_name": "huobi",
    "org_description": "",
-   "org_admin": "0xcff1002107105460941f797828f468667aa1a2db",
+   "org_admin": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47",
    "supported_tags": [ "name", "gender", "age" ],
-   "service_admin": "0xcff1002107105460941f797828f468667aa1a2db"
+   "service_admin": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47"
 }
 '''
 
@@ -112,7 +112,7 @@ payload = '''
 name = "admission_control"
 payload = '''
 {
-   "admin": "0xcff1002107105460941f797828f468667aa1a2db",
-   "deny_list": [ "0xd2d268749ffe54def4e2e73e5e06a4ebf0d6f585" ]
+   "admin": "muta1elcsqgg8zp2xp9ql09uz3argvea2rgkmglwr47",
+   "deny_list": [ "muta16tfxsaylle2daa8zuul9up4ya0cddav9h4chyk" ]
 }
 '''

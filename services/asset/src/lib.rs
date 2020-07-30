@@ -280,7 +280,7 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
             Err(err) => return ServiceError::JsonParse(err).into(),
         };
 
-        let asset_id = Hash::digest(Bytes::from(payload_json + &caller.as_hex()));
+        let asset_id = Hash::digest(Bytes::from(payload_json + &caller.to_string()));
         if self.assets.contains(&asset_id) {
             return ServiceError::Exists(asset_id).into();
         }

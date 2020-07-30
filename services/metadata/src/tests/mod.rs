@@ -93,6 +93,7 @@ fn mock_metadata_1() -> Metadata {
         interval:        3000,
         verifier_list:   [ValidatorExtend {
             bls_pub_key: Hex::from_string("0x04188ef9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned()).unwrap(),
+            pub_key: Hex::from_string("0x02ef0cb0d7bc6c18b4bea1f5908d9106522b35ab3c399369605d4242525bda7e60".to_owned()).unwrap(),
             address:        Address::from_hex("0xCAB8EEA4799C21379C20EF5BAA2CC8AF1BEC475B").unwrap(),
             propose_weight: 1,
             vote_weight:    1,
@@ -117,6 +118,7 @@ fn mock_metadata_2() -> Metadata {
         verifier_list:   [
             ValidatorExtend {
                 bls_pub_key: Hex::from_string("0xFFFFFFF9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402eda5ef22".to_owned()).unwrap(),
+                pub_key: Hex::from_string("0x02ef0cb0d7bc6c18b4bea1f5908d9106522b35ab3c399369605d4242525bda7e60".to_owned()).unwrap(),
                 address:        Address::from_hex("0xCAB8EEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
                     .unwrap(),
                 propose_weight: 3,
@@ -124,6 +126,7 @@ fn mock_metadata_2() -> Metadata {
             },
             ValidatorExtend {
                 bls_pub_key: Hex::from_string("0xFFFFFFf9488c19458a963cc57b567adde7db8f8b6bec392d5cb7b67b0abc1ed6cd966edc451f6ac2ef38079460eb965e890d1f576e4039a20467820237cda753f07a8b8febae1ec052190973a1bcf00690ea8fc0168b3fbbccd1c4e402edFFFFFF".to_owned()).unwrap(),
+                pub_key: Hex::from_string("0x02ef0cb0d7bc6c18b4bea1f5908d9106522b35ab3c399369605d4242525bda7e60".to_owned()).unwrap(),
                 address:        Address::from_hex("0xFFFFFEA4799C21379C20EF5BAA2CC8AFFFFFFFFF")
                     .unwrap(),
                 propose_weight: 3,

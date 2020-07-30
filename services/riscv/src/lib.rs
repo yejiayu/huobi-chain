@@ -391,7 +391,7 @@ where
             .sdk
             .borrow()
             .get_value::<_, Contract>(address)
-            .ok_or_else(|| ServiceError::ContractNotFound(address.as_hex()))?;
+            .ok_or_else(|| ServiceError::ContractNotFound(address.to_string()))?;
 
         let authorizer = self
             .authorization

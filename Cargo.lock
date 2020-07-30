@@ -361,7 +361,7 @@ checksum = "4d25d88fd6b8041580a654f9d0c581a047baee2b3efee13275f2fc392fc75034"
 [[package]]
 name = "asset"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "binding-macro",
  "byteorder",
@@ -510,6 +510,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
 
 [[package]]
+name = "bech32"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdcf67bb7ba7797a081cd19009948ab533af7c355d5caf1d08c777582d351e9c"
+
+[[package]]
 name = "bincode"
 version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -546,7 +552,7 @@ dependencies = [
 [[package]]
 name = "binding-macro"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "derive_more 0.15.0",
  "muta-protocol",
@@ -794,7 +800,7 @@ dependencies = [
 [[package]]
 name = "common-apm"
 version = "0.1.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "derive_more 0.99.9",
  "lazy_static",
@@ -807,7 +813,7 @@ dependencies = [
 [[package]]
 name = "common-config-parser"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "reqwest",
  "serde",
@@ -819,7 +825,7 @@ dependencies = [
 [[package]]
 name = "common-crypto"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "ophelia",
  "ophelia-bls-amcl",
@@ -829,7 +835,7 @@ dependencies = [
 [[package]]
 name = "common-logger"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "json",
  "log",
@@ -839,7 +845,7 @@ dependencies = [
 [[package]]
 name = "common-merkle"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "muta-protocol",
  "rayon",
@@ -883,7 +889,7 @@ checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 [[package]]
 name = "core-api"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -906,7 +912,7 @@ dependencies = [
 [[package]]
 name = "core-consensus"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "async-trait",
  "bincode",
@@ -954,7 +960,7 @@ checksum = "90accdee0acac454f78a41d2eefc1212ec6eaa2ae6a216619389e996c0155c3c"
 [[package]]
 name = "core-mempool"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "async-trait",
  "bytes 0.5.5",
@@ -981,10 +987,11 @@ dependencies = [
 [[package]]
 name = "core-network"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "async-trait",
  "bincode",
+ "bs58",
  "bytes 0.5.5",
  "common-apm",
  "derive_more 0.99.9",
@@ -1002,16 +1009,14 @@ dependencies = [
  "serde_derive",
  "snap",
  "tentacle",
- "tentacle-discovery",
- "tentacle-identify",
- "tentacle-ping",
  "tokio 0.2.21",
+ "tokio-util 0.2.0",
 ]
 
 [[package]]
 name = "core-storage"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "async-trait",
  "common-apm",
@@ -1324,7 +1329,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "framework"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "asset 0.1.0-alpha.0",
  "byteorder",
@@ -2168,12 +2173,12 @@ dependencies = [
 [[package]]
 name = "metadata"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "binding-macro",
  "byteorder",
  "bytes 0.5.5",
- "derive_more 0.15.0",
+ "derive_more 0.99.9",
  "muta-protocol",
  "rlp 0.4.5",
  "serde",
@@ -2282,17 +2287,6 @@ checksum = "89d10a1ea3ffe41d318ccd9f21a1f2366c8103b95e1deaa9449793f4b10cefe8"
 
 [[package]]
 name = "molecule"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5492f99b99e29ec28391edf446abfe10dbc3ebc401c978f7c8ac9c0ef3b7cd93"
-dependencies = [
- "bytes 0.5.5",
- "cfg-if",
- "faster-hex",
-]
-
-[[package]]
-name = "molecule"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "663f76cc52219e5957e2f5563cce9d89f98aa8503c9c898b5c412d97df663998"
@@ -2305,7 +2299,7 @@ dependencies = [
 [[package]]
 name = "multi-signature"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "binding-macro",
  "byteorder",
@@ -2325,7 +2319,7 @@ dependencies = [
 [[package]]
 name = "muta"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "actix-rt",
  "backtrace",
@@ -2400,9 +2394,10 @@ dependencies = [
 [[package]]
 name = "muta-protocol"
 version = "0.1.0-alpha.1"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "async-trait",
+ "bech32",
  "bincode",
  "byteorder",
  "bytes 0.5.5",
@@ -2415,6 +2410,8 @@ dependencies = [
  "json",
  "lazy_static",
  "muta-codec-derive",
+ "ophelia",
+ "ophelia-secp256k1",
  "prost",
  "rlp 0.4.5",
  "serde",
@@ -2542,9 +2539,9 @@ dependencies = [
 
 [[package]]
 name = "ophelia"
-version = "0.2.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d4dea546e8ea4c119b81998e48872d72a57c59706e23734de835bd080f82672"
+checksum = "5caa4d338c1b71ccf6ed244a4c79868d4ba4396efd96f3d04b299fc10068ff30"
 dependencies = [
  "anyhow",
  "bytes 0.5.5",
@@ -2554,9 +2551,9 @@ dependencies = [
 
 [[package]]
 name = "ophelia-bls-amcl"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c60629a3d2fcdde90bc4d4d088545964c30d1c2e9ef7518cc06df3f0e66c8f31"
+checksum = "27f27b7eedacdd864ad93aa4058f021955ecefc59b69996fda328106fdd1bc41"
 dependencies = [
  "bls_amcl",
  "ophelia",
@@ -2566,9 +2563,9 @@ dependencies = [
 
 [[package]]
 name = "ophelia-derive"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8261c7a65613d9a546299056d8646a8ae7014ea94c691bd15fb420665e1afbd4"
+checksum = "93bf0f35140949b59d621f5d907bde3f2cc286ea8ad609411d3447725869d814"
 dependencies = [
  "quote 1.0.7",
  "syn 1.0.33",
@@ -2585,9 +2582,9 @@ dependencies = [
 
 [[package]]
 name = "ophelia-secp256k1"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5645d74fc60a1ba12dc908cbd954552c57c1c57443dfa7f36249b9c9e62ab69a"
+checksum = "a08af2899402844c4e235a89d1648b5c76eef8053f0e5cb26860c29c2baf5c5c"
 dependencies = [
  "lazy_static",
  "ophelia",
@@ -3777,14 +3774,15 @@ dependencies = [
 [[package]]
 name = "tentacle"
 version = "0.3.0-alpha.5"
-source = "git+https://github.com/zeroqn/p2p?branch=v0.3.0.alpha5-muta#3440d4cc705ab8c865b753dbf61f80c69b8b3902"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d372fcc0a53b9ca6705cc8e46b0a68850280c1b48f78c8c177eb8dfe50232413"
 dependencies = [
  "bytes 0.5.5",
  "futures 0.3.5",
  "igd",
  "libc",
  "log",
- "molecule 0.6.0",
+ "molecule",
  "tentacle-multiaddr",
  "tentacle-secio",
  "thiserror",
@@ -3795,35 +3793,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "tentacle-discovery"
-version = "0.2.9"
-source = "git+https://github.com/zeroqn/p2p?branch=v0.3.0.alpha5-muta#3440d4cc705ab8c865b753dbf61f80c69b8b3902"
-dependencies = [
- "bytes 0.5.5",
- "futures 0.3.5",
- "log",
- "molecule 0.5.0",
- "rand 0.6.5",
- "tentacle",
- "tokio 0.2.21",
- "tokio-util 0.2.0",
-]
-
-[[package]]
-name = "tentacle-identify"
-version = "0.2.10"
-source = "git+https://github.com/zeroqn/p2p?branch=v0.3.0.alpha5-muta#3440d4cc705ab8c865b753dbf61f80c69b8b3902"
-dependencies = [
- "bytes 0.5.5",
- "log",
- "molecule 0.5.0",
- "tentacle",
-]
-
-[[package]]
 name = "tentacle-multiaddr"
 version = "0.1.0"
-source = "git+https://github.com/zeroqn/p2p?branch=v0.3.0.alpha5-muta#3440d4cc705ab8c865b753dbf61f80c69b8b3902"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d216ab77a6719cbcdf9d10ae35d825d29c2920090c2cb5d6179d953f9e4dfc3"
 dependencies = [
  "bs58",
  "bytes 0.5.5",
@@ -3833,27 +3806,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "tentacle-ping"
-version = "0.3.9"
-source = "git+https://github.com/zeroqn/p2p?branch=v0.3.0.alpha5-muta#3440d4cc705ab8c865b753dbf61f80c69b8b3902"
-dependencies = [
- "bytes 0.5.5",
- "futures 0.3.5",
- "log",
- "molecule 0.5.0",
- "tentacle",
-]
-
-[[package]]
 name = "tentacle-secio"
 version = "0.3.4"
-source = "git+https://github.com/zeroqn/p2p?branch=v0.3.0.alpha5-muta#3440d4cc705ab8c865b753dbf61f80c69b8b3902"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58e14b0d86f0a9a2580cb4fb866ba15dcd1ddd6f055f342b806009dd401381a0"
 dependencies = [
  "bs58",
  "bytes 0.5.5",
  "futures 0.3.5",
  "log",
- "molecule 0.6.0",
+ "molecule",
  "openssl",
  "openssl-sys",
  "rand 0.7.3",
@@ -4164,7 +4126,8 @@ dependencies = [
 [[package]]
 name = "tokio-yamux"
 version = "0.2.4"
-source = "git+https://github.com/zeroqn/p2p?branch=v0.3.0.alpha5-muta#3440d4cc705ab8c865b753dbf61f80c69b8b3902"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24efa898a2c99b751966227ee5dedcb4a9dc549471eadde0df92bd16fc7f34d5"
 dependencies = [
  "bytes 0.5.5",
  "futures 0.3.5",
@@ -4394,7 +4357,7 @@ dependencies = [
 [[package]]
 name = "util"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/nervosnetwork/muta?rev=7382279#738227962771a6a66b85f2fd199df2e699b43adc"
+source = "git+https://github.com/nervosnetwork/muta?rev=a0bf7b4f#a0bf7b4f6316cceabc3c85e3e7233798ba6f1983"
 dependencies = [
  "binding-macro",
  "byteorder",

@@ -35,7 +35,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallEnvironment {
         match code {
             SYSCODE_ADDRESS => {
                 let ptr = machine.registers()[ckb_vm::registers::A0].to_u64();
-                let address = self.iparams.address.as_hex();
+                let address = self.iparams.address.to_string();
 
                 if ptr != 0 {
                     machine.memory_mut().store_bytes(ptr, address.as_ref())?;
@@ -69,7 +69,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallEnvironment {
             }
             SYSCODE_ORIGIN => {
                 let ptr = machine.registers()[ckb_vm::registers::A0].to_u64();
-                let origin = self.context.get_caller().as_hex();
+                let origin = self.context.get_caller().to_string();
 
                 if ptr != 0 {
                     machine.memory_mut().store_bytes(ptr, origin.as_ref())?;
@@ -88,7 +88,7 @@ impl<Mac: ckb_vm::SupportMachine> ckb_vm::Syscalls<Mac> for SyscallEnvironment {
                 let caller = self
                     .context
                     .get_extra()
-                    .unwrap_or_else(|| Bytes::from(self.context.get_caller().as_hex()));
+                    .unwrap_or_else(|| Bytes::from(self.context.get_caller().to_string()));
 
                 if ptr != 0 {
                     machine.memory_mut().store_bytes(ptr, &caller)?;
