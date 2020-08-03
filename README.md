@@ -14,8 +14,8 @@
 
 ## 开始
 
-- [快速入门](https://huobigroup.github.io/huobi-chain/#/getting_started)
-- [文档](https://huobigroup.github.io/huobi-chain/#/)
+- [快速入门](https://huobigroup.github.io/huobi-chain-docs/#/getting_started)
+- [文档](https://huobigroup.github.io/huobi-chain-docs/#/)
 
 ## 核心功能
 

@@ -11,8 +11,8 @@ In terms of optimization for financial applications, Huobi chain plans to suppor
 
 ## Get Started
 
-- [Getting_started](https://huobigroup.github.io/huobi-chain/#/getting_started).
-- [Documentation](https://huobigroup.github.io/huobi-chain/#/)
+- [Getting_started](https://huobigroup.github.io/huobi-chain-docs/#/getting_started).
+- [Documentation](https://huobigroup.github.io/huobi-chain-docs/#/)
 
 ## Key Features
 
