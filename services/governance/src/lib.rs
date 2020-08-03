@@ -391,7 +391,7 @@ where
         self.sdk.set_value(BLOCK_MINER_KEY.to_owned(), miner_addr);
     }
 
-    #[tx_hook_before]
+    // #[tx_hook_before]
     fn pledge_fee(&mut self, ctx: ServiceContext) -> ServiceResponse<String> {
         let info = self
             .sdk
@@ -428,7 +428,7 @@ where
         ServiceResponse::from_succeed("".to_owned())
     }
 
-    #[tx_hook_after]
+    // #[tx_hook_after]
     fn deduct_fee(&mut self, ctx: ServiceContext) -> ServiceResponse<String> {
         let tx_fee = self.calc_tx_fee(&ctx);
         if tx_fee.is_err() {
