@@ -126,7 +126,7 @@ impl DefaultServiceMapping {
 
 fn main() {
     let matches = clap::App::new("Huobi-chain")
-        .version("v0.3.0")
+        .version("v0.5.0-beta.1")
         .author("Muta Dev <muta@nervos.org>")
         .arg(
             clap::Arg::from_usage("-c --config=[FILE] 'a required file for the configuration'")
