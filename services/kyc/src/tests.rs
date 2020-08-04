@@ -15,6 +15,7 @@ use framework::binding::{
 };
 use protocol::types::{Address, ServiceContext, ServiceContextParams};
 
+use crate::types::TagString;
 use std::{
     cell::RefCell,
     collections::HashMap,
@@ -406,6 +407,42 @@ fn should_update_user_tags() {
 
     let admin = service_call!(kyc, get_admin, ctx);
     assert_eq!(admin, Address::from_hex(SERVICE_ADMIN).unwrap());
+}
+
+#[test]
+#[should_panic]
+fn should_reject_update_user_tags_using_invalid_tag_name() {
+    let mut tags: HashMap<TagName, FixedTagList> = HashMap::new();
+    tags.insert(
+        "title_is_more_than_32_length_xxxxxxx".parse().unwrap(),
+        FixedTagList::from_vec(vec!["ZaYi".parse().unwrap()]).expect("fixed tag list"),
+    );
+}
+#[test]
+#[should_panic]
+fn should_reject_update_user_tags_using_invalid_tag_value() {
+    let mut tags: HashMap<TagName, FixedTagList> = HashMap::new();
+    tags.insert(
+        "title".parse().unwrap(),
+        FixedTagList::from_vec(vec!["value_is_more_than_32_length_xxxxxxx"
+            .parse()
+            .unwrap()])
+        .expect("fixed tag list"),
+    );
+}
+
+#[test]
+#[should_panic]
+fn should_reject_update_user_tags_using_invalid_value_capacity() {
+    let mut tags: HashMap<TagName, FixedTagList> = HashMap::new();
+    let mut values = Vec::<TagString>::new();
+    for i in 0..17 {
+        values.push(("value".to_owned() + &(i.to_string())).parse().unwrap())
+    }
+    tags.insert(
+        "title".parse().unwrap(),
+        FixedTagList::from_vec(values).expect("fixed tag list"),
+    );
 }
 
 #[test]

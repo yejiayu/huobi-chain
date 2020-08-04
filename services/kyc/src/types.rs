@@ -17,6 +17,11 @@ use std::{
     str::FromStr,
 };
 
+const TAG_NAME_VALUE_LENGTH: usize = 32usize;
+const ORG_NAME_LENGTH: usize = 32usize;
+const TAG_VALUE_CAPACITY: usize = 16usize;
+const ORG_DESCRIPTION_LENGTH: usize = 256usize;
+
 #[derive(Debug, From, Display)]
 #[display(fmt = "{}", _0)]
 pub struct BadPayload(&'static str);
@@ -42,8 +47,8 @@ impl Validated for TagString {}
 
 impl TagString {
     pub fn validate(s: &str) -> Result<(), &'static str> {
-        if s.chars().count() > 12 {
-            return Err("tag length exceed 12");
+        if s.chars().count() > TAG_NAME_VALUE_LENGTH {
+            return Err("tag length exceed");
         }
 
         // 'NULL' is reversed keyword, make sure that a tag array doesn't
@@ -248,8 +253,8 @@ pub struct OrgName(String);
 
 impl OrgName {
     pub fn validate(s: &str) -> Result<(), &'static str> {
-        if s.chars().count() > 12 {
-            return Err("org name exceed 12 chars");
+        if s.chars().count() > ORG_NAME_LENGTH {
+            return Err("org name exceed");
         }
 
         for (i, c) in s.chars().enumerate() {
@@ -352,8 +357,8 @@ pub struct Genesis {
 
 impl Validate for Genesis {
     fn validate(&self) -> Result<(), ServiceError> {
-        if self.org_description.len() >= 256 {
-            return Err(BadPayload("description length exceed 256").into());
+        if self.org_description.len() >= ORG_DESCRIPTION_LENGTH {
+            return Err(BadPayload("description length exceed ").into());
         }
 
         if self.org_admin == Address::default() {
@@ -381,8 +386,8 @@ impl Validate for KycOrgInfo {
     // Note: TagName and OrgName is already validated during deserialization,
     // and there's not way to create invalid TagName from public function.
     fn validate(&self) -> Result<(), ServiceError> {
-        if self.description.len() >= 256 {
-            return Err(BadPayload("description length exceed 256").into());
+        if self.description.len() >= ORG_DESCRIPTION_LENGTH {
+            return Err(BadPayload("description length exceed").into());
         }
 
         if self.admin == Address::default() {
@@ -406,8 +411,8 @@ impl FixedTagList {
     pub fn validate(tags: &[TagString]) -> Result<(), &'static str> {
         NoneEmptyVec::validate(tags)?;
 
-        if tags.len() > 6 {
-            return Err("tag array length exceed 6");
+        if tags.len() > TAG_VALUE_CAPACITY {
+            return Err("tag array length exceed");
         }
 
         Ok(())
@@ -513,8 +518,8 @@ pub struct RegisterNewOrg {
 
 impl Validate for RegisterNewOrg {
     fn validate(&self) -> Result<(), ServiceError> {
-        if self.description.len() >= 256 {
-            return Err(BadPayload("description length exceed 256").into());
+        if self.description.len() >= ORG_DESCRIPTION_LENGTH {
+            return Err(BadPayload("description length exceed").into());
         }
 
         if self.admin == Address::default() {
