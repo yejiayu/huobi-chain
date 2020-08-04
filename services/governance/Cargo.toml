@@ -1,15 +1,15 @@
 [package]
 name = "governance"
-version = "0.5.0-beta.1"
+version = "0.5.0-beta.2"
 authors = ["Muta Dev <muta@nervos.org>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.1"}
-protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.1", package = "muta-protocol" }
-binding-macro = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.1" }
+muta = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.2"}
+protocol = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.2", package = "muta-protocol" }
+binding-macro = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.2" }
 
 asset = { path = "../asset" }
 metadata = { path = "../metadata" }
@@ -27,6 +27,6 @@ async-trait = "0.1"
 hex = "0.4"
 toml = "0.5"
 lazy_static = "1.4"
-framework = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.1"}
+framework = { git = "https://github.com/nervosnetwork/muta", tag = "v0.2.0-beta.2"}
 metadata = { path = "../metadata" }
 

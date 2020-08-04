@@ -86,6 +86,7 @@ fn new_metadata_service(
 fn mock_metadata_1() -> Metadata {
     Metadata {
         chain_id:        Hash::digest(Bytes::from("test")),
+        bech32_address_hrp: "muta".to_owned(),
         common_ref:      Hex::from_string("0x703873635a6b51513451".to_string()).unwrap(),
         timeout_gap:     20,
         cycles_limit:    99_999_999,
@@ -110,6 +111,7 @@ fn mock_metadata_1() -> Metadata {
 fn mock_metadata_2() -> Metadata {
     Metadata {
         chain_id:        Hash::digest(Bytes::from("test")),
+        bech32_address_hrp: "muta".to_owned(),
         common_ref:      Hex::from_string("0x703873635a6b51513451".to_string()).unwrap(),
         timeout_gap:     20,
         cycles_limit:    99_999_999,
