@@ -391,7 +391,6 @@ impl<SDK: ServiceSDK> AssetService<SDK> {
         Self::emit_event(&ctx, "TransferFrom".to_owned(), event)
     }
 
-    #[cycles(210_00)]
     #[write]
     fn hook_transfer_from(
         &mut self,
