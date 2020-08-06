@@ -59,7 +59,6 @@ payload = '''
         ],
         "miner_benefit": 3
     },
-    "tx_fee_inlet_address": "muta19dddt3retspx298cx9785g27yxxue4k0zmetx3",
     "miner_profit_outlet_address": "muta1dqf7hymzxuhw7csq7wcahslcr9n3ewnfz42ts0",
     "miner_charge_map": [
         {"address": "muta1dqf7hymzxuhw7csq7wcahslcr9n3ewnfz42ts0", "miner_charge_address": "muta1dqf7hymzxuhw7csq7wcahslcr9n3ewnfz42ts0"}
